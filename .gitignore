@@ -127,3 +127,17 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Private
+/data/*
+/training_data/model/*
+/training_data/*
+/tss_0to3.add.xml
+/tss_7to10.add.xml
+/tss_free.rou.xml
+/tss_peak.rou.xml
+/sample.net.xml
+/20201028.net.xml
+/Net_data
+/training_data/*
+/Network/*.xml
