@@ -172,30 +172,34 @@ class Trainer(RLAlgorithm):
         # 전체를 날리는 epsilon greedy
         actions = torch.zeros((1, self.num_agent, self.action_size),
                               dtype=torch.int, device=self.configs['device'])
-        if random.random() > self.epsilon:  # epsilon greedy
-            # masks = torch.cat((mask, mask), dim=0)
-            with torch.no_grad():
-                obs = self.mainSuperQNetwork(state)
+        if mask.sum() > 0:
+            if random.random() > self.epsilon:  # epsilon greedy
+                # masks = torch.cat((mask, mask), dim=0)
+                with torch.no_grad():
+                    obs = self.mainSuperQNetwork(state)
+                    rate_actions = torch.zeros(
+                        (1, self.num_agent, 1), dtype=torch.int, device=self.configs['device'])
+                    time_actions = torch.zeros(
+                        (1, self.num_agent, 1), dtype=torch.int, device=self.configs['device'])
+                    for index in torch.nonzero(mask):
+                        rate_action, time_action = self.mainQNetwork[index](
+                            obs)
+                        rate_actions[0, index] = rate_action.max(1)[1].int()
+                        time_actions[0, index] = time_action.max(1)[1].int()
+                    actions = torch.cat((rate_actions, time_actions), dim=2)
+                    # agent가 늘어나면 view(agents,action_size)
+            else:
                 rate_actions = torch.zeros(
                     (1, self.num_agent, 1), dtype=torch.int, device=self.configs['device'])
                 time_actions = torch.zeros(
                     (1, self.num_agent, 1), dtype=torch.int, device=self.configs['device'])
                 for index in torch.nonzero(mask):
-                    rate_action, time_action = self.mainQNetwork[index](obs)
-                    rate_actions[0, index] = rate_action.max(1)[1].int()
-                    time_actions[0, index] = time_action.max(1)[1].int()
+                    rate_actions[0, index] = torch.tensor(random.randint(
+                        0, self.rate_action_space[self.rate_key_list[index]]-1), dtype=torch.int, device=self.configs['device'])
+                    time_actions[0, index] = torch.tensor(random.randint(
+                        0, self.configs['time_action_space'][index]-1), dtype=torch.int, device=self.configs['device'])
                 actions = torch.cat((rate_actions, time_actions), dim=2)
-                # agent가 늘어나면 view(agents,action_size)
-            return actions
-        else:
-            for index in torch.nonzero(mask):
-                rate_action = torch.tensor([random.randint(0, self.rate_action_space[self.rate_key_list[index]]-1)  # 여기서 3일 때, phase 4 7일때 phase8
-                                            for i in range(self.num_agent)], device=self.configs['device']).view(1, self.num_agent, 1)
-                time_action = torch.tensor(
-                    [random.randint(0, self.configs['time_action_space'][index]-1) for i in range(self.num_agent)]).view(1, self.num_agent, 1)
-                actions = torch.cat((rate_action, time_action), dim=2)
-
-            return actions
+        return actions
 
     def target_update(self):
         # Hard Update

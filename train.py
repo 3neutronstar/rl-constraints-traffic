@@ -81,6 +81,24 @@ def city_dqn_train(configs, time_data, sumoCmd):
             # 전체 1초증가 # traci는 env.step에
             step += 1
             t_agent += 1
+
+            # environment에 적용
+            # action 적용함수, traci.simulationStep 있음
+            next_state = env.step(
+                actions, mask_matrix, action_index_matrix, action_update_mask)
+
+            # env속에 agent별 state를 꺼내옴, max_offset+period 이상일 때 시작
+            if step >= int(torch.max(OFFSET)+torch.max(TL_PERIOD)):
+                rep_state, rep_action, rep_reward, rep_next_state = env.get_state(
+                    mask_matrix)
+                agent.save_replay(rep_state, rep_action, rep_reward,
+                                  rep_next_state, mask_matrix)  # dqn
+                total_reward += rep_reward.sum()
+            # update
+            agent.update(mask_matrix)
+
+            # 모두 하고 나서
+
             # 넘어가야된다면 action index증가 (by tensor slicing)
             action_update_mask = torch.eq(  # update는 단순히 진짜 현시만 받아서 결정해야됨
                 t_agent, action_matrix[0, action_index_matrix]).view(NUM_AGENT)  # 0,인 이유는 인덱싱
@@ -99,21 +117,6 @@ def city_dqn_train(configs, time_data, sumoCmd):
             mask_matrix[clear_matrix] = True
             mask_matrix[~clear_matrix] = False
 
-            # environment에 적용
-            # action 적용함수, traci.simulationStep 있음
-            next_state = env.step(
-                actions, mask_matrix, action_index_matrix, action_update_mask)
-
-            # env속에 agent별 state를 꺼내옴, max_offset+period 이상일 때 시작
-            if step >= int(torch.max(OFFSET)+torch.max(TL_PERIOD)):
-                rep_state, rep_action, rep_reward, rep_next_state = env.get_state(
-                    mask_matrix)
-                agent.save_replay(rep_state, rep_action, rep_reward,
-                                  rep_next_state, mask_matrix)  # dqn
-                total_reward += rep_reward.sum()
-            # print(mask_matrix)
-
-            agent.update(mask_matrix)
             state = next_state
             # info
             arrived_vehicles += traci.simulation.getArrivedNumber()
