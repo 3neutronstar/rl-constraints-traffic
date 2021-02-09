@@ -20,7 +20,7 @@ def city_dqn_train(configs, time_data, sumoCmd):
         from Env.CityEnv import CityEnv
 
     phase_num_matrix = torch.tensor(  # 각 tl이 갖는 최대 phase갯수
-        [len(phase) for i, phase in enumerate(configs['max_phase_num'])])
+        [len(configs['traffic_node_info'][index]['phase_duration']) for _, index in enumerate(configs['traffic_node_info'])])
     # init agent and tensorboard writer
     agent = Trainer(configs)
     writer = SummaryWriter(os.path.join(
@@ -58,9 +58,12 @@ def city_dqn_train(configs, time_data, sumoCmd):
             (NUM_AGENT, MAX_PHASES), dtype=torch.int, device=configs['device'])  # 노란불 3초 해줘야됨
         action_index_matrix = torch.zeros(
             (NUM_AGENT), dtype=torch.long, device=configs['device'])  # 현재 몇번째 phase인지
+        action_update_mask = torch.eq(   # action이 지금 update해야되는지 확인
+            t_agent, action_matrix[0, action_index_matrix]).view(NUM_AGENT)  # 0,인 이유는 인덱싱
 
         # state initialization
-        state = env.collect_state(action_update_mask)
+        state = env.collect_state(
+            action_update_mask, action_index_matrix, mask_matrix)
         total_reward = 0
 
         # agent setting
@@ -70,8 +73,9 @@ def city_dqn_train(configs, time_data, sumoCmd):
 
             # action 을 정하고
             actions = agent.get_action(state, mask_matrix)
-            action_matrix = env.calc_action(action_matrix,  # TODO 진짜 phase와 가짜 분리해서 나와야됨
-                                            actions, mask_matrix)  # action형태로 변환 # 다음으로 넘어가야할 시점에 대한 matrix
+            # action형태로 변환 # 다음으로 넘어가야할 시점에 대한 matrix
+            action_matrix = env.calc_action(
+                action_matrix, actions, mask_matrix)
             # 누적값으로 나타남
 
             # 전체 1초증가 # traci는 env.step에
@@ -80,10 +84,12 @@ def city_dqn_train(configs, time_data, sumoCmd):
             # 넘어가야된다면 action index증가 (by tensor slicing)
             action_update_mask = torch.eq(  # update는 단순히 진짜 현시만 받아서 결정해야됨
                 t_agent, action_matrix[0, action_index_matrix]).view(NUM_AGENT)  # 0,인 이유는 인덱싱
+            # print(t_agent, "time")
 
             # 최대에 도달하면 0으로 초기화 (offset과 비교)
             update_matrix = torch.eq(t_agent % TL_PERIOD, 0)
             t_agent[update_matrix] = 0
+            # print(update_matrix, "update")
 
             action_index_matrix[action_update_mask] += 1
             # agent의 최대 phase를 넘어가면 해당 agent의 action index 0으로 초기화
@@ -96,7 +102,7 @@ def city_dqn_train(configs, time_data, sumoCmd):
             # environment에 적용
             # action 적용함수, traci.simulationStep 있음
             next_state = env.step(
-                actions, action_index_matrix, action_update_mask)
+                actions, mask_matrix, action_index_matrix, action_update_mask)
 
             # env속에 agent별 state를 꺼내옴, max_offset+period 이상일 때 시작
             if step >= int(torch.max(OFFSET)+torch.max(TL_PERIOD)):

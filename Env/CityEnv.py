@@ -84,7 +84,7 @@ class CityEnv(baseEnv):
 
         return state, action, reward, next_state
 
-    def collect_state(self, action_update_mask, action_index_matrix):
+    def collect_state(self, action_update_mask, action_index_matrix, mask_matrix):
         '''
         매초 마다 update할 것이 있는지 확인해야함
         전과 비교해서 인덱스가 늘어나고 그 인덱스가
@@ -92,15 +92,31 @@ class CityEnv(baseEnv):
         Max Pressure based control
         각 node에 대해서 inflow 차량 수와 outflow 차량수 + 해당 방향이라는 전제에서
         '''
+        # Reward 저장을 위한 mask 생성
+        action_change_mask = torch.zeros_like(action_update_mask)
+        for index in torch.nonzero(action_update_mask):
+            if action_index_matrix[index] in self.traffic_node_info[self.tl_rl_list[index]]['phase_index']:
+                action_change_mask[index] = True
+                # action_index_matrix상의 값이 next state를 받아와야하는 index일 경우
+        # Reward
+        for index in torch.nonzero(action_change_mask):
+            outflow = 0
+            inflow = 0
+            interests = self.node_interest_pair[self.tl_rl_list[index]]
+            for interest in interests:
+                outflow += traci.edge.getLastStepVehicleNumber(
+                    interest['outflow'])
+                inflow += traci.edge.getLastStepHaltingNumber(
+                    interest['inflow'])
+            # pressure=inflow-outflow
+            # reward cumulative sum
+            pressure = torch.tensor(
+                -(inflow-outflow), dtype=torch.int, device=self.configs['device'])
+            self.tl_rl_memory[index].reward += pressure
+            self.reward += pressure
 
-        # next state 저장 여부 # before가 필요한 이유는 이전 step 행동에 대해서 state를 저장시켜줘야하기 때문
-        need_state_mask = torch.bitwise_or(
-            self.before_action_update_mask, action_update_mask)
-        action_change_mask = torch.bitwise_or(
-            self.before_action_update_mask, action_update_mask)
-        next_state = torch.zeros(
-            (1, self.num_agent, self.vehicle_state_space), dtype=torch.float, device=self.configs['device'])
-        if need_state_mask.sum() != 0:  # 검색의 필요가 없다면 검색x
+        # action 변화를 위한 state
+        if mask_matrix.sum() > 0:  # 검색의 필요가 없다면 검색x
             next_state = tuple()
             # 모든 rl node에 대해서
             # vehicle state
@@ -121,49 +137,54 @@ class CityEnv(baseEnv):
             next_state = torch.cat(next_state, dim=0).view(
                 1, self.num_agent, self.vehicle_state_space)
             # 각 agent env에 state,next_state 저장
-            for state_index in torch.nonzero(self.before_action_update_mask):
+            for state_index in torch.nonzero(mask_matrix):
                 self.tl_rl_memory[state_index].state = self.tl_rl_memory[state_index].next_state
                 self.tl_rl_memory[state_index].next_state = next_state
+        else:
+            next_state = torch.zeros(
+                1, self.num_agent, self.vehicle_state_space, dtype=torch.float, device=self.configs['device'])
 
         return next_state.view(1, -1)
 
-    def step(self, action, mask, action_index_matrix, action_update_mask):
+    def step(self, action, mask_matrix, action_index_matrix, action_update_mask):
         '''
         매 초마다 action을 적용하고, next_state를 반환하는 역할
         yellow mask가 True이면 해당 agent reward저장
         '''
         # action update
-        for index in torch.nonzero(mask):
+        for index in torch.nonzero(mask_matrix):
             # action의 변환 -> 각 phase의 길이
             phase_length_set = self._toPhaseLength(
-                self.tl_rl_list[index], action[index])
+                self.tl_rl_list[index], action[0, index])
             # tls재설정
             tls = self.traffic_node_info[self.tl_rl_list[index]]['program']
             for phase_idx in self.traffic_node_info[self.tl_rl_list[index]]['phase_index']:
-                tls.phase[phase_idx].duration = phase_length_set[phase_idx]
-
-            traci.trafficlight.setProgramLogic(self.tl_rl_list[index], tls)
-            self.tl_rl_memory[i].action = action.int()
+                tls[0].phases[phase_idx].duration = phase_length_set[phase_idx]
+            traci.trafficlight.setProgramLogic(self.tl_rl_list[index], tls[0])
+            self.tl_rl_memory[index].action = action.int()
         # action을 environment에 등록 후 상황 살피기,action을 저장
 
         # step
         traci.simulationStep()
         # next state 받아오기, reward저장
         next_state = self.collect_state(
-            action_update_mask, action_index_matrix)
-        self.before_action_index_matrix = action_index_matrix
+            action_update_mask, action_index_matrix, mask_matrix)
         self.before_action_update_mask = action_update_mask
         return next_state
 
     def calc_action(self, action_matrix, actions, mask_matrix):
         for index in torch.nonzero(mask_matrix):
             actions = actions.long()
-            action_matrix[index] = self.traffic_node_info[self.tl_rl_list[index]]['phase_duration']*actions[0, index, 1].int() + \
-                self.common_phase[index]  # action으로 분배하는 공식 필요
+            phase_duration_list = self.traffic_node_info[self.tl_rl_list[index]
+                                                         ]['phase_duration']
+
+            action_matrix[index] = torch.tensor(
+                phase_duration_list, dtype=torch.int, device=self.configs['device'])
         # 누적 합산
-            for j in range(self.num_phase_list[index]):
-                if j >= 1:
-                    action_matrix[index, j] += action_matrix[index, j-1]
+            for l, _ in enumerate(phase_duration_list):
+                if l >= 1:
+                    action_matrix[index, l] += action_matrix[index, l-1]
+
         return action_matrix.int()
 
     def update_tensorboard(self, writer, epoch):
@@ -176,6 +197,6 @@ class CityEnv(baseEnv):
         tl_dict = deepcopy(self.traffic_node_info[tl_rl])
         for j, idx in enumerate(tl_dict['phase_index']):
             tl_dict['phase_duration'][idx] = tl_dict['phase_duration'][idx] + \
-                action[j][0]*action[j][1]
-        phase_set_length = tl_dict['phase_duration']
+                action[0, 0]*action[0, 1]
+        phase_length_set = tl_dict['phase_duration']
         return phase_length_set

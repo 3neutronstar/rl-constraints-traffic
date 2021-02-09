@@ -1,6 +1,7 @@
 from gen_net import Network
 from configs import EXP_CONFIGS
 import math
+import torch
 
 
 class GridNetwork(Network):
@@ -217,12 +218,18 @@ class GridNetwork(Network):
                     {'duration': '3',
                      'state': 'y'*(12+4*num_lanes),
                      },
+                    {'duration': '3',
+                     'state': 'r'*(12+4*num_lanes),
+                     },
                     {'duration': '37',  # 2
                      'state': 'G{0}{3}rr{2}{3}rG{0}{3}rr{2}{3}r'.format(  # 위직아래직
                          g*num_lanes, g, r*num_lanes, r),  # current
                      },
                     {'duration': '3',
                      'state': 'y'*(12+4*num_lanes),
+                     },
+                    {'duration': '3',
+                     'state': 'r'*(12+4*num_lanes),
                      },
                     {'duration': '37',  # 1
                      'state': 'r{2}{3}rr{2}{1}gr{2}{3}rr{2}{1}g'.format(  # 좌좌우좌
@@ -231,12 +238,18 @@ class GridNetwork(Network):
                     {'duration': '3',
                      'state': 'y'*(12+4*num_lanes),
                      },
+                    {'duration': '3',
+                     'state': 'r'*(12+4*num_lanes),
+                     },
                     {'duration': '37',  # 1
                      'state': 'r{2}{3}rG{0}{3}rr{2}{3}rG{0}{3}g'.format(  # 좌직우직
                          g*num_lanes, g, r*num_lanes, r),  # current
                      },
                     {'duration': '3',
                      'state': 'y'*(12+4*num_lanes),
+                     },
+                    {'duration': '3',
+                     'state': 'r'*(12+4*num_lanes),
                      },
                 ]
                 # 2행시
@@ -374,11 +387,15 @@ class GridNetwork(Network):
             key 에는 node id
             value에는 dictionary해서 그 속에 모든 내용 다들어가게
         '''
+        # rate_action_space
         NET_CONFIGS['phase_num_actions'] = {2: [[0, 0], [1, -1]],
                                             3: [[0, 0, 0], [1, 0, -1], [1, -1, 0], [0, 1, -1], [-1, 0, 1], [0, -1, 1], [-1, 1, 0]],
                                             4: [[0, 0, 0, 0], [1, 0, 0, -1], [1, 0, -1, 0], [1, -1, 0, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1],
                                                 [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]]}
-
+        NET_CONFIGS['rate_action_space'] = {2: len(NET_CONFIGS['phase_num_actions'][2]), 3: len(
+            NET_CONFIGS['phase_num_actions'][3]), 4: len(NET_CONFIGS['phase_num_actions'][4])}
+        # time_action_space
+        NET_CONFIGS['time_action_space'] = list()
         traffic_info = {
             'n_0_0': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
             'n_0_1': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
@@ -403,16 +420,17 @@ class GridNetwork(Network):
                     if node['id'][-3:] == interest['id'][-3:]:  # 좌표만 받기
                         node_interest_pair[node['id']].append(interest)
         # TODO, common phase 결정하면서 phase_index 만들기
-        for traffic in traffic_info:
-            traffic['common_phase'] = list()  # 실제 현시로 분류되는 phase
-            traffic['phase_index'] = list()  # 실제 현시의 index
-            for i, duration in enumerate(traffic['phase_duration']):
+        for key in traffic_info.keys():
+            traffic_info[key]['common_phase'] = list()  # 실제 현시로 분류되는 phase
+            traffic_info[key]['phase_index'] = list()  # 실제 현시의 index
+            for i, duration in enumerate(traffic_info[key]['phase_duration']):
                 if duration > 3:
-                    traffic['common_phase'].append(duration)
-                    traffic['phase_index'].append(i)
+                    traffic_info[key]['common_phase'].append(duration)
+                    traffic_info[key]['phase_index'].append(i)
+            traffic_info[key]['max_phase_num'] = len(
+                traffic_info[key]['common_phase'])
 
         # TODO, common_phase기반 max_phase_num넣기
-        NET_CONFIGS['max_phase_num'] = 4
         NET_CONFIGS['tl_period'] = list()
         NET_CONFIGS['common_phase'] = list()
         NET_CONFIGS['min_phase'] = list()
@@ -431,18 +449,21 @@ class GridNetwork(Network):
             NET_CONFIGS['tl_rl_list'].append(key)
             NET_CONFIGS['offset'].append(traffic_info[key]['offset'])
             NET_CONFIGS['phase_index'].append(traffic_info[key]['phase_index'])
+            NET_CONFIGS['time_action_space'].append((torch.min(torch.tensor(traffic_info[key]['max_phase'])-torch.tensor(
+                traffic_info[key]['common_phase']), torch.tensor(traffic_info[key]['common_phase'])-torch.tensor(traffic_info[key]['min_phase']))/2).mean().item())
 
         NET_CONFIGS['num_agent'] = len(NET_CONFIGS['tl_rl_list'])
         # max value 검출기
         maximum = 0
         for key in traffic_info.keys():
             if maximum < len(traffic_info[key]['phase_duration']):
-                maximum = len(traffic_info[key['phase_duration']])
+                maximum = len(traffic_info[key]['phase_duration'])
         NET_CONFIGS['max_phase_num'] = maximum
 
         NET_CONFIGS['interest_list'] = interest_list
         NET_CONFIGS['node_interest_pair'] = node_interest_pair
         NET_CONFIGS['traffic_node_info'] = traffic_info
+
         return NET_CONFIGS
 
     def _phase_list(self):

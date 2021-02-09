@@ -110,7 +110,6 @@ class GridEnv(baseEnv):
         # next state 저장
         need_state_mask = torch.bitwise_and(
             self.before_action_change_mask, action_change_mask)
-        # print(need_state_mask)
         next_state = torch.zeros(
             (1, self.num_agent, self.vehicle_state_space), dtype=torch.float, device=self.configs['device'])
         if need_state_mask.sum() != 0:  # 검색의 필요가 없다면 검색x
@@ -190,4 +189,4 @@ class GridEnv(baseEnv):
         straight: green=1, yellow=x, red=0 <- x is for changing
         left: green=1, yellow=x, red=0 <- x is for changing
         '''
-        return self.phase_dict[tl_rl][action]
+        return self.configs['traffic_node_info'][tl_rl][phase_list][action]

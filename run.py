@@ -85,18 +85,7 @@ def train(flags, time_data, configs, sumoConfig):
     elif flags.model.lower() == 'city':
         configs['action_size'] = 2
         configs['state_space'] = 8  # 4phase에서 각각 받아오는게 아니라 마지막에 한번만 받음
-        # action space
-        # TODO 갯수 지정이랑 action space 조정
-        configs['rate_action_space'] = {2: 2, 3: 7, 4: 19}
-        # time action space지정 (무조건 save param 이후 list화 시키고 나면 이전으로 옮길 것)
-        # TODO 여기 홀수일 때, 어떻게 할 건지 지정해야함
-        configs['phase_num_actions'] = {2: [[0, 0], [1, -1]],
-                                        3: [[0, 0, 0], [1, 0, -1], [1, -1, 0], [0, 1, -1], [-1, 0, 1], [0, -1, 1], [-1, 1, 0]],
-                                        4: [[0, 0, 0, 0], [1, 0, 0, -1], [1, 0, -1, 0], [1, -1, 0, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1],
-                                            [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]]}
 
-        configs['time_action_space'] = (torch.min(torch.tensor(configs['max_phase'])-torch.tensor(
-            configs['common_phase']), torch.tensor(configs['common_phase'])-torch.tensor(configs['min_phase']))/2).mean(dim=1).int().tolist()
         configs['model'] = 'city'
         from train import city_dqn_train
         from configs import SUPER_DQN_TRAFFIC_CONFIGS

@@ -114,11 +114,6 @@ class Trainer(RLAlgorithm):
         self.state_space = self.configs['state_space']
 
         # action space
-        self.configs['rate_action_space'] = 13
-        # time action space지정 (무조건 save param 이후 list화 시키고 나면 이전으로 옮길 것)
-        # TODO 여기 홀수일 때, 어떻게 할 건지 지정해야함
-        self.configs['time_action_space'] = (torch.min(torch.tensor(configs['max_phase'])-torch.tensor(
-            configs['common_phase']), torch.tensor(configs['common_phase'])-torch.tensor(configs['min_phase']))/2).mean(dim=1).int().tolist()
         # rate action space
         self.rate_action_space = self.configs['rate_action_space']
         # time action space
@@ -143,11 +138,14 @@ class Trainer(RLAlgorithm):
         # size에 따라 다르게 해주어야함
         self.mainQNetwork = list()
         self.targetQNetwork = list()
-        for i in range(self.num_agent):
+        self.rate_key_list = list()
+        for i, key in enumerate(self.configs['traffic_node_info'].keys()):
+            rate_key = self.configs['traffic_node_info'][key]['max_phase_num']
+            self.rate_key_list.append(rate_key)
             self.mainQNetwork.append(QNetwork(
-                self.super_output_size, self.rate_action_space, self.time_action_space[i], self.configs))
+                self.super_output_size, self.rate_action_space[rate_key], self.time_action_space[i], self.configs))
             self.targetQNetwork.append(QNetwork(
-                self.super_output_size, self.rate_action_space, self.time_action_space[i], self.configs))
+                self.super_output_size, self.rate_action_space[rate_key], self.time_action_space[i], self.configs))
 
         # hard update, optimizer setting
         self.optimizer = list()
@@ -191,7 +189,7 @@ class Trainer(RLAlgorithm):
             return actions
         else:
             for index in torch.nonzero(mask):
-                rate_action = torch.tensor([random.randint(0, self.rate_action_space-1)  # 여기서 3일 때, phase 4 7일때 phase8
+                rate_action = torch.tensor([random.randint(0, self.rate_action_space[self.rate_key_list[index]]-1)  # 여기서 3일 때, phase 4 7일때 phase8
                                             for i in range(self.num_agent)], device=self.configs['device']).view(1, self.num_agent, 1)
                 time_action = torch.tensor(
                     [random.randint(0, self.configs['time_action_space'][index]-1) for i in range(self.num_agent)]).view(1, self.num_agent, 1)
