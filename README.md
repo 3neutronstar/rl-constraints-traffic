@@ -20,7 +20,7 @@ City Optimization Reinforcement Learning based on https://github.com/3neutronsta
         (1) Before phase ends, receive all the number of inflow vehicles
 
 - Action (per each COMMON_PERIOD of intersection)
-    1) Tuple of +,- of each phases (13)
+    1) Tuple of +,- of each phases (18) <- 4 phases, (6) <- 3 phases, (2) <- 2 phases
     2) Length of phase time changes
     -> minimum value exists and maximum value exists
 
@@ -39,32 +39,32 @@ City Optimization Reinforcement Learning based on https://github.com/3neutronsta
 ### How to use
 check the condition state (throughput)
 ```shell script
-    python ./Experiment/run.py simulate
+    python ./run.py simulate
 ``` 
 Run in RL algorithm DQN (default device: cpu)
 ```shell script
-    python ./Experiment/run.py train --gpu False
+    python ./run.py train --gpu False
 ``` 
 If you want to use other algorithm, use this code (ppo,super_dqn, ~~REINFORCE, a2c~~) 
 
 ```shell script
-    python ./Experiment/run.py train --algorithm ppo
+    python ./run.py train --algorithm ppo
 ``` 
 Check the RL performance that based on FRAP model [FRAP Paper]https://arxiv.org/abs/1905.04722
 ```shell script
-    python ./Experiment/run.py train --model frap
+    python ./run.py train --model frap
 ``` 
 Didn't check that it learns well. (Prototype)
 - check the result
 Tensorboard
 ```shell script
-    tensorboard --logdir ./Experiment/training_data
+    tensorboard --logdir ./training_data
 ``` 
-Hyperparameter in json, model is in `./Experiment/training_data/[time you run]/model` directory.
+Hyperparameter in json, model is in `./training_data/[time you run]/model` directory.
 
 - replay the model
 ```shell script
-    python ./Experiment/run.py test --replay_name /replay_data in training_data dir/ --replay_epoch NUM
+    python ./run.py test --replay_name /replay_data in training_data dir/ --replay_epoch NUM
 ```
 
 ## Utils

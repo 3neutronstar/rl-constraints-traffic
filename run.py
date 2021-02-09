@@ -36,8 +36,8 @@ def parse_args(args):
         '--algorithm', type=str, default='super_dqn',
         help='choose algorithm super_dqn.')
     parser.add_argument(
-        '--model', type=str, default='base',
-        help='choose model base and city.')
+        '--model', type=str, default='city',
+        help='choose model "city".')
     parser.add_argument(
         '--gpu', type=bool, default=False,
         help='choose GPU or CPU')
