@@ -160,6 +160,7 @@ class CityEnv(baseEnv):
             tls = self.traffic_node_info[self.tl_rl_list[index]]['program']
             for phase_idx in self.traffic_node_info[self.tl_rl_list[index]]['phase_index']:
                 tls[0].phases[phase_idx].duration = phase_length_set[phase_idx]
+            print(phase_length_set)
             traci.trafficlight.setProgramLogic(self.tl_rl_list[index], tls[0])
             self.tl_rl_memory[index].action = action.int()
         # action을 environment에 등록 후 상황 살피기,action을 저장
@@ -197,6 +198,6 @@ class CityEnv(baseEnv):
         tl_dict = deepcopy(self.traffic_node_info[tl_rl])
         for j, idx in enumerate(tl_dict['phase_index']):
             tl_dict['phase_duration'][idx] = tl_dict['phase_duration'][idx] + \
-                action[0, 0]*action[0, 1]
+                tl_dict['matrix_actions'][action[0, 0]][j] * action[0, 1]
         phase_length_set = tl_dict['phase_duration']
         return phase_length_set
