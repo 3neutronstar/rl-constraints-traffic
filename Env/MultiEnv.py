@@ -28,7 +28,6 @@ class GridEnv(baseEnv):
 
         self.reward = 0
         self.state_space = self.configs['state_space']
-        self.action_space = self.configs['action_space']
         self.action_size = self.configs['action_size']
         self.left_lane_num = self.configs['num_lanes']-1
         self.phase_dict = self.configs['phase_dict']

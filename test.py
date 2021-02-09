@@ -3,9 +3,10 @@ import traci
 import time
 from utils import load_params
 
-def dqn_test(flags, sumoCmd, configs):
+
+def city_dqn_test(flags, sumoCmd, configs):
     # Environment Setting
-    configs['model']='base'
+    configs['model'] = 'base'
     from Agent.dqn import Trainer
     if configs['model'] == 'base':
         from Env.Env import TL3x3Env
@@ -13,9 +14,10 @@ def dqn_test(flags, sumoCmd, configs):
         from Env.FRAP import TL3x3Env
     # init test setting
     if flags.replay_name is not None:
-        configs = load_params(configs, flags.replay_name) # 여기앞에 configs 설정해도 의미 없음
-        configs['replay_epoch']=str(flags.replay_epoch)
-        configs['mode']='test'
+        # 여기앞에 configs 설정해도 의미 없음
+        configs = load_params(configs, flags.replay_name)
+        configs['replay_epoch'] = str(flags.replay_epoch)
+        configs['mode'] = 'test'
 
     # setting the rl list
     MAX_STEPS = configs['max_steps']
@@ -32,7 +34,7 @@ def dqn_test(flags, sumoCmd, configs):
         traci.start(sumoCmd)
         # Epoch Start setting
         step = 0
-        env =  TL3x3Env(configs)
+        env = TL3x3Env(configs)
         done = False
         total_reward = 0
         reward = 0
@@ -64,15 +66,15 @@ def dqn_test(flags, sumoCmd, configs):
             total_reward, arrived_vehicles))
 
 
-def super_dqn_test(flags,sumoCmd, configs):
+def super_dqn_test(flags, sumoCmd, configs):
     from Agent.super_dqn import Trainer
     if configs['model'] == 'base':
         from Env.MultiEnv import GridEnv
     # init test setting
     if flags.replay_name is not None:
-        configs['replay_epoch']=flags.replay_epoch
+        configs['replay_epoch'] = flags.replay_epoch
         configs = load_params(configs, flags.replay_name)
-        configs['mode']='test'
+        configs['mode'] = 'test'
     phase_num_matrix = torch.tensor(
         [len(phase) for i, phase in enumerate(configs['max_phase'])])
     # init agent and tensorboard writer
@@ -154,7 +156,7 @@ def super_dqn_test(flags,sumoCmd, configs):
                 t_agent, action_matrix[0, action_index_matrix]-3)  # 3초먼저 yellow로 바꿈
             for y in torch.nonzero(yellow_mask):
                 traci.trafficlight.setRedYellowGreenState(
-                    TL_RL_LIST[y], 'y'*20)
+                    TL_RL_LIST[y], 'y'*(12+4*configs['num_lanes']))
             # environment에 적용
             # action 적용함수, traci.simulationStep 있음
             next_state = env.step(actions, action_index_matrix, yellow_mask)

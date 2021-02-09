@@ -311,7 +311,6 @@ class GridNetwork(Network):
         side_list = ['u', 'r', 'd', 'l']
         NET_CONFIGS = dict()
         interest_list = list()
-        phase_dict = dict()
         node_list = self.configs['node_info']
         # grid에서는 자동 생성기 따라서 사용해도 무방함 #map완성되면 통일 가능
         x_y_end = self.configs['grid_num']-1
@@ -371,38 +370,103 @@ class GridNetwork(Network):
                     }
                 )
         # phase 생성
+        '''
+            key 에는 node id
+            value에는 dictionary해서 그 속에 모든 내용 다들어가게
+        '''
+        NET_CONFIGS['phase_num_actions'] = {2: [[0, 0], [1, -1]],
+                                            3: [[0, 0, 0], [1, 0, -1], [1, -1, 0], [0, 1, -1], [-1, 0, 1], [0, -1, 1], [-1, 1, 0]],
+                                            4: [[0, 0, 0, 0], [1, 0, 0, -1], [1, 0, -1, 0], [1, -1, 0, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1],
+                                                [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]]}
+
+        traffic_info = {
+            'n_0_0': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
+            'n_0_1': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
+            'n_0_2': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
+            'n_1_0': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
+            'n_1_1': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
+            'n_1_2': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
+            'n_2_0': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
+            'n_2_1': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
+            'n_2_2': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
+        }
+        # phase list 삽입
         for tl_rl in self.tl_rl_list:
-            phase_dict[tl_rl['id']] = self._phase_list()
+            traffic_info[tl_rl['id']]['phase_list'] = self._phase_list()
         # agent별 reward,state,next_state,action저장용
         # 관심 노드와 interest inflow or outflow edge 정렬
         node_interest_pair = dict()
         for _, node in enumerate(node_list):
             if node['id'][-1] not in side_list:
-                node_interest_pair['{}'.format(
-                    node['id'])] = list()
+                node_interest_pair[node['id']] = list()
                 for _, interest in enumerate(interest_list):
                     if node['id'][-3:] == interest['id'][-3:]:  # 좌표만 받기
-                        node_interest_pair['{}'.format(
-                            node['id'])].append(interest)
+                        node_interest_pair[node['id']].append(interest)
+        # TODO, common phase 결정하면서 phase_index 만들기
+        for traffic in traffic_info:
+            traffic['common_phase'] = list()  # 실제 현시로 분류되는 phase
+            traffic['phase_index'] = list()  # 실제 현시의 index
+            for i, duration in enumerate(traffic['phase_duration']):
+                if duration > 3:
+                    traffic['common_phase'].append(duration)
+                    traffic['phase_index'].append(i)
+
+        # TODO, common_phase기반 max_phase_num넣기
+        NET_CONFIGS['max_phase_num'] = 4
+        NET_CONFIGS['tl_period'] = list()
+        NET_CONFIGS['common_phase'] = list()
+        NET_CONFIGS['min_phase'] = list()
+        NET_CONFIGS['max_phase'] = list()
+        NET_CONFIGS['tl_rl_list'] = list()
+        NET_CONFIGS['offset'] = list()
+        NET_CONFIGS['phase_index'] = list()
+
+        for key in traffic_info.keys():
+            NET_CONFIGS['tl_period'].append(
+                traffic_info[key]['period'])
+            NET_CONFIGS['common_phase'].append(
+                traffic_info[key]['common_phase'])
+            NET_CONFIGS['min_phase'].append(traffic_info[key]['min_phase'])
+            NET_CONFIGS['max_phase'].append(traffic_info[key]['max_phase'])
+            NET_CONFIGS['tl_rl_list'].append(key)
+            NET_CONFIGS['offset'].append(traffic_info[key]['offset'])
+            NET_CONFIGS['phase_index'].append(traffic_info[key]['phase_index'])
+
+        NET_CONFIGS['num_agent'] = len(NET_CONFIGS['tl_rl_list'])
+        # max value 검출기
+        maximum = 0
+        for key in traffic_info.keys():
+            if maximum < len(traffic_info[key]['phase_duration']):
+                maximum = len(traffic_info[key['phase_duration']])
+        NET_CONFIGS['max_phase_num'] = maximum
 
         NET_CONFIGS['interest_list'] = interest_list
         NET_CONFIGS['node_interest_pair'] = node_interest_pair
-        NET_CONFIGS['phase_dict'] = phase_dict
+        NET_CONFIGS['traffic_node_info'] = traffic_info
         return NET_CONFIGS
 
     def _phase_list(self):
         num_lanes = self.configs['num_lanes']
         g = 'G'
         r = 'r'
+        y = 'y'
         phase_list = [
             'r{2}{1}gr{2}{3}rr{2}{1}gr{2}{3}r'.format(  # 위좌아래좌
                 g*num_lanes, g, r*num_lanes, r),
+            '{}'.format(y*(12+4*num_lanes)),
+            '{}'.format(r*(12+4*num_lanes)),
             'G{0}{3}rr{2}{3}rG{0}{3}rr{2}{3}r'.format(  # 위직아래직
                 g*num_lanes, g, r*num_lanes, r),  # current
+            '{}'.format(y*(12+4*num_lanes)),
+            '{}'.format(r*(12+4*num_lanes)),
             'r{2}{3}rr{2}{1}gr{2}{3}rr{2}{1}g'.format(  # 좌좌우좌
                 g*num_lanes, g, r*num_lanes, r),
+            '{}'.format(y*(12+4*num_lanes)),
+            '{}'.format(r*(12+4*num_lanes)),
             'r{2}{3}rG{0}{3}rr{2}{3}rG{0}{3}g'.format(  # 좌직우직
                 g*num_lanes, g, r*num_lanes, r),  # current
+            '{}'.format(y*(12+4*num_lanes)),
+            '{}'.format(r*(12+4*num_lanes)),
         ]
         return phase_list
 

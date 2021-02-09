@@ -59,24 +59,44 @@ def train(flags, time_data, configs, sumoConfig):
         sumoBinary = checkBinary('sumo')
     sumoCmd = [sumoBinary, "-c", sumoConfig, '--start']
     # configs setting
+    configs['num_agent'] = len(configs['tl_rl_list'])
     configs['algorithm'] = flags.algorithm.lower()
     print("training algorithm: ", configs['algorithm'])
     if flags.model.lower() == 'base':
-        configs['num_phase'] = 4
-        configs['action_space'] = configs['num_phase']
-        configs['action_size'] = 2
-        configs['state_space'] = 8  # 4phase에서 각각 받아오는게 아니라 마지막에 한번만 받음
-        configs['model'] = 'base'
         from train import super_dqn_train
         from configs import SUPER_DQN_TRAFFIC_CONFIGS
         configs = merge_dict_non_conflict(configs, SUPER_DQN_TRAFFIC_CONFIGS)
+        configs['max_phase_num'] = 4
+        configs['offset'] = [0 for i in range(
+            configs['num_agent'])]  # offset 임의 설정
+        configs['tl_period'] = [160 for i in range(
+            configs['num_agent'])]  # max period 임의 설정
+        configs['action_size'] = 2
+        configs['state_space'] = 8  # 4phase에서 각각 받아오는게 아니라 마지막에 한번만 받음
+        # action space
+        configs['rate_action_space'] = 13
+        # time action space지정 (무조건 save param 이후 list화 시키고 나면 이전으로 옮길 것)
+        # TODO 여기 홀수일 때, 어떻게 할 건지 지정해야함
+        configs['time_action_space'] = (torch.min(torch.tensor(configs['max_phase'])-torch.tensor(
+            configs['common_phase']), torch.tensor(configs['common_phase'])-torch.tensor(configs['min_phase']))/2).mean(dim=1).int().tolist()
+        configs['model'] = 'base'
         super_dqn_train(configs, time_data, sumoCmd)
 
     elif flags.model.lower() == 'city':
-        configs['num_phase'] = 4
-        configs['action_space'] = configs['num_phase']
         configs['action_size'] = 2
         configs['state_space'] = 8  # 4phase에서 각각 받아오는게 아니라 마지막에 한번만 받음
+        # action space
+        # TODO 갯수 지정이랑 action space 조정
+        configs['rate_action_space'] = {2: 2, 3: 7, 4: 19}
+        # time action space지정 (무조건 save param 이후 list화 시키고 나면 이전으로 옮길 것)
+        # TODO 여기 홀수일 때, 어떻게 할 건지 지정해야함
+        configs['phase_num_actions'] = {2: [[0, 0], [1, -1]],
+                                        3: [[0, 0, 0], [1, 0, -1], [1, -1, 0], [0, 1, -1], [-1, 0, 1], [0, -1, 1], [-1, 1, 0]],
+                                        4: [[0, 0, 0, 0], [1, 0, 0, -1], [1, 0, -1, 0], [1, -1, 0, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1],
+                                            [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]]}
+
+        configs['time_action_space'] = (torch.min(torch.tensor(configs['max_phase'])-torch.tensor(
+            configs['common_phase']), torch.tensor(configs['common_phase'])-torch.tensor(configs['min_phase']))/2).mean(dim=1).int().tolist()
         configs['model'] = 'city'
         from train import city_dqn_train
         from configs import SUPER_DQN_TRAFFIC_CONFIGS
@@ -85,9 +105,8 @@ def train(flags, time_data, configs, sumoConfig):
 
 
 def test(flags, configs, sumoConfig):
-    from Agent.dqn import Trainer
     from utils import save_params, load_params, update_tensorboard
-    from test import dqn_test, super_dqn_test
+    from test import city_dqn_test, super_dqn_test
     if flags.disp == True:
         sumoBinary = checkBinary('sumo-gui')
     else:
@@ -97,6 +116,8 @@ def test(flags, configs, sumoConfig):
 
     if flags.algorithm.lower() == 'super_dqn':
         super_dqn_test(flags, sumoCmd, configs)
+    if flags.algorithm.lower() == 'city_dqn':
+        city_dqn_test(flags, sumoCmd, configs)
 
 
 def simulate(flags, configs, sumoConfig):
@@ -174,15 +195,6 @@ def main(args):
         network.generate_cfg(True, configs['mode'])
         NET_CONFIGS = network.get_configs()
         configs = merge_dict_non_conflict(configs, NET_CONFIGS)
-        print(NET_CONFIGS['phase_dict'])
-
-        # rl_list 설정
-        side_list = ['u', 'r', 'd', 'l']
-        tl_rl_list = list()
-        for _, node in enumerate(configs['node_info']):
-            if node['id'][-1] not in side_list:
-                tl_rl_list.append(node['id'])
-        configs['tl_rl_list'] = tl_rl_list
 
     # Generating Network
     else:  # map file 에서 불러오기
@@ -211,12 +223,7 @@ def main(args):
     # check the mode
     if configs['mode'] == 'train':
         # init train setting
-        configs['num_agent'] = len(configs['tl_rl_list'])
-        configs['max_phase_num'] = 4
-        configs['offset'] = [0 for i in range(
-            configs['num_agent'])]  # offset 임의 설정
-        configs['tl_max_period'] = [160 for i in range(
-            configs['num_agent'])]  # max period 임의 설정
+
         configs['mode'] = 'train'
         sumoConfig = os.path.join(
             configs['current_path'], 'training_data', time_data, 'net_data', configs['file_name']+'_train.sumocfg')
