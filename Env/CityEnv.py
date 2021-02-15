@@ -104,10 +104,12 @@ class CityEnv(baseEnv):
             inflow = 0
             interests = self.node_interest_pair[self.tl_rl_list[index]]
             for interest in interests:
-                outflow += traci.edge.getLastStepVehicleNumber(
-                    interest['outflow'])
-                inflow += traci.edge.getLastStepHaltingNumber(
-                    interest['inflow'])
+                if interest['outflow']: # None이 아닐 때 행동
+                    outflow += traci.edge.getLastStepVehicleNumber(
+                        interest['outflow'])
+                if interest['inflow']:# None이 아닐 때 행동
+                    inflow += traci.edge.getLastStepHaltingNumber(
+                        interest['inflow'])
             # pressure=inflow-outflow
             # reward cumulative sum
             pressure = torch.tensor(
@@ -125,13 +127,17 @@ class CityEnv(baseEnv):
                     (self.vehicle_state_space, 1), dtype=torch.float, device=self.configs['device'])
                 # 모든 inflow에 대해서
                 for j, pair in enumerate(self.node_interest_pair[interest]):
-                    left_movement = traci.lane.getLastStepHaltingNumber(
-                        pair['inflow']+'_{}'.format(self.left_lane_num))  # 멈춘애들 계산
-                    # 직진
-                    veh_state[j*2] = traci.edge.getLastStepHaltingNumber(
-                        pair['inflow'])-left_movement  # 가장 좌측에 멈춘 친구를 왼쪽차선 이용자로 판단
-                    # 좌회전
-                    veh_state[j*2+1] = left_movement
+                    if pair['inflow'] is None:
+                        veh_state[j*2]=0.0
+                        veh_state[j*2+1]=0.0
+                    else:
+                        left_movement = traci.lane.getLastStepHaltingNumber(
+                            pair['inflow']+'_{}'.format(self.left_lane_num))  # 멈춘애들 계산
+                        # 직진
+                        veh_state[j*2] = traci.edge.getLastStepHaltingNumber(
+                            pair['inflow'])-left_movement  # 가장 좌측에 멈춘 친구를 왼쪽차선 이용자로 판단
+                        # 좌회전
+                        veh_state[j*2+1] = left_movement
                 veh_state = torch.transpose(veh_state, 0, 1)
                 next_state += tuple(veh_state)
             next_state = torch.cat(next_state, dim=0).view(

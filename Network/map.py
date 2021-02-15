@@ -29,7 +29,10 @@ class MapNetwork(Network):
         NET_CONFIGS['phase_num_actions'] = {2: [[0, 0], [1, -1]],
                                             3: [[0, 0, 0], [1, 0, -1], [1, -1, 0], [0, 1, -1], [-1, 0, 1], [0, -1, 1], [-1, 1, 0]],
                                             4: [[0, 0, 0, 0], [1, 0, 0, -1], [1, 0, -1, 0], [1, -1, 0, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1],
-                                                [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]]}
+                                                [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]],
+                                            5: [[0,0,0,0,0]],
+                                            6:[[0,0,0,0,0,0]],}
+
         NET_CONFIGS['rate_action_space'] = {2: len(NET_CONFIGS['phase_num_actions'][2]), 3: len(
             NET_CONFIGS['phase_num_actions'][3]), 4: len(NET_CONFIGS['phase_num_actions'][4])}
         NET_CONFIGS['tl_period'] = list()
@@ -38,6 +41,7 @@ class MapNetwork(Network):
         tlLogicList = net_tree.findall('tlLogic')
         NET_CONFIGS['time_action_space'] = list()
 
+        #traffic info 저장
         for tlLogic in tlLogicList:
             tl_id = tlLogic.attrib['id']
             traffic_info[tl_id] = dict()
@@ -69,7 +73,7 @@ class MapNetwork(Network):
                 phase_state_list.append(phase.attrib['state'])
                 phase_duration_list.append(int(phase.attrib['duration']))
                 tl_period += int(phase.attrib['duration'])
-                if int(phase.attrib['duration']) >= 5:  # Phase 로 간주할 숫자
+                if int(phase.attrib['duration']) > 5:  # Phase 로 간주할 숫자
                     num_phase += 1
                     min_duration_list.append(int(phase.attrib['minDuration']))
                     max_duration_list.append(int(phase.attrib['maxDuration']))
@@ -132,24 +136,35 @@ class MapNetwork(Network):
                         'id': node_id,
                         'type': junction.attrib['type'],
                     })
-                    incLanes=junction.attrib['incLanes']
-                    inflowLanes=incLanes.split(' ')# 공백기준 자르기
-                    inflow_list=list() # 중복 제거된 inflow list
-                    for i,inflowLane in enumerate(inflowLanes):
+                    # node 결정 완료
+                    # edge는?
+                    for edge in self.configs['edge_info']:
+                        i=0
                         interest=dict()
-                        interest['id']=node_id+'_{}'.format(i)
-                        inflowEdge=inflowLane[:-2] #뒤의 lane 제거
-                        #중복 제거 후 list화
-                        if inflowEdge not in inflow_list:
-                            inflow_list.append(inflowEdge)
-                            interest['inflow']=inflowEdge
+                        if edge['to']==node_id: # inflow
+                            interest['id']=node_id+'_{}'.format(i)
+                            interest['inflow']=edge['id']
+                            tmp_edge=str(-int(edge['id']))
+                            if tmp_edge in edge_list:
+                                interest['outflow']=tmp_edge
+                            else:
+                                interest['outflow']=None
+                            interest_list.append(interest)
+
+                            i+=1 # index표기용
+                            
+                        elif edge['from']==node_id:
+                            interest['id']=node_id+'_{}'.format(i)
+                            interest['outflow']=edge['id']
+                            tmp_edge=str(-int(edge['id']))
+                            if tmp_edge in edge_list:
+                                interest['inflow']=tmp_edge
+                            else:
+                                interest['inflow']=None
+                            interest_list.append(interest)
+                            i+=1 # index표기용
+
                         # outflow가 존재하는 지 확인 후 list에 삽입
-                        outflowEdge=str(-int(inflowEdge))
-                        if outflowEdge in edge_list:
-                            interest['outflow']=outflowEdge
-                        else:
-                            interest['outflow']=None # outflow edge가 없는 경우 None처리 TODO 데이터 받을 때, 처리 필요
-                        interest_list.append(interest)
                         
                     node_interest_pair[node_id]=interest_list
 

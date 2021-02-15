@@ -13,11 +13,11 @@ from itertools import chain
 DEFAULT_CONFIG = {
     'gamma': 0.99,
     'tau': 0.001,
-    'batch_size': 64,
+    'batch_size': 32,
     'experience_replay_size': 1e5,
     'epsilon': 0.9,
     'epsilon_decay_rate': 0.98,
-    'fc_net': [32, 32, 16],
+    'fc_net': [32, 32, 20],
     'lr': 1e-4,
     'lr_decay_rate': 0.98,
     'target_update_period': 8,
