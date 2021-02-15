@@ -160,7 +160,6 @@ class CityEnv(baseEnv):
             tls = self.traffic_node_info[self.tl_rl_list[index]]['program']
             for phase_idx in self.traffic_node_info[self.tl_rl_list[index]]['phase_index']:
                 tls[0].phases[phase_idx].duration = phase_length_set[phase_idx]
-            print(phase_length_set)
             traci.trafficlight.setProgramLogic(self.tl_rl_list[index], tls[0])
             self.tl_rl_memory[index].action = action.int()
         # action을 environment에 등록 후 상황 살피기,action을 저장

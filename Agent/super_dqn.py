@@ -140,7 +140,7 @@ class Trainer(RLAlgorithm):
         self.targetQNetwork = list()
         self.rate_key_list = list()
         for i, key in enumerate(self.configs['traffic_node_info'].keys()):
-            rate_key = self.configs['traffic_node_info'][key]['max_phase_num']
+            rate_key = self.configs['traffic_node_info'][key]['num_phase']
             self.rate_key_list.append(rate_key)
             self.mainQNetwork.append(QNetwork(
                 self.super_output_size, self.rate_action_space[rate_key], self.time_action_space[i], self.configs))

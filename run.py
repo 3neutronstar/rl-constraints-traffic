@@ -195,6 +195,7 @@ def main(args):
         configs['load_file_name'] = configs['network']
         mapnet = MapNetwork(configs)
         MAP_CONFIGS = mapnet.get_tl_from_xml()
+
         for key in MAP_CONFIGS.keys():
             configs[key] = MAP_CONFIGS[key]
 

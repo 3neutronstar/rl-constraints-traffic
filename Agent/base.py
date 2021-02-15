@@ -80,6 +80,7 @@ def merge_dict(d1, d2):
         merged[key] = d2[key]
     return merged
 
+
 def merge_dict_non_conflict(d1, d2):
     '''
     d2를 d1위에 덮기 (non 충돌 ver)
@@ -88,6 +89,7 @@ def merge_dict_non_conflict(d1, d2):
     for key in d2.keys():
         merged[key] = d2[key]
     return merged
+
 
 def hard_update(target, source):
     for target_param, param in zip(target.parameters(), source.parameters()):

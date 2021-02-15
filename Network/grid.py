@@ -397,18 +397,19 @@ class GridNetwork(Network):
         # time_action_space
         NET_CONFIGS['time_action_space'] = list()
         traffic_info = {
-            'n_0_0': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
-            'n_0_1': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
-            'n_0_2': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
-            'n_1_0': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
-            'n_1_1': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
-            'n_1_2': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
-            'n_2_0': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
-            'n_2_1': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
-            'n_2_2': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]},
+            'n_0_0': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]}, 'num_phase': 4,
+            'n_0_1': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]}, 'num_phase': 4,
+            'n_0_2': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]}, 'num_phase': 4,
+            'n_1_0': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]}, 'num_phase': 4,
+            'n_1_1': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]}, 'num_phase': 4,
+            'n_1_2': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]}, 'num_phase': 4,
+            'n_2_0': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]}, 'num_phase': 4,
+            'n_2_1': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]}, 'num_phase': 4,
+            'n_2_2': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4]}, 'num_phase': 4,
         }
         # phase list 삽입
         for tl_rl in self.tl_rl_list:
+            # dict에 phase list
             traffic_info[tl_rl['id']]['phase_list'] = self._phase_list()
         # agent별 reward,state,next_state,action저장용
         # 관심 노드와 interest inflow or outflow edge 정렬
