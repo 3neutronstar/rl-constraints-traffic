@@ -10,7 +10,6 @@ import random
 import numpy as np
 import traci.constants as tc
 from sumolib import checkBinary
-from utils import interest_list
 from configs import EXP_CONFIGS
 from Agent.base import merge_dict, merge_dict_non_conflict
 
@@ -131,8 +130,8 @@ def simulate(flags, configs, sumoConfig):
 
         traci.simulationStep()
         step += 1
-        for _, edge in enumerate(interest_list):
-            avg_waiting_time += traci.edge.getWaitingTime(edge['inflow'])
+        # for _, edge in enumerate(configs['interest_list']):
+        #     avg_waiting_time += traci.edge.getWaitingTime(edge['inflow'])
 
         # vehicle_list = traci.vehicle.getIDList()
         # for i, vehicle in enumerate(vehicle_list):
