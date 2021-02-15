@@ -7,12 +7,12 @@ import random
 import os
 from collections import namedtuple
 from copy import deepcopy
-from Agent.base import RLAlgorithm, ReplayMemory, merge_dict, hard_update
+from Agent.base import RLAlgorithm, ReplayMemory, merge_dict, hard_update, soft_update
 from torch.utils.tensorboard import SummaryWriter
 from itertools import chain
 DEFAULT_CONFIG = {
     'gamma': 0.99,
-    'tau': 0.995,
+    'tau': 0.001,
     'batch_size': 64,
     'experience_replay_size': 1e5,
     'epsilon': 0.9,
@@ -202,13 +202,17 @@ class Trainer(RLAlgorithm):
         return actions
 
     def target_update(self):
-        # Hard Update
+        # # Hard Update
+        # for target, source in zip(self.targetQNetwork, self.mainQNetwork):
+        #     hard_update(target, source)
+        # # Total Update
+        # hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
 
-        # Each Update
+        # Soft Update
         for target, source in zip(self.targetQNetwork, self.mainQNetwork):
-            hard_update(target, source)
+            soft_update(target, source,self.configs)
         # Total Update
-        hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
+        soft_update(self.targetSuperQNetwork, self.mainSuperQNetwork,self.configs)
 
     def save_replay(self, state, action, reward, next_state, mask):
         for i in torch.nonzero(mask):

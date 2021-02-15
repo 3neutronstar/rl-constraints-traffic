@@ -94,3 +94,7 @@ def merge_dict_non_conflict(d1, d2):
 def hard_update(target, source):
     for target_param, param in zip(target.parameters(), source.parameters()):
         target_param.data.copy_(param.data)
+
+def soft_update(target,source,configs):
+    for target_param,param in zip(target.parameters(),source.parameters()):
+        target_param.data.copy_(target_param.data*(1.0-configs['tau'])+param.data*configs['tau'])

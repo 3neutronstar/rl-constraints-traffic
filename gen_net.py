@@ -230,7 +230,8 @@ class Network():
             E('net-file', attrib={'value': os.path.join(self.current_Env_path,self.file_name+'.net.xml')}))
         indent(sumocfg)
         if route_exist == True:
-            self._generate_rou_xml()
+            if self.configs['network']=='grid':#grid에서만 생성
+                self._generate_rou_xml()
             if os.path.exists(os.path.join(self.current_Env_path, self.file_name+'.rou.xml')):
                 inputXML.append(
                     E('route-files', attrib={'value':os.path.join(self.current_Env_path, self.file_name+'.rou.xml')}))

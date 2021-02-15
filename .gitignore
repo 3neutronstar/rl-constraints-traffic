@@ -137,6 +137,7 @@ dmypy.json
 /20201028.net.xml
 /Net_data
 /training_data/*
-/Network/*.xml
+/Network/modify2*.xml
+/Network/origin*.xml
 /Network/randomTrips.py
 /Network/modify2.net.xml

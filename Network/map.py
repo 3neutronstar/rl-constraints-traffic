@@ -102,90 +102,148 @@ class MapNetwork(Network):
                 maximum = len(traffic_info[key]['phase_duration'])
         NET_CONFIGS['max_phase_num'] = maximum
 
+        # road용
+        # edge info 저장
+        self.configs['edge_info']=list()
+        edge_list=list() # edge존재 확인용
+        edges=net_tree.findall('edge')
+        for edge in edges:
+            if 'function' not in edge.attrib.keys():
+                self.configs['edge_info'].append({
+                    'id':edge.attrib['id'],
+                    'from':edge.attrib['from'],
+                    'to':edge.attrib['to'],
+                })
+                edge_list.append(edge.attrib['id'])
+        # node info 저장
+        self.configs['node_info'] = list()
         # interest list
         interest_list = list()
-
+        # node interest pair
         node_interest_pair = dict()
+        junctions = net_tree.findall('junction')
+
+        # network용
+        if self.configs['network']!='3x3grid':
+            for junction in junctions:
+                node_id=junction.attrib['id']
+                if junction.attrib['type'] == "traffic_light": # 정상 node만 분리, 신호등 노드
+                    self.configs['node_info'].append({
+                        'id': node_id,
+                        'type': junction.attrib['type'],
+                    })
+                    incLanes=junction.attrib['incLanes']
+                    inflowLanes=incLanes.split(' ')# 공백기준 자르기
+                    inflow_list=list() # 중복 제거된 inflow list
+                    for i,inflowLane in enumerate(inflowLanes):
+                        interest=dict()
+                        interest['id']=node_id+'_{}'.format(i)
+                        inflowEdge=inflowLane[:-2] #뒤의 lane 제거
+                        #중복 제거 후 list화
+                        if inflowEdge not in inflow_list:
+                            inflow_list.append(inflowEdge)
+                            interest['inflow']=inflowEdge
+                        # outflow가 존재하는 지 확인 후 list에 삽입
+                        outflowEdge=str(-int(inflowEdge))
+                        if outflowEdge in edge_list:
+                            interest['outflow']=outflowEdge
+                        else:
+                            interest['outflow']=None # outflow edge가 없는 경우 None처리 TODO 데이터 받을 때, 처리 필요
+                        interest_list.append(interest)
+                        
+                    node_interest_pair[node_id]=interest_list
+
+
+                elif junction.attrib['type'] == "priority": # 정상 node만 분리
+                    self.configs['node_info'].append({
+                        'id': node_id,
+                        'type': junction.attrib['type'],
+                    })
+                else:
+                    pass
+
+
 
         # 임시 3x3 grid 용
-        side_list = ['u', 'r', 'd', 'l']
-        self.configs['grid_num'] = 3
-        x_y_end = self.configs['grid_num']-1
-        # grid junction
-        junctions = net_tree.findall('junction')
-        self.configs['node_info'] = list()
-        for junction in junctions:
-            if junction.attrib['type'] != "internal":
-                self.configs['node_info'].append({
-                    'id': junction.attrib['id'],
-                    'type': junction.attrib['type'],
-                })
+        if self.configs['network']=='3x3grid':
+            side_list = ['u', 'r', 'd', 'l']
+            self.configs['grid_num'] = 3
+            x_y_end = self.configs['grid_num']-1
+            # grid junction
+            junctions = net_tree.findall('junction')
+            for junction in junctions:
+                if junction.attrib['type'] != "internal":
+                    self.configs['node_info'].append({
+                        'id': junction.attrib['id'],
+                        'type': junction.attrib['type'],
+                    })
 
-        for _, node in enumerate(self.configs['node_info']):
-            if node['id'][-1] not in side_list:
-                x = int(node['id'][-3])
-                y = int(node['id'][-1])
-                left_x = x-1
-                left_y = y
-                right_x = x+1
-                right_y = y
-                down_x = x
-                down_y = y+1  # 아래로가면 y는 숫자가 늘어남
-                up_x = x
-                up_y = y-1  # 위로가면 y는 숫자가 줄어듦
+            for _, node in enumerate(self.configs['node_info']):
+                if node['id'][-1] not in side_list:
+                    x = int(node['id'][-3])
+                    y = int(node['id'][-1])
+                    left_x = x-1
+                    left_y = y
+                    right_x = x+1
+                    right_y = y
+                    down_x = x
+                    down_y = y+1  # 아래로가면 y는 숫자가 늘어남
+                    up_x = x
+                    up_y = y-1  # 위로가면 y는 숫자가 줄어듦
 
-                if x == 0:
-                    left_y = 'l'
-                    left_x = y
-                if y == 0:
-                    up_y = 'u'
-                if x == x_y_end:
-                    right_y = 'r'
-                    right_x = y
-                if y == x_y_end:
-                    down_y = 'd'
-                # up
-                interest_list.append(
-                    {
-                        'id': 'u_{}'.format(node['id'][2:]),
-                        'inflow': 'n_{}_{}_to_n_{}_{}'.format(up_x, up_y, x, y),
-                        'outflow': 'n_{}_{}_to_n_{}_{}'.format(x, y, up_x, up_y),
-                    }
-                )
-                # right
-                interest_list.append(
-                    {
-                        'id': 'r_{}'.format(node['id'][2:]),
-                        'inflow': 'n_{}_{}_to_n_{}_{}'.format(right_x, right_y, x, y),
-                        'outflow': 'n_{}_{}_to_n_{}_{}'.format(x, y, right_x, right_y),
-                    }
-                )
-                # down
-                interest_list.append(
-                    {
-                        'id': 'd_{}'.format(node['id'][2:]),
-                        'inflow': 'n_{}_{}_to_n_{}_{}'.format(down_x, down_y, x, y),
-                        'outflow': 'n_{}_{}_to_n_{}_{}'.format(x, y, down_x, down_y),
-                    }
-                )
-                # left
-                interest_list.append(
-                    {
-                        'id': 'l_{}'.format(node['id'][2:]),
-                        'inflow': 'n_{}_{}_to_n_{}_{}'.format(left_x, left_y, x, y),
-                        'outflow': 'n_{}_{}_to_n_{}_{}'.format(x, y, left_x, left_y),
-                    }
-                )
-        for _, node in enumerate(self.configs['node_info']):
-            if node['id'][-1] not in side_list:
-                node_interest_pair[node['id']] = list()
-                for _, interest in enumerate(interest_list):
-                    if node['id'][-3:] == interest['id'][-3:]:  # 좌표만 받기
-                        node_interest_pair[node['id']].append(interest)
+                    if x == 0:
+                        left_y = 'l'
+                        left_x = y
+                    if y == 0:
+                        up_y = 'u'
+                    if x == x_y_end:
+                        right_y = 'r'
+                        right_x = y
+                    if y == x_y_end:
+                        down_y = 'd'
+                    # up
+                    interest_list.append(
+                        {
+                            'id': 'u_{}'.format(node['id'][2:]),
+                            'inflow': 'n_{}_{}_to_n_{}_{}'.format(up_x, up_y, x, y),
+                            'outflow': 'n_{}_{}_to_n_{}_{}'.format(x, y, up_x, up_y),
+                        }
+                    )
+                    # right
+                    interest_list.append(
+                        {
+                            'id': 'r_{}'.format(node['id'][2:]),
+                            'inflow': 'n_{}_{}_to_n_{}_{}'.format(right_x, right_y, x, y),
+                            'outflow': 'n_{}_{}_to_n_{}_{}'.format(x, y, right_x, right_y),
+                        }
+                    )
+                    # down
+                    interest_list.append(
+                        {
+                            'id': 'd_{}'.format(node['id'][2:]),
+                            'inflow': 'n_{}_{}_to_n_{}_{}'.format(down_x, down_y, x, y),
+                            'outflow': 'n_{}_{}_to_n_{}_{}'.format(x, y, down_x, down_y),
+                        }
+                    )
+                    # left
+                    interest_list.append(
+                        {
+                            'id': 'l_{}'.format(node['id'][2:]),
+                            'inflow': 'n_{}_{}_to_n_{}_{}'.format(left_x, left_y, x, y),
+                            'outflow': 'n_{}_{}_to_n_{}_{}'.format(x, y, left_x, left_y),
+                        }
+                    )
+            for _, node in enumerate(self.configs['node_info']):
+                if node['id'][-1] not in side_list:
+                    node_interest_pair[node['id']] = list()
+                    for _, interest in enumerate(interest_list):
+                        if node['id'][-3:] == interest['id'][-3:]:  # 좌표만 받기
+                            node_interest_pair[node['id']].append(interest)
+
+        #정리
         NET_CONFIGS['traffic_node_info'] = traffic_info
         NET_CONFIGS['interest_list'] = interest_list
         NET_CONFIGS['node_interest_pair'] = node_interest_pair
-
         NET_CONFIGS['tl_rl_list'] = self.tl_rl_list
         NET_CONFIGS['offset'] = self.offset_list
         NET_CONFIGS['phase_list'] = self.phase_list
@@ -210,7 +268,6 @@ class MapNetwork(Network):
                                             self.configs['time_data'], 'net_data', self.configs['time_data']+'.rou.xml'))
             net_tree.write(gen_file_name, encoding='UTF-8', xml_declaration=True)
         else:
-            net_tree.write(self.current_path+'/{}'.format(self.configs['time_data']+'.rou.xml'), encoding='UTF-8', xml_declaration=True)
             gen_file_name = str(os.path.join(self.configs['current_path'], 'Net_data',
                                              self.configs['time_data']+'.rou.xml'))
             net_tree.write(gen_file_name, encoding='UTF-8', xml_declaration=True)

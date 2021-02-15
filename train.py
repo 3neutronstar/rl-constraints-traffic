@@ -119,10 +119,13 @@ def city_dqn_train(configs, time_data, sumoCmd):
             state = next_state
             # info
             arrived_vehicles += traci.simulation.getArrivedNumber()
+            #soft update
+            agent.target_update()
 
         agent.update_hyperparams(epoch)  # lr and epsilon upate
-        if epoch % agent.configs['target_update_period'] == 0:
-            agent.target_update()  # dqn
+        #hard update
+        # if epoch % agent.configs['target_update_period'] == 0:
+        #     agent.target_update()  # dqn
         b = time.time()
         traci.close()
         print("time:", b-a)
@@ -133,6 +136,6 @@ def city_dqn_train(configs, time_data, sumoCmd):
                                                                        total_reward.sum(), arrived_vehicles))
         if epoch % 50 == 0:
             agent.save_weights(
-                configs['file_name']+'_{}_{}'.format(time_data, epoch))
+                configs['file_name']+'_{}'.format(epoch))
 
     writer.close()
