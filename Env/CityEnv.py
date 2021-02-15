@@ -31,7 +31,6 @@ class CityEnv(baseEnv):
         self.action_size = self.configs['action_size']
         self.left_lane_num = self.configs['num_lanes']-1
         self.traffic_node_info = self.configs['traffic_node_info']
-        self.vehicle_state_space = 8
         self.nodes = self.configs['node_info']
 
         self.before_action_update_mask = torch.zeros(
@@ -124,7 +123,7 @@ class CityEnv(baseEnv):
             # vehicle state
             for interest in self.node_interest_pair:
                 veh_state = torch.zeros(
-                    (self.vehicle_state_space, 1), dtype=torch.float, device=self.configs['device'])
+                    (self.state_space, 1), dtype=torch.float, device=self.configs['device'])
                 # 모든 inflow에 대해서
                 for j, pair in enumerate(self.node_interest_pair[interest]):
                     if pair['inflow'] is None:
@@ -141,14 +140,14 @@ class CityEnv(baseEnv):
                 veh_state = torch.transpose(veh_state, 0, 1)
                 next_state += tuple(veh_state)
             next_state = torch.cat(next_state, dim=0).view(
-                1, self.num_agent, self.vehicle_state_space)
+                1, self.num_agent, self.state_space)
             # 각 agent env에 state,next_state 저장
             for state_index in torch.nonzero(mask_matrix):
                 self.tl_rl_memory[state_index].state = self.tl_rl_memory[state_index].next_state
                 self.tl_rl_memory[state_index].next_state = next_state
         else:
             next_state = torch.zeros(
-                1, self.num_agent, self.vehicle_state_space, dtype=torch.float, device=self.configs['device'])
+                1, self.num_agent, self.state_space, dtype=torch.float, device=self.configs['device'])
 
         return next_state.view(1, -1)
 
@@ -183,9 +182,14 @@ class CityEnv(baseEnv):
             actions = actions.long()
             phase_duration_list = self.traffic_node_info[self.tl_rl_list[index]
                                                          ]['phase_duration']
-
-            action_matrix[index] = torch.tensor(
+            pad_mat=torch.zeros_like(action_matrix[index])
+            pad_mat_size=pad_mat.size()[1]
+            insert_mat=torch.tensor(
                 phase_duration_list, dtype=torch.int, device=self.configs['device'])
+            mat=torch.nn.functional.pad(insert_mat,(0,pad_mat_size-insert_mat.size()[0]),'constant',0)
+            action_matrix[index] = mat
+            # action_matrix[index] = torch.tensor(
+            #     phase_duration_list, dtype=torch.int, device=self.configs['device'])
         # 누적 합산
             for l, _ in enumerate(phase_duration_list):
                 if l >= 1:

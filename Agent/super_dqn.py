@@ -16,10 +16,10 @@ DEFAULT_CONFIG = {
     'batch_size': 32,
     'experience_replay_size': 1e5,
     'epsilon': 0.9,
-    'epsilon_decay_rate': 0.98,
-    'fc_net': [32, 32, 20],
+    'epsilon_decay_rate': 0.99,
+    'fc_net': [250, 128, 50],
     'lr': 1e-4,
-    'lr_decay_rate': 0.98,
+    'lr_decay_rate': 0.99,
     'target_update_period': 8,
     'final_epsilon': 0.0005,
     'final_lr': 1e-6,
@@ -61,16 +61,16 @@ class QNetwork(nn.Module):
 
     def forward(self, input_x):
         # 증감
-        x = f.leaky_relu(self.fc1(input_x))
-        x = f.leaky_relu(self.fc2(x))
-        x = f.leaky_relu(self.fc3(x))
+        x = f.relu(self.fc1(input_x))
+        x = f.relu(self.fc2(x))
+        x = f.relu(self.fc3(x))
         x = self.fc4(x)
         # 증감의 크기
         # argmax(x)값을 구해서 넣기
         y = torch.cat((input_x, x.max(dim=1)[1].view(-1, 1).detach()), dim=1)
-        y = f.leaky_relu(self.fc_y1(y))
-        y = f.leaky_relu(self.fc_y2(y))
-        y = f.leaky_relu(self.fc_y3(y))
+        y = f.relu(self.fc_y1(y))
+        y = f.relu(self.fc_y2(y))
+        y = f.relu(self.fc_y3(y))
         y = self.fc_y4(y)
         return x, y  # q value
 

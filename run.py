@@ -84,7 +84,7 @@ def train(flags, time_data, configs, sumoConfig):
 
     elif flags.model.lower() == 'city':
         configs['action_size'] = 2
-        configs['state_space'] = 8  # 4phase에서 각각 받아오는게 아니라 마지막에 한번만 받음
+        # state space 는 map.py에서 결정
 
         configs['model'] = 'city'
         from train import city_dqn_train

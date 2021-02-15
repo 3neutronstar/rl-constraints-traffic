@@ -32,9 +32,10 @@ class MapNetwork(Network):
                                                 [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]],
                                             5: [[0,0,0,0,0]],
                                             6:[[0,0,0,0,0,0]],}
+        NET_CONFIGS['rate_action_space']=dict()
+        for i in range(2,7): # rate action_space 지정
+            NET_CONFIGS['rate_action_space'][i]=len(NET_CONFIGS['phase_num_actions'][i])
 
-        NET_CONFIGS['rate_action_space'] = {2: len(NET_CONFIGS['phase_num_actions'][2]), 3: len(
-            NET_CONFIGS['phase_num_actions'][3]), 4: len(NET_CONFIGS['phase_num_actions'][4])}
         NET_CONFIGS['tl_period'] = list()
         traffic_info = dict()
         net_tree = parse(self.net_file_path)
@@ -93,8 +94,8 @@ class MapNetwork(Network):
             traffic_node_info['max_phase'] = max_duration_list
             traffic_node_info['num_phase'] = num_phase
             # 각 tl_rl의 time_action_space지정
-            NET_CONFIGS['time_action_space'].append(round((torch.min(torch.tensor(traffic_node_info['max_phase'])-torch.tensor(
-                traffic_node_info['common_phase']), torch.tensor(traffic_node_info['common_phase'])-torch.tensor(traffic_node_info['min_phase']))/2).mean().item()))
+            NET_CONFIGS['time_action_space'].append(abs(round((torch.min(torch.tensor(traffic_node_info['max_phase'])-torch.tensor(
+                traffic_node_info['common_phase']), torch.tensor(traffic_node_info['common_phase'])-torch.tensor(traffic_node_info['min_phase']))/2).mean().item())))
 
             self.phase_list.append(phase_state_list)
             self.common_phase.append(phase_duration_list)
@@ -126,7 +127,8 @@ class MapNetwork(Network):
         # node interest pair
         node_interest_pair = dict()
         junctions = net_tree.findall('junction')
-
+        # state space size 결정
+        inflow_size=0
         # network용
         if self.configs['network']!='3x3grid':
             for junction in junctions:
@@ -138,8 +140,9 @@ class MapNetwork(Network):
                     })
                     # node 결정 완료
                     # edge는?
+                    i=0
+                    interests=list()
                     for edge in self.configs['edge_info']:
-                        i=0
                         interest=dict()
                         if edge['to']==node_id: # inflow
                             interest['id']=node_id+'_{}'.format(i)
@@ -149,10 +152,9 @@ class MapNetwork(Network):
                                 interest['outflow']=tmp_edge
                             else:
                                 interest['outflow']=None
-                            interest_list.append(interest)
-
+                            interests.append(interest)
                             i+=1 # index표기용
-                            
+
                         elif edge['from']==node_id:
                             interest['id']=node_id+'_{}'.format(i)
                             interest['outflow']=edge['id']
@@ -161,14 +163,22 @@ class MapNetwork(Network):
                                 interest['inflow']=tmp_edge
                             else:
                                 interest['inflow']=None
-                            interest_list.append(interest)
+                            interests.append(interest)
                             i+=1 # index표기용
 
-                        # outflow가 존재하는 지 확인 후 list에 삽입
-                        
-                    node_interest_pair[node_id]=interest_list
-
-
+                    # 중복이 존재하는지 확인 후 list에 삽입
+                    no_dup_outflow_list=list()
+                    no_dup_interest_list=list()
+                    for interest_comp in interests:
+                        if interest_comp['outflow'] not in no_dup_outflow_list:
+                            no_dup_outflow_list.append(interest_comp['outflow'])
+                            no_dup_interest_list.append(interest_comp)
+                    interest_list.append(no_dup_interest_list)
+                    node_interest_pair[node_id]=no_dup_interest_list
+                    if inflow_size<len(no_dup_interest_list):
+                        inflow_size=len(no_dup_interest_list)
+                
+                #일반 노드 
                 elif junction.attrib['type'] == "priority": # 정상 node만 분리
                     self.configs['node_info'].append({
                         'id': node_id,
@@ -183,6 +193,7 @@ class MapNetwork(Network):
         if self.configs['network']=='3x3grid':
             side_list = ['u', 'r', 'd', 'l']
             self.configs['grid_num'] = 3
+            inflow_size=4
             x_y_end = self.configs['grid_num']-1
             # grid junction
             junctions = net_tree.findall('junction')
@@ -263,6 +274,7 @@ class MapNetwork(Network):
         NET_CONFIGS['offset'] = self.offset_list
         NET_CONFIGS['phase_list'] = self.phase_list
         NET_CONFIGS['common_phase'] = self.common_phase
+        NET_CONFIGS['state_space']=inflow_size*2 # 좌회전,직전 
 
         return NET_CONFIGS
 
