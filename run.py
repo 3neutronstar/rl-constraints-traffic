@@ -201,7 +201,7 @@ def main(args):
 
         mapnet.gen_net_from_xml()
         mapnet.gen_rou_from_xml()
-        mapnet.generate_cfg(True, 'train')
+        mapnet.generate_cfg(True, configs['mode'])
 
     # check the environment
     if 'SUMO_HOME' in os.environ:
@@ -213,20 +213,16 @@ def main(args):
     # check the mode
     if configs['mode'] == 'train':
         # init train setting
-
-        configs['mode'] = 'train'
         sumoConfig = os.path.join(
             configs['current_path'], 'training_data', time_data, 'net_data', configs['file_name']+'_train.sumocfg')
         train(flags, time_data, configs, sumoConfig)
     elif configs['mode'] == 'test':
         configs['time_data'] = flags.replay_name
         configs['replay_name'] = configs['time_data']
-        configs['mode'] = 'test'
         sumoConfig = os.path.join(
             configs['current_path'], 'training_data', time_data, 'net_data', configs['file_name']+'_test.sumocfg')
         test(flags, configs, sumoConfig)
     else:  # simulate
-        configs['mode'] = 'simulate'
         sumoConfig = os.path.join(
             configs['current_path'], 'Net_data', configs['file_name']+'_simulate.sumocfg')
         simulate(flags, configs, sumoConfig)

@@ -89,8 +89,8 @@ class MapNetwork(Network):
             traffic_node_info['max_phase'] = max_duration_list
             traffic_node_info['num_phase'] = num_phase
             # 각 tl_rl의 time_action_space지정
-            NET_CONFIGS['time_action_space'].append((torch.min(torch.tensor(traffic_node_info['max_phase'])-torch.tensor(
-                traffic_node_info['common_phase']), torch.tensor(traffic_node_info['common_phase'])-torch.tensor(traffic_node_info['min_phase']))/2).mean().item())
+            NET_CONFIGS['time_action_space'].append(round((torch.min(torch.tensor(traffic_node_info['max_phase'])-torch.tensor(
+                traffic_node_info['common_phase']), torch.tensor(traffic_node_info['common_phase'])-torch.tensor(traffic_node_info['min_phase']))/2).mean().item()))
 
             self.phase_list.append(phase_state_list)
             self.common_phase.append(phase_duration_list)
@@ -195,12 +195,22 @@ class MapNetwork(Network):
 
     def gen_net_from_xml(self):
         net_tree = parse(self.net_file_path)
-        gen_file_name = str(os.path.join(self.configs['current_path'], 'training_data',
-                                         self.configs['time_data'], 'net_data', self.configs['time_data']+'.net.xml'))
-        net_tree.write(gen_file_name, encoding='UTF-8', xml_declaration=True)
+        if self.configs['mode']=='train' or self.configs['mode']=='test':
+            gen_file_name = str(os.path.join(self.configs['current_path'], 'training_data',
+                                            self.configs['time_data'], 'net_data', self.configs['time_data']+'.net.xml'))
+            net_tree.write(gen_file_name, encoding='UTF-8', xml_declaration=True)
+        else: #simulate
+            gen_file_name = str(os.path.join(self.configs['current_path'], 'Net_data', self.configs['time_data']+'.net.xml'))
+            net_tree.write(gen_file_name, encoding='UTF-8', xml_declaration=True)
 
     def gen_rou_from_xml(self):
         net_tree = parse(self.rou_file_path)
-        gen_file_name = str(os.path.join(self.configs['current_path'], 'training_data',
-                                         self.configs['time_data'], 'net_data', self.configs['time_data']+'.rou.xml'))
-        net_tree.write(gen_file_name, encoding='UTF-8', xml_declaration=True)
+        if self.configs['mode']=='train' or self.configs['mode']== 'test':
+            gen_file_name = str(os.path.join(self.configs['current_path'], 'training_data',
+                                            self.configs['time_data'], 'net_data', self.configs['time_data']+'.rou.xml'))
+            net_tree.write(gen_file_name, encoding='UTF-8', xml_declaration=True)
+        else:
+            net_tree.write(self.current_path+'/{}'.format(self.configs['time_data']+'.rou.xml'), encoding='UTF-8', xml_declaration=True)
+            gen_file_name = str(os.path.join(self.configs['current_path'], 'Net_data',
+                                             self.configs['time_data']+'.rou.xml'))
+            net_tree.write(gen_file_name, encoding='UTF-8', xml_declaration=True)

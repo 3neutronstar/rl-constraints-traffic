@@ -37,6 +37,7 @@ def city_dqn_train(configs, time_data, sumoCmd):
     TL_PERIOD = torch.tensor(
         configs['tl_period'], device=configs['device'], dtype=torch.int)
     epoch = 0
+    print("action space(rate: {}, time: {}".format(configs['rate_action_space'],configs['time_action_space']))
     while epoch < configs['num_epochs']:
         step = 0
         traci.start(sumoCmd)

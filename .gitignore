@@ -138,3 +138,5 @@ dmypy.json
 /Net_data
 /training_data/*
 /Network/*.xml
+/Network/randomTrips.py
+/Network/modify2.net.xml

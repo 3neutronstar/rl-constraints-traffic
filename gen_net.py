@@ -28,6 +28,9 @@ class Network():
         self.sim_start = self.configs['sim_start']
         self.max_steps = self.configs['max_steps']
         self.current_path = os.path.dirname(os.path.abspath(__file__))
+        gen_training_data_path=os.path.join(self.current_path,'training_data')
+        if os.path.exists(gen_training_data_path)==False:
+            os.mkdir(gen_training_data_path)
         if self.configs['mode'] == 'train' or self.configs['mode'] == 'train_old':
             self.file_name = self.configs['file_name']
             os.mkdir(os.path.join(self.current_path, 'training_data',
@@ -49,6 +52,13 @@ class Network():
             self.file_name = self.configs['file_name']
             self.current_Env_path = os.path.join(
                 self.current_path, 'Net_data')
+            if os.path.exists(self.current_Env_path)==False:
+                os.mkdir(self.current_Env_path)
+
+        # data directory generate
+        gen_data_path=os.path.join(self.current_path,'data')
+        if os.path.exists(gen_data_path)==False:
+            os.mkdir(gen_data_path)
 
         self.num_cars = str(self.configs['num_cars'])
         self.num_lanes = str(self.configs['num_lanes'])
