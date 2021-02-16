@@ -152,7 +152,7 @@ class MapNetwork(Network):
                             for target_edge in self.configs['edge_info']:
                                 if target_edge['from']==edge['to'] and target_edge['to']==edge['from']:
                                     interest['outflow']=target_edge['id']
-                                    continue
+                                    break
                                 else:
                                     interest['outflow']=None
 
@@ -166,7 +166,7 @@ class MapNetwork(Network):
                             for target_edge in self.configs['edge_info']:
                                 if target_edge['from']==edge['to'] and target_edge['to']==edge['from']:
                                     interest['inflow']=target_edge['id']
-                                    continue
+                                    break
                                 else:
                                     interest['inflow']=None
                             interests.append(interest)
