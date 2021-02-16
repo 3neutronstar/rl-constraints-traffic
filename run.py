@@ -88,6 +88,8 @@ def train(flags, time_data, configs, sumoConfig):
     elif flags.model.lower() == 'city':
         configs['action_size'] = 2
         # state space 는 map.py에서 결정
+        if flags.network.lower()=='grid':
+            configs['state_space']=8
 
         configs['model'] = 'city'
         from train import city_dqn_train
@@ -117,7 +119,7 @@ def simulate(flags, configs, sumoConfig):
         sumoBinary = checkBinary('sumo-gui')
     else:
         sumoBinary = checkBinary('sumo')
-    sumoCmd = [sumoBinary, "-c", sumoConfig,"--scale","1.5"]
+    sumoCmd = [sumoBinary, "-c", sumoConfig,"--scale","1.3"]
     MAX_STEPS = configs['max_steps']
     traci.start(sumoCmd)
     a = time.time()

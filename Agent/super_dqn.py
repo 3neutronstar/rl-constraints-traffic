@@ -111,6 +111,7 @@ class Trainer(RLAlgorithm):
             self.configs['current_path'], 'training_data', self.configs['time_data'], 'model'))
         self.configs = merge_dict(configs, DEFAULT_CONFIG)
         self.num_agent = len(self.configs['tl_rl_list'])
+        self.configs['state_space']=8
         self.state_space = self.configs['state_space']
 
         # action space

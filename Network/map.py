@@ -376,6 +376,7 @@ class MapNetwork(Network):
             # 임시 3x3 grid 용
             if self.configs['network']=='3x3grid':
                 side_list = ['u', 'r', 'd', 'l']
+                NET_CONFIGS['state_space']=8
                 self.configs['grid_num'] = 3
                 inflow_size=4
                 x_y_end = self.configs['grid_num']-1
