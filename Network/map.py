@@ -78,8 +78,8 @@ class MapNetwork(Network):
                 tl_period += int(phase.attrib['duration'])
                 if int(phase.attrib['duration']) > 5:  # Phase 로 간주할 숫자
                     num_phase += 1
-                    min_duration_list.append(int(phase.attrib['minDuration']))
-                    max_duration_list.append(int(phase.attrib['maxDuration']))
+                    min_duration_list.append(int(phase.attrib['minDur']))
+                    max_duration_list.append(int(phase.attrib['maxDur']))
                     phase_index_list.append(i)
                     common_phase_list.append(int(phase.attrib['duration']))
 
@@ -96,8 +96,9 @@ class MapNetwork(Network):
             traffic_node_info['max_phase'] = max_duration_list
             traffic_node_info['num_phase'] = num_phase
             # 각 tl_rl의 time_action_space지정
-            NET_CONFIGS['time_action_space'].append(abs(round((torch.min(torch.tensor(traffic_node_info['max_phase'])-torch.tensor(
-                traffic_node_info['common_phase']), torch.tensor(traffic_node_info['common_phase'])-torch.tensor(traffic_node_info['min_phase']))/2).mean().item())))
+            # NET_CONFIGS['time_action_space'].append(abs(round((torch.min(torch.tensor(traffic_node_info['max_phase'])-torch.tensor(
+            #     traffic_node_info['common_phase']), torch.tensor(traffic_node_info['common_phase'])-torch.tensor(traffic_node_info['min_phase']))/2).mean().item())))
+            NET_CONFIGS['time_action_space'].append(4) #임의 초 지정
 
             self.phase_list.append(phase_state_list)
             self.common_phase.append(phase_duration_list)
@@ -148,22 +149,26 @@ class MapNetwork(Network):
                         if edge['to']==node_id: # inflow
                             interest['id']=node_id+'_{}'.format(i)
                             interest['inflow']=edge['id']
-                            tmp_edge=str(-int(edge['id']))
-                            if tmp_edge in edge_list:
-                                interest['outflow']=tmp_edge
-                            else:
-                                interest['outflow']=None
+                            for target_edge in self.configs['edge_info']:
+                                if target_edge['from']==edge['to'] and target_edge['to']==edge['from']:
+                                    interest['outflow']=target_edge['id']
+                                    continue
+                                else:
+                                    interest['outflow']=None
+
+                            
                             interests.append(interest)
                             i+=1 # index표기용
 
                         elif edge['from']==node_id:
                             interest['id']=node_id+'_{}'.format(i)
                             interest['outflow']=edge['id']
-                            tmp_edge=str(-int(edge['id']))
-                            if tmp_edge in edge_list:
-                                interest['inflow']=tmp_edge
-                            else:
-                                interest['inflow']=None
+                            for target_edge in self.configs['edge_info']:
+                                if target_edge['from']==edge['to'] and target_edge['to']==edge['from']:
+                                    interest['inflow']=target_edge['id']
+                                    continue
+                                else:
+                                    interest['inflow']=None
                             interests.append(interest)
                             i+=1 # index표기용
 

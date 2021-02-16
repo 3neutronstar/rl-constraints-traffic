@@ -71,7 +71,6 @@ def city_dqn_train(configs, time_data, sumoCmd):
         arrived_vehicles = 0
         a = time.time()
         while step < MAX_STEPS:
-
             # action 을 정하고
             actions = agent.get_action(state, mask_matrix)
             # action형태로 변환 # 다음으로 넘어가야할 시점에 대한 matrix

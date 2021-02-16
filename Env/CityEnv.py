@@ -19,6 +19,8 @@ class CityEnv(baseEnv):
     def __init__(self, configs):
         super().__init__(configs)
         self.configs = configs
+        self.phase_action_matrix=torch.zeros( #누적합산 이전의 action_matrix
+            (self.configs['num_agent'], self.configs['max_phase_num']), dtype=torch.int, device=configs['device']) # reward 계산시 사용
         self.tl_list = traci.trafficlight.getIDList()
         self.tl_rl_list = self.configs['tl_rl_list']
         self.num_agent = len(self.tl_rl_list)
@@ -116,6 +118,20 @@ class CityEnv(baseEnv):
             self.tl_rl_memory[index].reward += pressure
             self.reward += pressure
 
+        if mask_matrix.sum()>0:
+            for index in torch.nonzero(mask_matrix):
+                if self.phase_action_matrix[index].sum()!=0:
+                    phase_index=torch.tensor(self.configs['traffic_node_info'][self.tl_rl_list[index]]['phase_index'],device=self.configs['device']).view(1,-1).long()
+                    # penalty for phase duration more than maxDuration
+                    if torch.ge(self.phase_action_matrix[index].gather(dim=1,index=phase_index),torch.tensor(self.configs['traffic_node_info'][self.tl_rl_list[index]]['max_phase'])).sum():
+                        self.tl_rl_memory[index].reward -= 99 # penalty
+                        self.reward-=99
+                    # penalty for phase duration less than minDuration
+                    if torch.ge(torch.tensor(self.configs['traffic_node_info'][self.tl_rl_list[index]]['min_phase']),self.phase_action_matrix[index].gather(dim=1,index=phase_index)).sum():
+                        self.tl_rl_memory[index].reward -= 99 # penalty
+                        self.reward-=99
+        # save reward
+
         # action 변화를 위한 state
         if mask_matrix.sum() > 0:  # 검색의 필요가 없다면 검색x
             next_state = tuple()
@@ -190,12 +206,12 @@ class CityEnv(baseEnv):
             action_matrix[index] = mat
             # action_matrix[index] = torch.tensor(
             #     phase_duration_list, dtype=torch.int, device=self.configs['device'])
-        # 누적 합산
+            # 누적 합산
+            self.phase_action_matrix[index]=mat # 누적합산이전 저장
             for l, _ in enumerate(phase_duration_list):
                 if l >= 1:
                     action_matrix[index, l] += action_matrix[index, l-1]
-
-        return action_matrix.int()
+        return action_matrix.int() # 누적합산 저장
 
     def update_tensorboard(self, writer, epoch):
         writer.add_scalar('episode/reward', self.reward,
