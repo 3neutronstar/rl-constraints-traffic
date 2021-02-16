@@ -1,5 +1,6 @@
 import json
 import os
+from random import random
 import sys
 import time
 import traci
@@ -40,7 +41,11 @@ def city_dqn_train(configs, time_data, sumoCmd):
     print("action space(rate: {}, time: {}".format(configs['rate_action_space'],configs['time_action_space']))
     while epoch < configs['num_epochs']:
         step = 0
-        traci.start(sumoCmd)
+        if configs['randomness']==True:
+            tmp_sumoCmd=sumoCmd+['--scale',str(0.5+random())]
+        else:
+            tmp_sumoCmd=sumoCmd+['--scale',str(1.3)]
+        traci.start(tmp_sumoCmd)
         env = CityEnv(configs)
         # Total Initialization
         actions = torch.zeros(

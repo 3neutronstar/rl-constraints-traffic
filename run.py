@@ -46,6 +46,9 @@ def parse_args(args):
     parser.add_argument(
         '--replay_epoch', type=str, default=None,
         help='activate only in test mode and write file_name to load weights.')
+    parser.add_argument(
+        '--randomness', type=bool, default=False,
+        help='activate only in test mode and write file_name to load weights.')
     return parser.parse_known_args(args)[0]
 
 
@@ -60,6 +63,7 @@ def train(flags, time_data, configs, sumoConfig):
     # configs setting
     configs['num_agent'] = len(configs['tl_rl_list'])
     configs['algorithm'] = flags.algorithm.lower()
+    configs['randomness']=flags.randomness
     print("training algorithm: ", configs['algorithm'])
     if flags.model.lower() == 'base':
         from train import super_dqn_train
@@ -113,7 +117,7 @@ def simulate(flags, configs, sumoConfig):
         sumoBinary = checkBinary('sumo-gui')
     else:
         sumoBinary = checkBinary('sumo')
-    sumoCmd = [sumoBinary, "-c", sumoConfig]
+    sumoCmd = [sumoBinary, "-c", sumoConfig,"--scale","1.5"]
     MAX_STEPS = configs['max_steps']
     traci.start(sumoCmd)
     a = time.time()

@@ -17,7 +17,7 @@ DEFAULT_CONFIG = {
     'experience_replay_size': 1e5,
     'epsilon': 0.9,
     'epsilon_decay_rate': 0.98,
-    'fc_net': [250, 128, 50],
+    'fc_net': [64, 128, 50],
     'lr': 1e-5,
     'lr_decay_rate': 0.98,
     'target_update_period': 5,
