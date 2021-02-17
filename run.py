@@ -119,7 +119,7 @@ def simulate(flags, configs, sumoConfig):
         sumoBinary = checkBinary('sumo-gui')
     else:
         sumoBinary = checkBinary('sumo')
-    sumoCmd = [sumoBinary, "-c", sumoConfig,"--scale","1.3"]
+    sumoCmd = [sumoBinary, "-c", sumoConfig,"--scale","2.0"]
     MAX_STEPS = configs['max_steps']
     traci.start(sumoCmd)
     a = time.time()

@@ -15,11 +15,11 @@ DEFAULT_CONFIG = {
     'tau': 0.001,
     'batch_size': 64,
     'experience_replay_size': 1e5,
-    'epsilon': 0.9,
-    'epsilon_decay_rate': 0.98,
+    'epsilon': 0.8,
+    'epsilon_decay_rate': 0.99,
     'fc_net': [64, 128, 50],
-    'lr': 1e-5,
-    'lr_decay_rate': 0.98,
+    'lr': 1e-4,
+    'lr_decay_rate': 0.99,
     'target_update_period': 5,
     'final_epsilon': 0.0005,
     'final_lr': 1e-6,
@@ -111,7 +111,6 @@ class Trainer(RLAlgorithm):
             self.configs['current_path'], 'training_data', self.configs['time_data'], 'model'))
         self.configs = merge_dict(configs, DEFAULT_CONFIG)
         self.num_agent = len(self.configs['tl_rl_list'])
-        self.configs['state_space']=8
         self.state_space = self.configs['state_space']
 
         # action space
