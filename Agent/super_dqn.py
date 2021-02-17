@@ -305,7 +305,7 @@ class Trainer(RLAlgorithm):
         torch.save(self.targetSuperQNetwork.state_dict(), os.path.join(
             self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'Super_target.h5'))
 
-        for i,mainQ, targetQ in enumerate(zip(self.mainQNetwork, self.targetQNetwork)):
+        for i,(mainQ, targetQ) in enumerate(zip(self.mainQNetwork, self.targetQNetwork)):
             torch.save(mainQ.state_dict(), os.path.join(
                 self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'_{}.h5'.format(i)))
             torch.save(targetQ.state_dict(), os.path.join(
