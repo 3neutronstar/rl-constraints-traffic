@@ -44,7 +44,10 @@ def city_dqn_train(configs, time_data, sumoCmd):
         if configs['randomness']==True:
             tmp_sumoCmd=sumoCmd+['--scale',str(1.5+random())] # 1.5~2.5
         else:
-            tmp_sumoCmd=sumoCmd+['--scale',str(2.0)]
+            if configs['network']=='dunsan':
+                tmp_sumoCmd=sumoCmd+['--scale',str(2.0)]
+            elif configs['network']=='3x3grid':
+                tmp_sumoCmd=sumoCmd+['--scale',str(1.1)]
         traci.start(tmp_sumoCmd)
         env = CityEnv(configs)
         # Total Initialization

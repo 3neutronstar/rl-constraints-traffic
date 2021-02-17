@@ -118,7 +118,11 @@ def simulate(flags, configs, sumoConfig):
         sumoBinary = checkBinary('sumo-gui')
     else:
         sumoBinary = checkBinary('sumo')
-    sumoCmd = [sumoBinary, "-c", sumoConfig,"--scale","2.0"]
+    if flags.network.lower()=="3x3grid":
+        sumoCmd = [sumoBinary, "-c", sumoConfig,"--scale","1.1"]
+    elif flags.network.lower()=='dunsan':
+        sumoCmd = [sumoBinary, "-c", sumoConfig,"--scale","2.0"]
+
     MAX_STEPS = configs['max_steps']
     traci.start(sumoCmd)
     a = time.time()

@@ -17,10 +17,10 @@ DEFAULT_CONFIG = {
     'experience_replay_size': 1e5,
     'epsilon': 0.8,
     'epsilon_decay_rate': 0.99,
-    'fc_net': [64, 60, 50],
+    'fc_net': [64, 64, 50],
     'lr': 1e-4,
     'lr_decay_rate': 0.99,
-    'target_update_period': 5,
+    'target_update_period': 10,
     'final_epsilon': 0.0005,
     'final_lr': 1e-6,
 }

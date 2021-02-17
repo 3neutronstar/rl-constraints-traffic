@@ -274,7 +274,7 @@ class MapNetwork(Network):
                 traffic_node_info['num_phase'] = num_phase
                 # 각 tl_rl의 time_action_space지정
                 NET_CONFIGS['time_action_space'].append(abs(round((torch.min(torch.tensor(traffic_node_info['max_phase'])-torch.tensor(
-                    traffic_node_info['common_phase']), torch.tensor(traffic_node_info['common_phase'])-torch.tensor(traffic_node_info['min_phase']))/2).mean().item())))
+                    traffic_node_info['common_phase']), torch.tensor(traffic_node_info['common_phase'])-torch.tensor(traffic_node_info['min_phase'])).float()).mean().item())))
 
                 self.phase_list.append(phase_state_list)
                 self.common_phase.append(phase_duration_list)
