@@ -100,7 +100,7 @@ def train(flags, time_data, configs, sumoConfig):
 
 def test(flags, configs, sumoConfig):
     from utils import save_params, load_params, update_tensorboard
-    from test import city_dqn_test, super_dqn_test
+    from test import city_dqn_test
     if flags.disp == True:
         sumoBinary = checkBinary('sumo-gui')
     else:
@@ -109,8 +109,6 @@ def test(flags, configs, sumoConfig):
     sumoCmd = [sumoBinary, "-c", sumoConfig]
 
     if flags.algorithm.lower() == 'super_dqn':
-        super_dqn_test(flags, sumoCmd, configs)
-    if flags.algorithm.lower() == 'city_dqn':
         city_dqn_test(flags, sumoCmd, configs)
 
 
@@ -171,9 +169,16 @@ def main(args):
     configs['current_path'] = os.path.dirname(os.path.abspath(__file__))
     configs['mode'] = flags.mode.lower()
     time_data = time.strftime('%m-%d_%H-%M-%S', time.localtime(time.time()))
+    if configs['mode'] == 'test':
+        configs['time_data'] = flags.replay_name
+        configs['replay_name'] = configs['time_data']
+        sumoConfig = os.path.join(
+            configs['current_path'], 'training_data', time_data, 'net_data', configs['file_name']+'_test.sumocfg')
+        test(flags, configs, sumoConfig)
+
+        
     configs['time_data'] = str(time_data)
     configs['file_name'] = configs['time_data']
-
     # check the network
     configs['network'] = flags.network.lower()
     if configs['network'] == 'grid':
@@ -221,12 +226,6 @@ def main(args):
         sumoConfig = os.path.join(
             configs['current_path'], 'training_data', time_data, 'net_data', configs['file_name']+'_train.sumocfg')
         train(flags, time_data, configs, sumoConfig)
-    elif configs['mode'] == 'test':
-        configs['time_data'] = flags.replay_name
-        configs['replay_name'] = configs['time_data']
-        sumoConfig = os.path.join(
-            configs['current_path'], 'training_data', time_data, 'net_data', configs['file_name']+'_test.sumocfg')
-        test(flags, configs, sumoConfig)
     else:  # simulate
         sumoConfig = os.path.join(
             configs['current_path'], 'Net_data', configs['file_name']+'_simulate.sumocfg')

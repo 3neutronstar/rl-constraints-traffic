@@ -7,7 +7,7 @@ import random
 import os
 from collections import namedtuple
 from copy import deepcopy
-from Agent.base import RLAlgorithm, ReplayMemory, merge_dict, hard_update, soft_update
+from Agent.base import RLAlgorithm, ReplayMemory, merge_dict, hard_update, merge_dict_non_conflict, soft_update
 from torch.utils.tensorboard import SummaryWriter
 from itertools import chain
 DEFAULT_CONFIG = {
@@ -17,7 +17,7 @@ DEFAULT_CONFIG = {
     'experience_replay_size': 1e5,
     'epsilon': 0.8,
     'epsilon_decay_rate': 0.99,
-    'fc_net': [64, 128, 50],
+    'fc_net': [64, 60, 50],
     'lr': 1e-4,
     'lr_decay_rate': 0.99,
     'target_update_period': 5,
@@ -107,9 +107,12 @@ class SuperQNetwork(nn.Module):
 class Trainer(RLAlgorithm):
     def __init__(self, configs):
         super().__init__(configs)
-        os.mkdir(os.path.join(
-            self.configs['current_path'], 'training_data', self.configs['time_data'], 'model'))
-        self.configs = merge_dict(configs, DEFAULT_CONFIG)
+        if configs['mode']=='train' or configs['mode']== 'simulate':
+            os.mkdir(os.path.join(
+                self.configs['current_path'], 'training_data', self.configs['time_data'], 'model'))
+            self.configs = merge_dict(configs, DEFAULT_CONFIG)
+        else: # test
+            self.configs = merge_dict_non_conflict(configs, DEFAULT_CONFIG)
         self.num_agent = len(self.configs['tl_rl_list'])
         self.state_space = self.configs['state_space']
 
@@ -140,7 +143,10 @@ class Trainer(RLAlgorithm):
         self.targetQNetwork = list()
         self.rate_key_list = list()
         for i, key in enumerate(self.configs['traffic_node_info'].keys()):
-            rate_key = self.configs['traffic_node_info'][key]['num_phase']
+            if configs['mode']=='train':
+                rate_key = self.configs['traffic_node_info'][key]['num_phase']
+            elif configs['mode']== 'test':
+                rate_key = str(self.configs['traffic_node_info'][key]['num_phase'])
             self.rate_key_list.append(rate_key)
             self.mainQNetwork.append(QNetwork(
                 self.super_output_size, self.rate_action_space[rate_key], self.time_action_space[i], self.configs))
@@ -202,17 +208,17 @@ class Trainer(RLAlgorithm):
         return actions
 
     def target_update(self):
-        # Hard Update
-        for target, source in zip(self.targetQNetwork, self.mainQNetwork):
-            hard_update(target, source)
-        # Total Update
-        hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
-
-        # # Soft Update
+        # # Hard Update
         # for target, source in zip(self.targetQNetwork, self.mainQNetwork):
-        #     soft_update(target, source,self.configs)
+        #     hard_update(target, source)
         # # Total Update
-        # soft_update(self.targetSuperQNetwork, self.mainSuperQNetwork,self.configs)
+        # hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
+
+        # Soft Update
+        for target, source in zip(self.targetQNetwork, self.mainQNetwork):
+            soft_update(target, source,self.configs)
+        # Total Update
+        soft_update(self.targetSuperQNetwork, self.mainSuperQNetwork,self.configs)
 
     def save_replay(self, state, action, reward, next_state, mask):
         for i in torch.nonzero(mask):
@@ -299,19 +305,19 @@ class Trainer(RLAlgorithm):
         torch.save(self.targetSuperQNetwork.state_dict(), os.path.join(
             self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'Super_target.h5'))
 
-        for mainQ, targetQ in zip(self.mainQNetwork, self.targetQNetwork):
+        for i,mainQ, targetQ in enumerate(zip(self.mainQNetwork, self.targetQNetwork)):
             torch.save(mainQ.state_dict(), os.path.join(
-                self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'.h5'))
+                self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'_{}.h5'.format(i)))
             torch.save(targetQ.state_dict(), os.path.join(
-                self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'_target.h5'))
+                self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'_target_{}.h5'.format(i)))
 
     def load_weights(self, name):
         self.mainSuperQNetwork.load_state_dict(torch.load(os.path.join(
-            self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'Super.h5')))
+            self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'_{}Super.h5'.format(self.configs['replay_epoch']))))
         self.mainSuperQNetwork.eval()
-        for mainQ in self.mainQNetwork:
+        for i,mainQ in enumerate(self.mainQNetwork):
             mainQ.load_state_dict(torch.load(os.path.join(
-                self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'.h5')))
+                self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'_{}_{}.h5'.format(self.configs['replay_epoch'],i))))
             mainQ.eval()
 
     def update_tensorboard(self, writer, epoch):

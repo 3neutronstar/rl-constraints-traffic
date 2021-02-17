@@ -6,8 +6,7 @@ from utils import load_params
 
 def city_dqn_test(flags, sumoCmd, configs):
     # Environment Setting
-    configs['model'] = 'base'
-    from Agent.dqn import Trainer
+    from Agent.super_dqn import Trainer
     from Env.CityEnv import CityEnv
     # init test setting
     if flags.replay_name is not None:
@@ -18,10 +17,10 @@ def city_dqn_test(flags, sumoCmd, configs):
 
     phase_num_matrix = torch.tensor(  # 각 tl이 갖는 최대 phase갯수
         [len(configs['traffic_node_info'][index]['phase_duration']) for _, index in enumerate(configs['traffic_node_info'])])
-    # init agent and tensorboard writer
+
     agent = Trainer(configs)
-    # save hyper parameters
-    agent.save_params(time_data)
+    agent.save_params(configs['time_data'])
+    agent.load_weights(flags.replay_name)
     # init training
     NUM_AGENT = configs['num_agent']
     TL_RL_LIST = configs['tl_rl_list']
@@ -36,8 +35,6 @@ def city_dqn_test(flags, sumoCmd, configs):
     # agent setting
     total_reward = 0
     arrived_vehicles = 0
-    agent = Trainer(configs)
-    agent.load_weights(flags.replay_name)
     with torch.no_grad():
         step = 0
         traci.start(sumoCmd)

@@ -18,11 +18,6 @@ class MapNetwork(Network):
             self.configs['current_path'], 'Network', self.configs['load_file_name']+'.net.xml')
         self.rou_file_path = os.path.join(
             self.configs['current_path'], 'Network', self.configs['load_file_name']+'.rou.xml')
-
-    def specify_traffic_light(self):
-        self.traffic_light = traffic_light
-
-        return traffic_light
     
     def get_tl_from_add_xml(self):
         add_file_path = os.path.join(
