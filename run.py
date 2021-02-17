@@ -68,7 +68,8 @@ def train(flags, time_data, configs, sumoConfig):
     if flags.model.lower() == 'base':
         from train import super_dqn_train
         from configs import SUPER_DQN_TRAFFIC_CONFIGS
-        configs = merge_dict_non_conflict(configs, SUPER_DQN_TRAFFIC_CONFIGS)
+        if flags.network.lower()=='grid':
+            configs = merge_dict_non_conflict(configs, SUPER_DQN_TRAFFIC_CONFIGS)
         configs['max_phase_num'] = 4
         configs['offset'] = [0 for i in range(
             configs['num_agent'])]  # offset 임의 설정
