@@ -255,6 +255,7 @@ class Network():
             tree.write(os.path.join(self.current_Env_path, self.file_name+'_simulate.sumocfg'),
                        pretty_print=True, encoding='UTF-8', xml_declaration=True)
         elif mode == 'test':
+            print("test")
             tree.write(os.path.join(self.current_Env_path, self.file_name+'_test.sumocfg'),
                        pretty_print=True, encoding='UTF-8', xml_declaration=True)
         elif mode == 'train' or mode == 'train_old':

@@ -31,7 +31,6 @@ class CityEnv(baseEnv):
         self.reward = 0
         self.state_space = self.configs['state_space']
         self.action_size = self.configs['action_size']
-        self.left_lane_num = self.configs['num_lanes']-1
         self.traffic_node_info = self.configs['traffic_node_info']
         self.nodes = self.configs['node_info']
 
@@ -61,6 +60,15 @@ class CityEnv(baseEnv):
         for key in self.traffic_node_info.keys():
             self.traffic_node_info[key]['program'] = traci.trafficlight.getCompleteRedYellowGreenDefinition(
                 key)
+        
+        self.left_lane_num_dict=dict()
+        # lane 정보 저장
+        for interest in self.node_interest_pair:
+            # 모든 inflow에 대해서
+            for pair in self.node_interest_pair[interest]:
+                if pair['inflow']==None:
+                    continue
+                self.left_lane_num_dict[pair['inflow']]=traci.edge.getLaneNumber(pair['inflow'])-1
 
     def get_state(self, mask):
         '''
@@ -147,7 +155,7 @@ class CityEnv(baseEnv):
                         veh_state[j*2+1]=0.0
                     else:
                         left_movement = traci.lane.getLastStepHaltingNumber(
-                            pair['inflow']+'_{}'.format(self.left_lane_num))  # 멈춘애들 계산
+                            pair['inflow']+'_{}'.format(self.left_lane_num_dict[pair['inflow']]))  # 멈춘애들 계산
                         # 직진
                         veh_state[j*2] = traci.edge.getLastStepHaltingNumber(
                             pair['inflow'])-left_movement  # 가장 좌측에 멈춘 친구를 왼쪽차선 이용자로 판단

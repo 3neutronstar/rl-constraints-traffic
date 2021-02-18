@@ -113,14 +113,15 @@ class MapNetwork(Network):
         edges=net_tree.findall('edge')
         for edge in edges:
             if 'function' not in edge.attrib.keys():
-                self.configs['edge_info'].append({
+                edge_list.append({
                     'id':edge.attrib['id'],
                     'from':edge.attrib['from'],
                     'to':edge.attrib['to'],
                 })
-                edge_list.append(edge.attrib['id'])
+            self.configs['edge_info'].append(edge.attrib['id']) # 모든 엣지 저장
         # node info 저장
         self.configs['node_info'] = list()
+        node_list=list()
         # interest list
         interest_list = list()
         # node interest pair
@@ -132,19 +133,19 @@ class MapNetwork(Network):
         for junction in junctions:
             node_id=junction.attrib['id']
             if junction.attrib['type'] == "traffic_light": # 정상 node만 분리, 신호등 노드
-                self.configs['node_info'].append({
+                node_list.append({
                     'id': node_id,
                     'type': junction.attrib['type'],
                 })
                 if node_id in self.tl_rl_list: # 학습하는 tl만 저장
                     i=0
                     interests=list()
-                    for edge in self.configs['edge_info']:
+                    for edge in edge_list:
                         interest=dict()
                         if edge['to']==node_id: # inflow
                             interest['id']=node_id+'_{}'.format(i)
                             interest['inflow']=edge['id']
-                            for target_edge in self.configs['edge_info']:
+                            for target_edge in edge_list:
                                 if target_edge['from']==edge['to'] and target_edge['to']==edge['from']:
                                     interest['outflow']=target_edge['id']
                                     break
@@ -158,7 +159,7 @@ class MapNetwork(Network):
                         elif edge['from']==node_id:
                             interest['id']=node_id+'_{}'.format(i)
                             interest['outflow']=edge['id']
-                            for target_edge in self.configs['edge_info']:
+                            for target_edge in edge_list:
                                 if target_edge['from']==edge['to'] and target_edge['to']==edge['from']:
                                     interest['inflow']=target_edge['id']
                                     break
@@ -181,13 +182,19 @@ class MapNetwork(Network):
                 
             #일반 노드 
             elif junction.attrib['type'] == "priority": # 정상 node만 분리
-                self.configs['node_info'].append({
+                node_list.append({
                     'id': node_id,
                     'type': junction.attrib['type'],
                 })
             else:
                 pass
+            self.configs['node_info'].append({
+                    'id': node_id,
+                    'type': junction.attrib['type'],
+                })
                     #정리
+        NET_CONFIGS['edge_info']=self.configs['edge_info']
+        NET_CONFIGS['node_info']=self.configs['node_info']
         NET_CONFIGS['traffic_node_info'] = traffic_info
         NET_CONFIGS['interest_list'] = interest_list
         NET_CONFIGS['node_interest_pair'] = node_interest_pair
@@ -196,7 +203,7 @@ class MapNetwork(Network):
         NET_CONFIGS['phase_list'] = self.phase_list
         NET_CONFIGS['common_phase'] = self.common_phase
         NET_CONFIGS['state_space']=inflow_size*2 # 좌회전,직전 
-        print("Agent Num:{}, Traffic Num:{}".format(len(self.tl_rl_list),len(self.configs['node_info'])))
+        print("Agent Num:{}, Traffic Num:{}".format(len(self.tl_rl_list),len(node_list)))
         return NET_CONFIGS
 
     def get_tl_from_xml(self):
@@ -298,9 +305,9 @@ class MapNetwork(Network):
                         'from':edge.attrib['from'],
                         'to':edge.attrib['to'],
                     })
-                    edge_list.append(edge.attrib['id'])
             # node info 저장
             self.configs['node_info'] = list()
+            node_list=list()
             # interest list
             interest_list = list()
             # node interest pair
@@ -313,7 +320,7 @@ class MapNetwork(Network):
                 for junction in junctions:
                     node_id=junction.attrib['id']
                     if junction.attrib['type'] == "traffic_light": # 정상 node만 분리, 신호등 노드
-                        self.configs['node_info'].append({
+                        node_list.append({
                             'id': node_id,
                             'type': junction.attrib['type'],
                         })
@@ -359,12 +366,16 @@ class MapNetwork(Network):
                     
                     #일반 노드 
                     elif junction.attrib['type'] == "priority": # 정상 node만 분리
-                        self.configs['node_info'].append({
+                        node_list.append({
                             'id': node_id,
                             'type': junction.attrib['type'],
                         })
                     else:
                         pass
+                    self.configs['node_info'].append({
+                        'id': node_id,
+                        'type': junction.attrib['type'],
+                    })
 
 
 
@@ -379,12 +390,12 @@ class MapNetwork(Network):
                 junctions = net_tree.findall('junction')
                 for junction in junctions:
                     if junction.attrib['type'] != "internal":
-                        self.configs['node_info'].append({
+                        node_list.append({
                             'id': junction.attrib['id'],
                             'type': junction.attrib['type'],
                         })
 
-                for _, node in enumerate(self.configs['node_info']):
+                for _, node in enumerate(node_list):
                     if node['id'][-1] not in side_list:
                         x = int(node['id'][-3])
                         y = int(node['id'][-1])
@@ -439,7 +450,7 @@ class MapNetwork(Network):
                                 'outflow': 'n_{}_{}_to_n_{}_{}'.format(x, y, left_x, left_y),
                             }
                         )
-                for _, node in enumerate(self.configs['node_info']):
+                for _, node in enumerate(node_list):
                     if node['id'][-1] not in side_list:
                         node_interest_pair[node['id']] = list()
                         for _, interest in enumerate(interest_list):
@@ -447,6 +458,9 @@ class MapNetwork(Network):
                                 node_interest_pair[node['id']].append(interest)
 
             #정리
+            NET_CONFIGS['node_info']=self.configs['node_info']
+            NET_CONFIGS['edge_info']=self.configs['edge_info']
+
             NET_CONFIGS['traffic_node_info'] = traffic_info
             NET_CONFIGS['interest_list'] = interest_list
             NET_CONFIGS['node_interest_pair'] = node_interest_pair

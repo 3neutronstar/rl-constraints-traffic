@@ -106,8 +106,12 @@ def test(flags, configs, sumoConfig):
         sumoBinary = checkBinary('sumo-gui')
     else:
         sumoBinary = checkBinary('sumo')
-
-    sumoCmd = [sumoBinary, "-c", sumoConfig]
+    if flags.network.lower()=="3x3grid":
+        sumoCmd = [sumoBinary, "-c", sumoConfig,"--scale","1.1"]
+    elif flags.network.lower()=='dunsan':
+        sumoCmd = [sumoBinary, "-c", sumoConfig,"--scale","2.0"]
+    else:
+        sumoCmd=[sumoBinary, "-c", sumoConfig]
 
     if flags.algorithm.lower() == 'super_dqn':
         city_dqn_test(flags, sumoCmd, configs)
@@ -122,6 +126,8 @@ def simulate(flags, configs, sumoConfig):
         sumoCmd = [sumoBinary, "-c", sumoConfig,"--scale","1.1"]
     elif flags.network.lower()=='dunsan':
         sumoCmd = [sumoBinary, "-c", sumoConfig,"--scale","2.0"]
+    else:
+        sumoCmd=[sumoBinary, "-c", sumoConfig]
 
     MAX_STEPS = configs['max_steps']
     traci.start(sumoCmd)
@@ -139,6 +145,7 @@ def simulate(flags, configs, sumoConfig):
 
         traci.simulationStep()
         step += 1
+        print(traci.edge.getLaneNumber('n_0_0_to_n_0_1'))
         # for _, edge in enumerate(configs['interest_list']):
         #     avg_waiting_time += traci.edge.getWaitingTime(edge['inflow'])
 
@@ -174,15 +181,9 @@ def main(args):
     configs['current_path'] = os.path.dirname(os.path.abspath(__file__))
     configs['mode'] = flags.mode.lower()
     time_data = time.strftime('%m-%d_%H-%M-%S', time.localtime(time.time()))
-    if configs['mode'] == 'test':
-        configs['time_data'] = flags.replay_name
-        configs['replay_name'] = configs['time_data']
-        sumoConfig = os.path.join(
-            configs['current_path'], 'training_data', time_data, 'net_data', configs['file_name']+'_test.sumocfg')
-        test(flags, configs, sumoConfig)
+    configs['time_data'] = str(time_data)
 
         
-    configs['time_data'] = str(time_data)
     configs['file_name'] = configs['time_data']
     # check the network
     configs['network'] = flags.network.lower()
@@ -231,6 +232,12 @@ def main(args):
         sumoConfig = os.path.join(
             configs['current_path'], 'training_data', time_data, 'net_data', configs['file_name']+'_train.sumocfg')
         train(flags, time_data, configs, sumoConfig)
+    elif configs['mode'] == 'test':
+        configs['file_name'] =flags.replay_name
+        configs['replay_name'] = configs['time_data']
+        sumoConfig = os.path.join(
+            configs['current_path'], 'training_data', time_data, 'net_data', configs['time_data']+'_test.sumocfg')
+        test(flags, configs, sumoConfig)
     else:  # simulate
         sumoConfig = os.path.join(
             configs['current_path'], 'Net_data', configs['file_name']+'_simulate.sumocfg')
