@@ -17,7 +17,7 @@ DEFAULT_CONFIG = {
     'experience_replay_size': 1e5,
     'epsilon': 0.8,
     'epsilon_decay_rate': 0.98,
-    'fc_net': [64, 64, 50],
+    'fc_net': [64, 50, 40],
     'lr': 1e-4,
     'lr_decay_rate': 0.99,
     'target_update_period': 10,
@@ -86,16 +86,23 @@ class SuperQNetwork(nn.Module):
         self.input_size = int(input_size)
         self.output_size = int(output_size)
         self.num_agent = len(self.configs['tl_rl_list'])
+        self.state_space = self.configs['state_space']
+        # Neural Net
+        self.conv1 = nn.Conv1d(8, 16, kernel_size=(1, 1))
+        self.conv2 = nn.Conv1d(16, 8, kernel_size=(1, 1))
         self.fc1 = nn.Linear(
-            self.input_size, int(self.configs['state_space']*1.5*self.num_agent))
+            self.input_size, int(self.state_space*1.5*self.num_agent))
         self.fc2 = nn.Linear(
-            int(self.configs['state_space']*1.5*self.num_agent), int(self.configs['state_space']*1.5*self.num_agent))
+            int(self.state_space*1.5*self.num_agent), int(self.state_space*1.5*self.num_agent))
         self.fc3 = nn.Linear(
-            int(self.configs['state_space']*1.5*self.num_agent), int(self.configs['state_space']*1*self.num_agent))
+            int(self.state_space*1.5*self.num_agent), int(self.state_space*1*self.num_agent))
         self.fc4 = nn.Linear(
-            self.configs['state_space']*1*self.num_agent, self.output_size)
+            self.state_space*1*self.num_agent, self.output_size)
 
     def forward(self, x):
+        x = f.relu(self.conv1(x))
+        x = f.relu(self.conv2(x))
+        x = x.view(-1, self.num_agent*self.state_space)
         x = f.relu(self.fc1(x))
         x = f.relu(self.fc2(x))
         x = f.relu(self.fc3(x))
@@ -107,11 +114,11 @@ class SuperQNetwork(nn.Module):
 class Trainer(RLAlgorithm):
     def __init__(self, configs):
         super().__init__(configs)
-        if configs['mode']=='train' or configs['mode']== 'simulate':
+        if configs['mode'] == 'train' or configs['mode'] == 'simulate':
             os.mkdir(os.path.join(
                 self.configs['current_path'], 'training_data', self.configs['time_data'], 'model'))
             self.configs = merge_dict(configs, DEFAULT_CONFIG)
-        else: # test
+        else:  # test
             self.configs = merge_dict_non_conflict(configs, DEFAULT_CONFIG)
         self.num_agent = len(self.configs['tl_rl_list'])
         self.state_space = self.configs['state_space']
@@ -143,10 +150,11 @@ class Trainer(RLAlgorithm):
         self.targetQNetwork = list()
         self.rate_key_list = list()
         for i, key in enumerate(self.configs['traffic_node_info'].keys()):
-            if configs['mode']=='train':
+            if configs['mode'] == 'train':
                 rate_key = self.configs['traffic_node_info'][key]['num_phase']
-            elif configs['mode']== 'test':
-                rate_key = str(self.configs['traffic_node_info'][key]['num_phase'])
+            elif configs['mode'] == 'test':
+                rate_key = str(
+                    self.configs['traffic_node_info'][key]['num_phase'])
             self.rate_key_list.append(rate_key)
             self.mainQNetwork.append(QNetwork(
                 self.super_output_size, self.rate_action_space[rate_key], self.time_action_space[i], self.configs))
@@ -305,7 +313,7 @@ class Trainer(RLAlgorithm):
         torch.save(self.targetSuperQNetwork.state_dict(), os.path.join(
             self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'Super_target.h5'))
 
-        for i,(mainQ, targetQ) in enumerate(zip(self.mainQNetwork, self.targetQNetwork)):
+        for i, (mainQ, targetQ) in enumerate(zip(self.mainQNetwork, self.targetQNetwork)):
             torch.save(mainQ.state_dict(), os.path.join(
                 self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'_{}.h5'.format(i)))
             torch.save(targetQ.state_dict(), os.path.join(
@@ -315,9 +323,9 @@ class Trainer(RLAlgorithm):
         self.mainSuperQNetwork.load_state_dict(torch.load(os.path.join(
             self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'_{}Super.h5'.format(self.configs['replay_epoch']))))
         self.mainSuperQNetwork.eval()
-        for i,mainQ in enumerate(self.mainQNetwork):
+        for i, mainQ in enumerate(self.mainQNetwork):
             mainQ.load_state_dict(torch.load(os.path.join(
-                self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'_{}_{}.h5'.format(self.configs['replay_epoch'],i))))
+                self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'_{}_{}.h5'.format(self.configs['replay_epoch'], i))))
             mainQ.eval()
 
     def update_tensorboard(self, writer, epoch):

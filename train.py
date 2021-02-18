@@ -38,18 +38,19 @@ def city_dqn_train(configs, time_data, sumoCmd):
     TL_PERIOD = torch.tensor(
         configs['tl_period'], device=configs['device'], dtype=torch.int)
     epoch = 0
-    print("action space(rate: {}, time: {}".format(configs['rate_action_space'],configs['time_action_space']))
+    print("action space(rate: {}, time: {}".format(
+        configs['rate_action_space'], configs['time_action_space']))
     while epoch < configs['num_epochs']:
         step = 0
-        if configs['randomness']==True:
-            tmp_sumoCmd=sumoCmd+['--scale',str(1.5+random())] # 1.5~2.5
+        if configs['randomness'] == True:
+            tmp_sumoCmd = sumoCmd+['--scale', str(1.5+random())]  # 1.5~2.5
         else:
-            if configs['network']=='dunsan':
-                tmp_sumoCmd=sumoCmd+['--scale',str(2.0)]
-            elif configs['network']=='3x3grid':
-                tmp_sumoCmd=sumoCmd+['--scale',str(1.1)]
+            if configs['network'] == 'dunsan':
+                tmp_sumoCmd = sumoCmd+['--scale', str(2.0)]
+            elif configs['network'] == '3x3grid':
+                tmp_sumoCmd = sumoCmd+['--scale', str(1.1)]
             else:
-                tmp_sumoCmd=sumoCmd
+                tmp_sumoCmd = sumoCmd
         traci.start(tmp_sumoCmd)
         env = CityEnv(configs)
         # Total Initialization
@@ -132,7 +133,7 @@ def city_dqn_train(configs, time_data, sumoCmd):
             # agent.target_update()
 
         agent.update_hyperparams(epoch)  # lr and epsilon upate
-        #hard update
+        # hard update
         if epoch % agent.configs['target_update_period'] == 0:
             agent.target_update()  # dqn
         b = time.time()
