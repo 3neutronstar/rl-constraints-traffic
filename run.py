@@ -145,7 +145,6 @@ def simulate(flags, configs, sumoConfig):
 
         traci.simulationStep()
         step += 1
-        print(traci.edge.getLaneNumber('n_0_0_to_n_0_1'))
         # for _, edge in enumerate(configs['interest_list']):
         #     avg_waiting_time += traci.edge.getWaitingTime(edge['inflow'])
 
