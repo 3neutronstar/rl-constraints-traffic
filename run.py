@@ -141,27 +141,50 @@ def simulate(flags, configs, sumoConfig):
     # agent setting
     arrived_vehicles = 0
     avg_velocity = 0
+    part_velocity=list()
     while step < MAX_STEPS:
 
         traci.simulationStep()
         step += 1
-        # for _, edge in enumerate(configs['interest_list']):
-        #     avg_waiting_time += traci.edge.getWaitingTime(edge['inflow'])
-
+        # check performance
+        for _, interests in enumerate(configs['interest_list']):
+            print(interests)
+            for interest in interests:
+                # 신호군 흐름
+                avg_inEdge_velocity=list()
+                if interest['inflow']!=None:
+                    inflow_vehicle_list=traci.edge.getLastStepVehicleIDs(interest['inflow'])
+                    for inflow_vehicle_id in inflow_vehicle_list:
+                        avg_inEdge_velocity.append(traci.vehicle.getSpeed(inflow_vehicle_id))
+                    if len(avg_inEdge_velocity)!=0:
+                        part_velocity.append(torch.tensor(avg_inEdge_velocity,dtype=torch.float).mean())
+                    # 차량의 대기시간
+                    if traci.edge.getLastStepVehicleNumber(interest['inflow'])!=0:
+                        avg_waiting_time += traci.edge.getWaitingTime(interest['inflow'])/float(traci.edge.getLastStepVehicleNumber(interest['inflow']))
+                avg_outEdge_velocity=list()
+                if interest['outflow']!=None:
+                    outflow_vehicle_list=traci.edge.getLastStepVehicleIDs(interest['outflow'])
+                    for outflow_vehicle_id in outflow_vehicle_list:
+                        avg_outEdge_velocity.append(traci.vehicle.getSpeed(outflow_vehicle_id))
+                    if len(avg_inEdge_velocity)!=0:
+                        part_velocity.append(torch.tensor(avg_inEdge_velocity,dtype=torch.float).mean())
+                        
+        # # 전체 흐름
         # vehicle_list = traci.vehicle.getIDList()
-        # for i, vehicle in enumerate(vehicle_list):
+        # for i, vehicle in enumerate(vehicle_list): 
         #     speed = traci.vehicle.getSpeed(vehicle)
         #     avg_velocity = float((i)*avg_velocity+speed) / \
-        #         float(i+1)  # incremental avg
+        #         float(i+1)
 
         arrived_vehicles += traci.simulation.getAllSubscriptionResults()[
             ''][0x79]  # throughput
+    avg_part_velocity=torch.tensor(part_velocity,dtype=torch.float).mean()
     b = time.time()
     traci.close()
     # edgesss = traci.edge.getSubscriptionResults('n_2_2_to_n_2_1')
     # print(edgesss)
-    print('======== arrived number:{} avg waiting time:{},avg velocity:{}'.format(
-        arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity))
+    print('======== arrived number:{} avg waiting time:{},avg velocity:{} avg_part_velocity: {}'.format(
+        arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity,avg_part_velocity))
     print("sim_time=", b-a)
 
 

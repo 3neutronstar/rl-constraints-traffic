@@ -316,7 +316,8 @@ class MapNetwork(Network):
             # state space size 결정
             inflow_size=0
             # network용
-            if self.configs['network']!='3x3grid':
+            if True:
+            # if self.configs['network']!='3x3grid':
                 for junction in junctions:
                     node_id=junction.attrib['id']
                     if junction.attrib['type'] == "traffic_light": # 정상 node만 분리, 신호등 노드
@@ -333,22 +334,34 @@ class MapNetwork(Network):
                             if edge['to']==node_id: # inflow
                                 interest['id']=node_id+'_{}'.format(i)
                                 interest['inflow']=edge['id']
-                                tmp_edge=str(-int(edge['id']))
-                                if tmp_edge in edge_list:
-                                    interest['outflow']=tmp_edge
-                                else:
-                                    interest['outflow']=None
+                                for tmpEdge in self.configs['edge_info']: #outflow
+                                    if tmpEdge['from']==node_id and edge['from']==tmpEdge['to']:
+                                        interest['outflow']=tmpEdge['id']
+                                        break
+                                    else:
+                                        interest['outflow']=None
+                                # tmp_edge=str(-int(edge['id']))
+                                # if tmp_edge in edge_list:
+                                #     interest['outflow']=tmp_edge
+                                # else:
+                                #     interest['outflow']=None
                                 interests.append(interest)
                                 i+=1 # index표기용
 
                             elif edge['from']==node_id:
                                 interest['id']=node_id+'_{}'.format(i)
                                 interest['outflow']=edge['id']
-                                tmp_edge=str(-int(edge['id']))
-                                if tmp_edge in edge_list:
-                                    interest['inflow']=tmp_edge
-                                else:
-                                    interest['inflow']=None
+                                for tmpEdge in self.configs['edge_info']: #outflow
+                                    if tmpEdge['to']==node_id and edge['to']==tmpEdge['from']:
+                                        interest['inflow']=tmpEdge['id']
+                                        break
+                                    else:
+                                        interest['inflow']=None
+                                # tmp_edge=str(-int(edge['id']))
+                                # if tmp_edge in edge_list:
+                                #     interest['inflow']=tmp_edge
+                                # else:
+                                #     interest['inflow']=None
                                 interests.append(interest)
                                 i+=1 # index표기용
 
@@ -376,86 +389,6 @@ class MapNetwork(Network):
                         'id': node_id,
                         'type': junction.attrib['type'],
                     })
-
-
-
-            # 임시 3x3 grid 용
-            if self.configs['network']=='3x3grid':
-                side_list = ['u', 'r', 'd', 'l']
-                NET_CONFIGS['state_space']=8
-                self.configs['grid_num'] = 3
-                inflow_size=4
-                x_y_end = self.configs['grid_num']-1
-                # grid junction
-                junctions = net_tree.findall('junction')
-                for junction in junctions:
-                    if junction.attrib['type'] != "internal":
-                        node_list.append({
-                            'id': junction.attrib['id'],
-                            'type': junction.attrib['type'],
-                        })
-
-                for _, node in enumerate(node_list):
-                    if node['id'][-1] not in side_list:
-                        x = int(node['id'][-3])
-                        y = int(node['id'][-1])
-                        left_x = x-1
-                        left_y = y
-                        right_x = x+1
-                        right_y = y
-                        down_x = x
-                        down_y = y+1  # 아래로가면 y는 숫자가 늘어남
-                        up_x = x
-                        up_y = y-1  # 위로가면 y는 숫자가 줄어듦
-
-                        if x == 0:
-                            left_y = 'l'
-                            left_x = y
-                        if y == 0:
-                            up_y = 'u'
-                        if x == x_y_end:
-                            right_y = 'r'
-                            right_x = y
-                        if y == x_y_end:
-                            down_y = 'd'
-                        # up
-                        interest_list.append(
-                            {
-                                'id': 'u_{}'.format(node['id'][2:]),
-                                'inflow': 'n_{}_{}_to_n_{}_{}'.format(up_x, up_y, x, y),
-                                'outflow': 'n_{}_{}_to_n_{}_{}'.format(x, y, up_x, up_y),
-                            }
-                        )
-                        # right
-                        interest_list.append(
-                            {
-                                'id': 'r_{}'.format(node['id'][2:]),
-                                'inflow': 'n_{}_{}_to_n_{}_{}'.format(right_x, right_y, x, y),
-                                'outflow': 'n_{}_{}_to_n_{}_{}'.format(x, y, right_x, right_y),
-                            }
-                        )
-                        # down
-                        interest_list.append(
-                            {
-                                'id': 'd_{}'.format(node['id'][2:]),
-                                'inflow': 'n_{}_{}_to_n_{}_{}'.format(down_x, down_y, x, y),
-                                'outflow': 'n_{}_{}_to_n_{}_{}'.format(x, y, down_x, down_y),
-                            }
-                        )
-                        # left
-                        interest_list.append(
-                            {
-                                'id': 'l_{}'.format(node['id'][2:]),
-                                'inflow': 'n_{}_{}_to_n_{}_{}'.format(left_x, left_y, x, y),
-                                'outflow': 'n_{}_{}_to_n_{}_{}'.format(x, y, left_x, left_y),
-                            }
-                        )
-                for _, node in enumerate(node_list):
-                    if node['id'][-1] not in side_list:
-                        node_interest_pair[node['id']] = list()
-                        for _, interest in enumerate(interest_list):
-                            if node['id'][-3:] == interest['id'][-3:]:  # 좌표만 받기
-                                node_interest_pair[node['id']].append(interest)
 
             #정리
             NET_CONFIGS['node_info']=self.configs['node_info']
