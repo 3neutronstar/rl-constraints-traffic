@@ -166,7 +166,8 @@ class CityEnv(baseEnv):
                         # 좌회전
                         veh_state[j*2+1] = left_movement
                 next_state.append(veh_state)
-            next_state = torch.cat(next_state, dim=1)
+            next_state = torch.cat(next_state, dim=1).view(
+                1, self.state_space, self.num_agent)
             # 각 agent env에 state,next_state 저장
             for state_index in torch.nonzero(mask_matrix):
                 self.tl_rl_memory[state_index].state = self.tl_rl_memory[state_index].next_state
