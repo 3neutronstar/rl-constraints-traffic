@@ -63,13 +63,14 @@ def train(flags, time_data, configs, sumoConfig):
     # configs setting
     configs['num_agent'] = len(configs['tl_rl_list'])
     configs['algorithm'] = flags.algorithm.lower()
-    configs['randomness']=flags.randomness
+    configs['randomness'] = flags.randomness
     print("training algorithm: ", configs['algorithm'])
     if flags.model.lower() == 'base':
         from train import super_dqn_train
         from configs import SUPER_DQN_TRAFFIC_CONFIGS
-        if flags.network.lower()=='grid':
-            configs = merge_dict_non_conflict(configs, SUPER_DQN_TRAFFIC_CONFIGS)
+        if flags.network.lower() == 'grid':
+            configs = merge_dict_non_conflict(
+                configs, SUPER_DQN_TRAFFIC_CONFIGS)
         configs['max_phase_num'] = 4
         configs['offset'] = [0 for i in range(
             configs['num_agent'])]  # offset 임의 설정
@@ -89,8 +90,8 @@ def train(flags, time_data, configs, sumoConfig):
     elif flags.model.lower() == 'city':
         configs['action_size'] = 2
         # state space 는 map.py에서 결정
-        if flags.network.lower()=='grid':
-            configs['state_space']=8
+        if flags.network.lower() == 'grid':
+            configs['state_space'] = 8
 
         configs['model'] = 'city'
         from train import city_dqn_train
@@ -106,12 +107,12 @@ def test(flags, configs, sumoConfig):
         sumoBinary = checkBinary('sumo-gui')
     else:
         sumoBinary = checkBinary('sumo')
-    if flags.network.lower()=="3x3grid":
-        sumoCmd = [sumoBinary, "-c", sumoConfig,"--scale","1.1"]
-    elif flags.network.lower()=='dunsan':
-        sumoCmd = [sumoBinary, "-c", sumoConfig,"--scale","2.0"]
+    if flags.network.lower() == "3x3grid":
+        sumoCmd = [sumoBinary, "-c", sumoConfig, "--scale", "1.1"]
+    elif flags.network.lower() == 'dunsan':
+        sumoCmd = [sumoBinary, "-c", sumoConfig, "--scale", "2.0"]
     else:
-        sumoCmd=[sumoBinary, "-c", sumoConfig]
+        sumoCmd = [sumoBinary, "-c", sumoConfig]
 
     if flags.algorithm.lower() == 'super_dqn':
         city_dqn_test(flags, sumoCmd, configs)
@@ -122,12 +123,12 @@ def simulate(flags, configs, sumoConfig):
         sumoBinary = checkBinary('sumo-gui')
     else:
         sumoBinary = checkBinary('sumo')
-    if flags.network.lower()=="3x3grid":
-        sumoCmd = [sumoBinary, "-c", sumoConfig,"--scale","1.1"]
-    elif flags.network.lower()=='dunsan':
-        sumoCmd = [sumoBinary, "-c", sumoConfig,"--scale","2.0"]
+    if flags.network.lower() == "3x3grid":
+        sumoCmd = [sumoBinary, "-c", sumoConfig, "--scale", "1.1"]
+    elif flags.network.lower() == 'dunsan':
+        sumoCmd = [sumoBinary, "-c", sumoConfig, "--scale", "2.0"]
     else:
-        sumoCmd=[sumoBinary, "-c", sumoConfig]
+        sumoCmd = [sumoBinary, "-c", sumoConfig]
 
     MAX_STEPS = configs['max_steps']
     traci.start(sumoCmd)
@@ -141,7 +142,7 @@ def simulate(flags, configs, sumoConfig):
     # agent setting
     arrived_vehicles = 0
     avg_velocity = 0
-    part_velocity=list()
+    part_velocity = list()
     while step < MAX_STEPS:
 
         traci.simulationStep()
@@ -150,40 +151,37 @@ def simulate(flags, configs, sumoConfig):
         for _, interests in enumerate(configs['interest_list']):
             for interest in interests:
                 # 신호군 흐름
-                avg_inEdge_velocity=list()
-                if interest['inflow']!=None:
-                    inflow_vehicle_list=traci.edge.getLastStepVehicleIDs(interest['inflow'])
-                    for inflow_vehicle_id in inflow_vehicle_list:
-                        avg_inEdge_velocity.append(traci.vehicle.getSpeed(inflow_vehicle_id))
-                    if len(avg_inEdge_velocity)!=0:
-                        part_velocity.append(torch.tensor(avg_inEdge_velocity,dtype=torch.float).mean())
+                if interest['inflow'] != None:
                     # 차량의 대기시간
-                    if traci.edge.getLastStepVehicleNumber(interest['inflow'])!=0:
-                        avg_waiting_time += traci.edge.getWaitingTime(interest['inflow'])/float(traci.edge.getLastStepVehicleNumber(interest['inflow']))
-                avg_outEdge_velocity=list()
-                if interest['outflow']!=None:
-                    outflow_vehicle_list=traci.edge.getLastStepVehicleIDs(interest['outflow'])
-                    for outflow_vehicle_id in outflow_vehicle_list:
-                        avg_outEdge_velocity.append(traci.vehicle.getSpeed(outflow_vehicle_id))
-                    if len(avg_inEdge_velocity)!=0:
-                        part_velocity.append(torch.tensor(avg_inEdge_velocity,dtype=torch.float).mean())
-                        
+                    # 차량이 있을 때만
+                    if traci.edge.getLastStepVehicleNumber(interest['inflow']) != 0:
+                        avg_waiting_time += traci.edge.getWaitingTime(interest['inflow'])/float(
+                            traci.edge.getLastStepVehicleNumber(interest['inflow']))
+                        # 차량의 평균속도
+                        part_velocity.append(
+                            traci.edge.getLastStepMeanSpeed(interest['inflow']))
+
+                if interest['outflow'] != None:
+                    if traci.edge.getLastStepVehicleNumber(interest['outflow']) != 0:
+                        part_velocity.append(
+                            traci.edge.getLastStepMeanSpeed(interest['inflow']))
+
         # # 전체 흐름
         # vehicle_list = traci.vehicle.getIDList()
-        # for i, vehicle in enumerate(vehicle_list): 
+        # for i, vehicle in enumerate(vehicle_list):
         #     speed = traci.vehicle.getSpeed(vehicle)
         #     avg_velocity = float((i)*avg_velocity+speed) / \
         #         float(i+1)
 
         arrived_vehicles += traci.simulation.getAllSubscriptionResults()[
             ''][0x79]  # throughput
-    avg_part_velocity=torch.tensor(part_velocity,dtype=torch.float).mean()
+    avg_part_velocity = torch.tensor(part_velocity, dtype=torch.float).mean()
     b = time.time()
     traci.close()
     # edgesss = traci.edge.getSubscriptionResults('n_2_2_to_n_2_1')
     # print(edgesss)
     print('======== arrived number:{} avg waiting time:{},avg velocity:{} avg_part_velocity: {}'.format(
-        arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity,avg_part_velocity))
+        arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity))
     print("sim_time=", b-a)
 
 
@@ -204,7 +202,6 @@ def main(args):
     time_data = time.strftime('%m-%d_%H-%M-%S', time.localtime(time.time()))
     configs['time_data'] = str(time_data)
 
-        
     configs['file_name'] = configs['time_data']
     # check the network
     configs['network'] = flags.network.lower()
@@ -254,7 +251,7 @@ def main(args):
             configs['current_path'], 'training_data', time_data, 'net_data', configs['file_name']+'_train.sumocfg')
         train(flags, time_data, configs, sumoConfig)
     elif configs['mode'] == 'test':
-        configs['file_name'] =flags.replay_name
+        configs['file_name'] = flags.replay_name
         configs['replay_name'] = configs['time_data']
         sumoConfig = os.path.join(
             configs['current_path'], 'training_data', time_data, 'net_data', configs['time_data']+'_test.sumocfg')
