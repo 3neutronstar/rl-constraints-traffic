@@ -13,7 +13,7 @@ from itertools import chain
 DEFAULT_CONFIG = {
     'gamma': 0.99,
     'tau': 0.001,
-    'batch_size': 64,
+    'batch_size': 4,
     'experience_replay_size': 1e5,
     'epsilon': 0.8,
     'epsilon_decay_rate': 0.98,
@@ -107,11 +107,11 @@ class SuperQNetwork(nn.Module):
 class Trainer(RLAlgorithm):
     def __init__(self, configs):
         super().__init__(configs)
-        if configs['mode']=='train' or configs['mode']== 'simulate':
+        if configs['mode'] == 'train' or configs['mode'] == 'simulate':
             os.mkdir(os.path.join(
                 self.configs['current_path'], 'training_data', self.configs['time_data'], 'model'))
             self.configs = merge_dict(configs, DEFAULT_CONFIG)
-        else: # test
+        else:  # test
             self.configs = merge_dict_non_conflict(configs, DEFAULT_CONFIG)
         self.num_agent = len(self.configs['tl_rl_list'])
         self.state_space = self.configs['state_space']
@@ -143,10 +143,11 @@ class Trainer(RLAlgorithm):
         self.targetQNetwork = list()
         self.rate_key_list = list()
         for i, key in enumerate(self.configs['traffic_node_info'].keys()):
-            if configs['mode']=='train':
+            if configs['mode'] == 'train':
                 rate_key = self.configs['traffic_node_info'][key]['num_phase']
-            elif configs['mode']== 'test':
-                rate_key = str(self.configs['traffic_node_info'][key]['num_phase'])
+            elif configs['mode'] == 'test':
+                rate_key = str(
+                    self.configs['traffic_node_info'][key]['num_phase'])
             self.rate_key_list.append(rate_key)
             self.mainQNetwork.append(QNetwork(
                 self.super_output_size, self.rate_action_space[rate_key], self.time_action_space[i], self.configs))
@@ -176,7 +177,7 @@ class Trainer(RLAlgorithm):
         #             action[0][i]=random.randint(0,7)
 
         # 전체를 날리는 epsilon greedy
-        actions = torch.zeros((1, self.num_agent, self.action_size),
+        actions = torch.zeros((1, self.action_size, self.num_agent),
                               dtype=torch.int, device=self.configs['device'])
         if mask.sum() > 0:
             if random.random() > self.epsilon:  # epsilon greedy
@@ -184,27 +185,27 @@ class Trainer(RLAlgorithm):
                 with torch.no_grad():
                     obs = self.mainSuperQNetwork(state)
                     rate_actions = torch.zeros(
-                        (1, self.num_agent, 1), dtype=torch.int, device=self.configs['device'])
+                        (1, 1, self.num_agent), dtype=torch.int, device=self.configs['device'])
                     time_actions = torch.zeros(
-                        (1, self.num_agent, 1), dtype=torch.int, device=self.configs['device'])
+                        (1, 1, self.num_agent), dtype=torch.int, device=self.configs['device'])
                     for index in torch.nonzero(mask):
                         rate_action, time_action = self.mainQNetwork[index](
                             obs)
-                        rate_actions[0, index] = rate_action.max(1)[1].int()
-                        time_actions[0, index] = time_action.max(1)[1].int()
-                    actions = torch.cat((rate_actions, time_actions), dim=2)
+                        rate_actions[0, 0, index] = rate_action.max(1)[1].int()
+                        time_actions[0, 0, index] = time_action.max(1)[1].int()
+                    actions = torch.cat((rate_actions, time_actions), dim=1)
                     # agent가 늘어나면 view(agents,action_size)
             else:
                 rate_actions = torch.zeros(
-                    (1, self.num_agent, 1), dtype=torch.int, device=self.configs['device'])
+                    (1,  1, self.num_agent), dtype=torch.int, device=self.configs['device'])
                 time_actions = torch.zeros(
-                    (1, self.num_agent, 1), dtype=torch.int, device=self.configs['device'])
+                    (1,  1, self.num_agent), dtype=torch.int, device=self.configs['device'])
                 for index in torch.nonzero(mask):
-                    rate_actions[0, index] = torch.tensor(random.randint(
+                    rate_actions[0, 0, index] = torch.tensor(random.randint(
                         0, self.rate_action_space[self.rate_key_list[index]]-1), dtype=torch.int, device=self.configs['device'])
-                    time_actions[0, index] = torch.tensor(random.randint(
+                    time_actions[0, 0, index] = torch.tensor(random.randint(
                         0, self.configs['time_action_space'][index]-1), dtype=torch.int, device=self.configs['device'])
-                actions = torch.cat((rate_actions, time_actions), dim=2)
+                actions = torch.cat((rate_actions, time_actions), dim=1)
         return actions
 
     def target_update(self):
@@ -223,7 +224,7 @@ class Trainer(RLAlgorithm):
     def save_replay(self, state, action, reward, next_state, mask):
         for i in torch.nonzero(mask):
             self.mainQNetwork[i].experience_replay.push(
-                state[0, i].view(1, self.super_input_size), action[0, i], reward[0, i], next_state[0, i].view(1, self.super_input_size))
+                state[0, i].view(1, self.super_input_size), action[0, :, i].view(-1, self.action_size), reward[0, i], next_state[0, i].view(1, self.super_input_size))
 
     def update(self, mask):  # 각 agent마다 시행하기 # agent network로 돌아가서 시행 그러면될듯?
         for i, (mainQNetwork, targetQNetwork, optimizer) in enumerate(zip(self.mainQNetwork, self.targetQNetwork, self.optimizer)):
@@ -242,7 +243,6 @@ class Trainer(RLAlgorithm):
 
             # dim=0인 이유는 batch 끼리 cat 하는 것이기 때문임
             state_batch = torch.cat(batch.state)
-
             action_batch = torch.cat(batch.action)
             reward_batch = torch.cat(batch.reward)
 
@@ -251,9 +251,9 @@ class Trainer(RLAlgorithm):
             rate_state_action_values, time_state_action_values = mainQNetwork(self.mainSuperQNetwork(
                 state_batch))
             rate_state_action_values = rate_state_action_values.gather(
-                1, action_batch[:, 0, 0].view(-1, 1).long())
+                1, action_batch[:, 0].view(-1, 1).long())  # batch,rate_action_size
             time_state_action_values = time_state_action_values.gather(
-                1, action_batch[:, 0, 1].view(-1, 1).long())
+                1, action_batch[:, 1].view(-1, 1).long())  # batch,time_action_size
             # 모든 다음 상태를 위한 V(s_{t+1}) 계산
             rate_next_state_values = torch.zeros(
                 self.configs['batch_size'], device=self.configs['device'], dtype=torch.float)
@@ -305,7 +305,7 @@ class Trainer(RLAlgorithm):
         torch.save(self.targetSuperQNetwork.state_dict(), os.path.join(
             self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'Super_target.h5'))
 
-        for i,(mainQ, targetQ) in enumerate(zip(self.mainQNetwork, self.targetQNetwork)):
+        for i, (mainQ, targetQ) in enumerate(zip(self.mainQNetwork, self.targetQNetwork)):
             torch.save(mainQ.state_dict(), os.path.join(
                 self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'_{}.h5'.format(i)))
             torch.save(targetQ.state_dict(), os.path.join(
@@ -315,9 +315,9 @@ class Trainer(RLAlgorithm):
         self.mainSuperQNetwork.load_state_dict(torch.load(os.path.join(
             self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'_{}Super.h5'.format(self.configs['replay_epoch']))))
         self.mainSuperQNetwork.eval()
-        for i,mainQ in enumerate(self.mainQNetwork):
+        for i, mainQ in enumerate(self.mainQNetwork):
             mainQ.load_state_dict(torch.load(os.path.join(
-                self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'_{}_{}.h5'.format(self.configs['replay_epoch'],i))))
+                self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'_{}_{}.h5'.format(self.configs['replay_epoch'], i))))
             mainQ.eval()
 
     def update_tensorboard(self, writer, epoch):
