@@ -148,7 +148,6 @@ def simulate(flags, configs, sumoConfig):
         step += 1
         # check performance
         for _, interests in enumerate(configs['interest_list']):
-            print(interests)
             for interest in interests:
                 # 신호군 흐름
                 avg_inEdge_velocity=list()
