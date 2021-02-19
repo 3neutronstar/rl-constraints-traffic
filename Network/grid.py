@@ -187,7 +187,7 @@ class GridNetwork(Network):
                                 'end': str(self.configs['flow_end']),
                                 'probability': self.configs['probability'],
                                 'reroute': 'false',
-                                # 'via': edge['id']+" "+via_string+" "+checkEdge['id'],
+                                #'via': edge['id']+" "+via_string+" "+checkEdge['id'],
                                 'departPos': "base",
                                 'departLane': 'best',
                             })
@@ -218,9 +218,9 @@ class GridNetwork(Network):
                     {'duration': '3',
                      'state': 'y'*(12+4*num_lanes),
                      },
-                    {'duration': '3',
-                     'state': 'r'*(12+4*num_lanes),
-                     },
+                    # {'duration': '3',
+                    #  'state': 'r'*(12+4*num_lanes),
+                    #  },
                     {'duration': '37',  # 2
                      'state': 'G{0}{3}rr{2}{3}rG{0}{3}rr{2}{3}r'.format(  # 위직아래직
                          g*num_lanes, g, r*num_lanes, r),  # current
@@ -228,9 +228,9 @@ class GridNetwork(Network):
                     {'duration': '3',
                      'state': 'y'*(12+4*num_lanes),
                      },
-                    {'duration': '3',
-                     'state': 'r'*(12+4*num_lanes),
-                     },
+                    # {'duration': '3',
+                    #  'state': 'r'*(12+4*num_lanes),
+                    #  },
                     {'duration': '37',  # 1
                      'state': 'r{2}{3}rr{2}{1}gr{2}{3}rr{2}{1}g'.format(  # 좌좌우좌
                          g*num_lanes, g, r*num_lanes, r),
@@ -238,9 +238,9 @@ class GridNetwork(Network):
                     {'duration': '3',
                      'state': 'y'*(12+4*num_lanes),
                      },
-                    {'duration': '3',
-                     'state': 'r'*(12+4*num_lanes),
-                     },
+                    # {'duration': '3',
+                    #  'state': 'r'*(12+4*num_lanes),
+                    #  },
                     {'duration': '37',  # 1
                      'state': 'r{2}{3}rG{0}{3}rr{2}{3}rG{0}{3}g'.format(  # 좌직우직
                          g*num_lanes, g, r*num_lanes, r),  # current
@@ -248,9 +248,9 @@ class GridNetwork(Network):
                     {'duration': '3',
                      'state': 'y'*(12+4*num_lanes),
                      },
-                    {'duration': '3',
-                     'state': 'r'*(12+4*num_lanes),
-                     },
+                    # {'duration': '3',
+                    #  'state': 'r'*(12+4*num_lanes),
+                    #  },
                 ]
                 # 2행시
                 # phase_set = [
@@ -397,15 +397,15 @@ class GridNetwork(Network):
         # time_action_space
         NET_CONFIGS['time_action_space'] = list()
         traffic_info = {
-            'n_0_0': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
-            'n_0_1': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
-            'n_0_2': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
-            'n_1_0': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
-            'n_1_1': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
-            'n_1_2': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
-            'n_2_0': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
-            'n_2_1': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
-            'n_2_2': {'min_phase': [20, 20, 20, 20], 'offset': 0, 'phase_duration': [34, 3, 3, 34, 3, 3, 34, 3, 3, 34, 3, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
+            'n_0_0': {'min_phase': [25, 25, 25, 25], 'offset': 0, 'phase_duration': [34,  3, 34,  3, 34,  3, 34,  3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
+            'n_0_1': {'min_phase': [25, 25, 25, 25], 'offset': 0, 'phase_duration': [34,  3, 34,  3, 34,  3, 34,  3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
+            'n_0_2': {'min_phase': [25, 25, 25, 25], 'offset': 0, 'phase_duration': [34,  3, 34,  3, 34,  3, 34,  3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
+            'n_1_0': {'min_phase': [25, 25, 25, 25], 'offset': 0, 'phase_duration': [34,  3, 34,  3, 34,  3, 34,  3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
+            'n_1_1': {'min_phase': [25, 25, 25, 25], 'offset': 0, 'phase_duration': [34,  3, 34,  3, 34,  3, 34,  3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
+            'n_1_2': {'min_phase': [25, 25, 25, 25], 'offset': 0, 'phase_duration': [34,  3, 34,  3, 34,  3, 34,  3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
+            'n_2_0': {'min_phase': [25, 25, 25, 25], 'offset': 0, 'phase_duration': [34,  3, 34,  3, 34,  3, 34,  3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
+            'n_2_1': {'min_phase': [25, 25, 25, 25], 'offset': 0, 'phase_duration': [34,  3, 34,  3, 34,  3, 34,  3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
+            'n_2_2': {'min_phase': [25, 25, 25, 25], 'offset': 0, 'phase_duration': [34,  3, 34,  3, 34,  3, 34,  3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
         }
         # phase list 삽입
         for tl_rl in self.tl_rl_list:
@@ -450,8 +450,8 @@ class GridNetwork(Network):
             NET_CONFIGS['tl_rl_list'].append(key)
             NET_CONFIGS['offset'].append(traffic_info[key]['offset'])
             NET_CONFIGS['phase_index'].append(traffic_info[key]['phase_index'])
-            NET_CONFIGS['time_action_space'].append((torch.min(torch.tensor(traffic_info[key]['max_phase'])-torch.tensor(
-                traffic_info[key]['common_phase']), torch.tensor(traffic_info[key]['common_phase'])-torch.tensor(traffic_info[key]['min_phase']))/2).mean().item())
+            NET_CONFIGS['time_action_space'].append(round((torch.min(torch.tensor(traffic_info[key]['max_phase'])-torch.tensor(
+                traffic_info[key]['common_phase']), torch.tensor(traffic_info[key]['common_phase'])-torch.tensor(traffic_info[key]['min_phase']))/2.0).mean().item()))
 
         NET_CONFIGS['num_agent'] = len(NET_CONFIGS['tl_rl_list'])
         # max value 검출기
