@@ -17,7 +17,7 @@ DEFAULT_CONFIG = {
     'experience_replay_size': 1e5,
     'epsilon': 0.8,
     'epsilon_decay_rate': 0.98,
-    'fc_net': [64, 50, 40],
+    'fc_net': [64, 48, 32],
     'lr': 1e-4,
     'lr_decay_rate': 0.99,
     'target_update_period': 10,
@@ -88,8 +88,8 @@ class SuperQNetwork(nn.Module):
         self.num_agent = len(self.configs['tl_rl_list'])
         self.state_space = self.configs['state_space']
         # Neural Net
-        self.conv1 = nn.Conv1d(8, 16, kernel_size=(1, 1))
-        self.conv2 = nn.Conv1d(16, 8, kernel_size=(1, 1))
+        self.conv1 = nn.Conv1d(self.state_space, 16, kernel_size=1)
+        self.conv2 = nn.Conv1d(16, self.state_space, kernel_size=1)
         self.fc1 = nn.Linear(
             self.input_size, int(self.state_space*1.5*self.num_agent))
         self.fc2 = nn.Linear(
@@ -100,6 +100,7 @@ class SuperQNetwork(nn.Module):
             self.state_space*1*self.num_agent, self.output_size)
 
     def forward(self, x):
+        print(x.size())
         x = f.relu(self.conv1(x))
         x = f.relu(self.conv2(x))
         x = x.view(-1, self.num_agent*self.state_space)
@@ -231,7 +232,7 @@ class Trainer(RLAlgorithm):
     def save_replay(self, state, action, reward, next_state, mask):
         for i in torch.nonzero(mask):
             self.mainQNetwork[i].experience_replay.push(
-                state[0, i].view(1, self.super_input_size), action[0, i], reward[0, i], next_state[0, i].view(1, self.super_input_size))
+                state[0, i], action[0, i], reward[0, i], next_state[0, i])
 
     def update(self, mask):  # 각 agent마다 시행하기 # agent network로 돌아가서 시행 그러면될듯?
         for i, (mainQNetwork, targetQNetwork, optimizer) in enumerate(zip(self.mainQNetwork, self.targetQNetwork, self.optimizer)):
@@ -255,7 +256,6 @@ class Trainer(RLAlgorithm):
             reward_batch = torch.cat(batch.reward)
 
             # Q(s_t, a) 계산 - 모델이 action batch의 a'일때의 Q(s_t,a')를 계산할때, 취한 행동 a'의 column 선택(column이 Q)
-
             rate_state_action_values, time_state_action_values = mainQNetwork(self.mainSuperQNetwork(
                 state_batch))
             rate_state_action_values = rate_state_action_values.gather(

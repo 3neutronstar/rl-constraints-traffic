@@ -79,7 +79,7 @@ class CityEnv(baseEnv):
         '''
 
         state = torch.zeros(
-            (1, self.num_agent, self.state_space, self.num_agent, 1), dtype=torch.float, device=self.configs['device'])
+            (1, self.num_agent, self.state_space, self.num_agent), dtype=torch.float, device=self.configs['device'])
         next_state = torch.zeros_like(state)
         action = torch.zeros(
             (1, self.num_agent, self.num_agent, 2), dtype=torch.int, device=self.configs['device'])
@@ -166,15 +166,14 @@ class CityEnv(baseEnv):
                         # 좌회전
                         veh_state[j*2+1] = left_movement
                 next_state.append(veh_state)
-            next_state = torch.cat(next_state, dim=1).view(
-                1, self.state_space, self.num_agent, 1)
+            next_state = torch.cat(next_state, dim=1)
             # 각 agent env에 state,next_state 저장
             for state_index in torch.nonzero(mask_matrix):
                 self.tl_rl_memory[state_index].state = self.tl_rl_memory[state_index].next_state
                 self.tl_rl_memory[state_index].next_state = next_state
         else:
             next_state = torch.zeros(
-                1, self.state_space, self.num_agent, 1, dtype=torch.float, device=self.configs['device'])
+                1, self.state_space, self.num_agent, dtype=torch.float, device=self.configs['device'])
 
         return next_state
 
