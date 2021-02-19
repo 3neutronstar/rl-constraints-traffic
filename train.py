@@ -129,12 +129,12 @@ def city_dqn_train(configs, time_data, sumoCmd):
             # info
             arrived_vehicles += traci.simulation.getArrivedNumber()
             #soft update
-            agent.target_update()
+            # agent.target_update()
 
         agent.update_hyperparams(epoch)  # lr and epsilon upate
         # #hard update
-        # if epoch % agent.configs['target_update_period'] == 0:
-        #     agent.target_update()  # dqn
+        if epoch % agent.configs['target_update_period'] == 0:
+            agent.target_update()  # dqn
         b = time.time()
         traci.close()
         print("time:", b-a)

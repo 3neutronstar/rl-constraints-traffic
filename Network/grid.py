@@ -329,6 +329,7 @@ class GridNetwork(Network):
         x_y_end = self.configs['grid_num']-1
         for _, node in enumerate(node_list):
             if node['id'][-1] not in side_list:
+                interests = list()
                 x = int(node['id'][-3])
                 y = int(node['id'][-1])
                 left_x = x-1
@@ -351,7 +352,7 @@ class GridNetwork(Network):
                 if y == x_y_end:
                     down_y = 'd'
                 # up
-                interest_list.append(
+                interests.append(
                     {
                         'id': 'u_{}'.format(node['id'][2:]),
                         'inflow': 'n_{}_{}_to_n_{}_{}'.format(up_x, up_y, x, y),
@@ -359,7 +360,7 @@ class GridNetwork(Network):
                     }
                 )
                 # right
-                interest_list.append(
+                interests.append(
                     {
                         'id': 'r_{}'.format(node['id'][2:]),
                         'inflow': 'n_{}_{}_to_n_{}_{}'.format(right_x, right_y, x, y),
@@ -367,7 +368,7 @@ class GridNetwork(Network):
                     }
                 )
                 # down
-                interest_list.append(
+                interests.append(
                     {
                         'id': 'd_{}'.format(node['id'][2:]),
                         'inflow': 'n_{}_{}_to_n_{}_{}'.format(down_x, down_y, x, y),
@@ -375,13 +376,14 @@ class GridNetwork(Network):
                     }
                 )
                 # left
-                interest_list.append(
+                interests.append(
                     {
                         'id': 'l_{}'.format(node['id'][2:]),
                         'inflow': 'n_{}_{}_to_n_{}_{}'.format(left_x, left_y, x, y),
                         'outflow': 'n_{}_{}_to_n_{}_{}'.format(x, y, left_x, left_y),
                     }
                 )
+                interest_list.append(interests)
         # phase 생성
         '''
             key 에는 node id
@@ -417,9 +419,10 @@ class GridNetwork(Network):
         for _, node in enumerate(node_list):
             if node['id'][-1] not in side_list:
                 node_interest_pair[node['id']] = list()
-                for _, interest in enumerate(interest_list):
-                    if node['id'][-3:] == interest['id'][-3:]:  # 좌표만 받기
-                        node_interest_pair[node['id']].append(interest)
+                for _, interests in enumerate(interest_list):
+                    for interest in interests:
+                        if node['id'][-3:] == interest['id'][-3:]:  # 좌표만 받기
+                            node_interest_pair[node['id']].append(interest)
         # TODO, common phase 결정하면서 phase_index 만들기
         for key in traffic_info.keys():
             traffic_info[key]['common_phase'] = list()  # 실제 현시로 분류되는 phase
@@ -464,6 +467,7 @@ class GridNetwork(Network):
         NET_CONFIGS['interest_list'] = interest_list
         NET_CONFIGS['node_interest_pair'] = node_interest_pair
         NET_CONFIGS['traffic_node_info'] = traffic_info
+        print(interest_list)
 
         return NET_CONFIGS
 
