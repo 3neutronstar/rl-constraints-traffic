@@ -146,6 +146,7 @@ def simulate(flags, configs, sumoConfig):
     # travel time
     i=0
     avg_travel_time=0
+    total_velocity=list()
     while step < MAX_STEPS:
 
         traci.simulationStep()
@@ -172,20 +173,17 @@ def simulate(flags, configs, sumoConfig):
                             traci.edge.getLastStepMeanSpeed(interest['outflow']))
                     dup_list.append(interest['outflow'])
 
-        # # 전체 흐름
-        # vehicle_list = traci.vehicle.getIDList()
-        # for i, vehicle in enumerate(vehicle_list):
-        #     speed = traci.vehicle.getSpeed(vehicle)
-        #     avg_velocity = float((i)*avg_velocity+speed) / \
-        #         float(i+1)
+        edge_list=traci.simulation.getEdgeList()
+        for edgeid in edge_list:
+            if traci.edge.getLastStepVehicleNumber(edgeid) !=None:
+                total_velocity.append(traci.edge.getLastStepMeanSpeed(edgeid))
 
         arrived_vehicles += traci.simulation.getAllSubscriptionResults()[
             ''][0x79]  # throughput
-    avg_part_velocity = torch.tensor(part_velocity, dtype=torch.float).mean()
     b = time.time()
     traci.close()
-    # edgesss = traci.edge.getSubscriptionResults('n_2_2_to_n_2_1')
-    # print(edgesss)
+    avg_part_velocity = torch.tensor(part_velocity, dtype=torch.float).mean()
+    avg_velocity=torch.tensor(total_velocity,dtype=torch.float).mean()
     print('======== arrived number:{} avg waiting time:{},avg velocity:{} avg_part_velocity: {}'.format(
         arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity))
     print("sim_time=", b-a)

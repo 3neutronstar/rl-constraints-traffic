@@ -41,6 +41,7 @@ def city_dqn_test(flags, sumoCmd, configs):
     avg_velocity = 0
     arrived_vehicles = 0
     part_velocity = list()
+    total_velocity=list()
     with torch.no_grad():
         step = 0
         traci.start(sumoCmd)
@@ -129,20 +130,17 @@ def city_dqn_test(flags, sumoCmd, configs):
                             part_velocity.append(
                                 traci.edge.getLastStepMeanSpeed(interest['outflow']))
                         dup_list.append(interest['outflow'])
-
-            # # 전체 흐름
-            # vehicle_list = traci.vehicle.getIDList()
-            # for i, vehicle in enumerate(vehicle_list):
-            #     speed = traci.vehicle.getSpeed(vehicle)
-            #     avg_velocity = float((i)*avg_velocity+speed) / \
-            #         float(i+1)
-
-            state = next_state
+                    edge_list=traci.simulation.getEdgeList()
+            for edgeid in edge_list:
+                if traci.edge.getLastStepVehicleNumber(edgeid) !=None:
+                    total_velocity.append(traci.edge.getLastStepMeanSpeed(edgeid))
+                state = next_state
             # info
             arrived_vehicles += traci.simulation.getArrivedNumber()
 
         avg_part_velocity = torch.tensor(
             part_velocity, dtype=torch.float).mean()
+        avg_velocity=torch.tensor(total_velocity,dtype=torch.float).mean()
         b = time.time()
         traci.close()
         print("time:", b-a)
