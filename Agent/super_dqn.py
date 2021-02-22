@@ -54,6 +54,8 @@ class QNetwork(nn.Module):
             self.configs['fc_net'][1], self.configs['fc_net'][2])
         self.fc_y4 = nn.Linear(
             self.configs['fc_net'][2], self.time_output_size)
+        if configs['mode']=='test':
+            self.eval()
 
         # Experience Replay
         self.experience_replay = ReplayMemory(
@@ -98,6 +100,8 @@ class SuperQNetwork(nn.Module):
             int(self.state_space*1.5*self.num_agent), int(self.state_space*1*self.num_agent))
         self.fc4 = nn.Linear(
             self.state_space*1*self.num_agent, self.output_size)
+        if configs['mode']=='test':
+            self.eval()
 
     def forward(self, x):
         x = f.relu(self.conv1(x))

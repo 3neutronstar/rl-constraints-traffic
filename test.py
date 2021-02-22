@@ -135,11 +135,11 @@ def city_dqn_test(flags, sumoCmd, configs):
                             part_velocity.append(
                                 traci.edge.getLastStepMeanSpeed(interest['outflow']))
                         dup_list.append(interest['outflow'])
-                    edge_list=traci.edge.getIDList()
-            for edgeid in edge_list:
-                if traci.edge.getLastStepVehicleNumber(edgeid) !=None:
-                    total_velocity.append(traci.edge.getLastStepMeanSpeed(edgeid))
-                state = next_state
+            # edge_list=traci.edge.getIDList()
+            # for edgeid in edge_list:
+            #     if traci.edge.getLastStepVehicleNumber(edgeid) !=None:
+            #         total_velocity.append(traci.edge.getLastStepMeanSpeed(edgeid))
+            #     state = next_state
             # info
             arrived_vehicles += traci.simulation.getArrivedNumber()
 
@@ -156,4 +156,4 @@ def city_dqn_test(flags, sumoCmd, configs):
         avg_part_velocity = torch.tensor(part_velocity, dtype=torch.float).mean()
         avg_travel_time=torch.tensor(travel_time,dtype=torch.float).mean()
         print('======== arrived number:{} avg waiting time:{},avg velocity:{} avg_part_velocity: {} avg_travel_time: {}'.format(
-        arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity,avg_travel_time))
+        arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity,avg_travel_time/MAX_STEPS))
