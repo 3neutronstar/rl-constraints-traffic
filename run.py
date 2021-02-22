@@ -137,13 +137,13 @@ def simulate(flags, configs, sumoConfig):
     # traci.edge.subscribe('n_2_2_to_n_2_1', [
     #                      tc.LAST_STEP_VEHICLE_HALTING_NUMBER], 0, 2000)
     avg_waiting_time = 0
-    avg_velocity = 0
     step = 0
     # agent setting
     arrived_vehicles = 0
     part_velocity = list()
     # travel time
     travel_time=list()
+    total_velocity=list()
     while step < MAX_STEPS:
 
         traci.simulationStep()
@@ -174,14 +174,10 @@ def simulate(flags, configs, sumoConfig):
                         travel_time.append(traci.edge.getTraveltime(outflow))
                     dup_list.append(outflow)
 
-        # for _, edge in enumerate(configs['interest_list']):
-        #     avg_waiting_time += traci.edge.getWaitingTime(edge['inflow'])
-
-        # vehicle_list = traci.vehicle.getIDList()
-        # for i, vehicle in enumerate(vehicle_list):
-        #     speed = traci.vehicle.getSpeed(vehicle)
-        #     avg_velocity = float((i)*avg_velocity+speed) / \
-        #         float(i+1)  # incremental avg
+        edge_list=traci.edge.getIDList()
+        for edgeid in edge_list:
+            if traci.edge.getLastStepVehicleNumber(edgeid) !=0:
+                total_velocity.append(traci.edge.getLastStepMeanSpeed(edgeid))
 
         arrived_vehicles += traci.simulation.getAllSubscriptionResults()[
             ''][0x79]  # throughput
@@ -189,6 +185,7 @@ def simulate(flags, configs, sumoConfig):
     traci.close()
     avg_part_velocity = torch.tensor(part_velocity, dtype=torch.float).mean()
     avg_travel_time=torch.tensor(travel_time,dtype=torch.float).mean()
+    avg_velocity=torch.tensor(total_velocity,dtype=torch.float).mean()
     print('======== arrived number:{} avg waiting time:{},avg velocity:{} avg_part_velocity: {} avg_travel_time: {}'.format(
     arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity,avg_travel_time))
     print("sim_time=", b-a)

@@ -31,16 +31,15 @@ def city_dqn_test(flags, sumoCmd, configs):
                           device=configs['device'], dtype=torch.int)
     TL_PERIOD = torch.tensor(
         configs['tl_period'], device=configs['device'], dtype=torch.int)
-    epoch = 0
     # state initialization
     # agent setting
     # check performance
     avg_waiting_time = 0
     avg_part_velocity = 0
-    total_reward = 0
     avg_velocity = 0
     arrived_vehicles = 0
     part_velocity = list()
+    total_velocity=list()
     # travel time
     travel_time=list()
     with torch.no_grad():
@@ -137,12 +136,10 @@ def city_dqn_test(flags, sumoCmd, configs):
                             travel_time.append(traci.edge.getTraveltime(outflow))
                         dup_list.append(outflow)
 
-            # # 전체 흐름
-            # vehicle_list = traci.vehicle.getIDList()
-            # for i, vehicle in enumerate(vehicle_list):
-            #     speed = traci.vehicle.getSpeed(vehicle)
-            #     avg_velocity = float((i)*avg_velocity+speed) / \
-            #         float(i+1)
+            edge_list=traci.edge.getIDList()
+            for edgeid in edge_list:
+                if traci.edge.getLastStepVehicleNumber(edgeid) !=0:
+                    total_velocity.append(traci.edge.getLastStepMeanSpeed(edgeid))
 
             state = next_state
             # info
@@ -153,5 +150,6 @@ def city_dqn_test(flags, sumoCmd, configs):
         print("time:", b-a)
         avg_part_velocity = torch.tensor(part_velocity, dtype=torch.float).mean()
         avg_travel_time=torch.tensor(travel_time,dtype=torch.float).mean()
+        avg_velocity=torch.tensor(total_velocity,dtype=torch.float).mean()
         print('======== arrived number:{} avg waiting time:{},avg velocity:{} avg_part_velocity: {} avg_travel_time: {}'.format(
         arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity,avg_travel_time/MAX_STEPS))
