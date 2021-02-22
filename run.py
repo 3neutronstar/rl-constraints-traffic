@@ -190,7 +190,7 @@ def simulate(flags, configs, sumoConfig):
     avg_part_velocity = torch.tensor(part_velocity, dtype=torch.float).mean()
     avg_travel_time=torch.tensor(travel_time,dtype=torch.float).mean()
     print('======== arrived number:{} avg waiting time:{},avg velocity:{} avg_part_velocity: {} avg_travel_time: {}'.format(
-    arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity,avg_travel_time))
+    arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity,avg_travel_time/MAX_STEPS))
     print("sim_time=", b-a)
 
 

@@ -17,7 +17,7 @@ DEFAULT_CONFIG = {
     'experience_replay_size': 1e5,
     'epsilon': 0.8,
     'epsilon_decay_rate': 0.98,
-    'fc_net': [64, 48, 32],
+    'fc_net': [36, 48, 24],
     'lr': 1e-4,
     'lr_decay_rate': 0.99,
     'target_update_period': 10,
@@ -88,8 +88,8 @@ class SuperQNetwork(nn.Module):
         self.num_agent = len(self.configs['tl_rl_list'])
         self.state_space = self.configs['state_space']
         # Neural Net
-        self.conv1 = nn.Conv1d(self.state_space, 16, kernel_size=1)
-        self.conv2 = nn.Conv1d(16, self.state_space, kernel_size=1)
+        self.conv1 = nn.Conv1d(self.state_space, 4, kernel_size=1)
+        self.conv2 = nn.Conv1d(4, 1, kernel_size=1)
         self.fc1 = nn.Linear(
             self.input_size, int(self.state_space*1.5*self.num_agent))
         self.fc2 = nn.Linear(
@@ -137,9 +137,8 @@ class Trainer(RLAlgorithm):
         self.epsilon_decay_rate = self.configs['epsilon_decay_rate']
         self.batch_size = self.configs['batch_size']
         self.running_loss = 0
-        self.super_output_size = int(
-            self.num_agent*self.configs['state_space']/2)
-        self.super_input_size = int(self.configs['state_space']*self.num_agent)
+        self.super_output_size = int(self.num_agent*2)
+        self.super_input_size = int(self.num_agent)
         # NN composition
         self.mainSuperQNetwork = SuperQNetwork(
             self.super_input_size, self.super_output_size, self.configs)
