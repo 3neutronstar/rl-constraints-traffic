@@ -135,11 +135,11 @@ def city_dqn_test(flags, sumoCmd, configs):
                             part_velocity.append(
                                 traci.edge.getLastStepMeanSpeed(interest['outflow']))
                         dup_list.append(interest['outflow'])
-                    edge_list=traci.edge.getIDList()
-            for edgeid in edge_list:
-                if traci.edge.getLastStepVehicleNumber(edgeid) !=None:
-                    total_velocity.append(traci.edge.getLastStepMeanSpeed(edgeid))
-                state = next_state
+            # edge_list=traci.edge.getIDList()
+            # for edgeid in edge_list:
+            #     if traci.edge.getLastStepVehicleNumber(edgeid) !=None:
+            #         total_velocity.append(traci.edge.getLastStepMeanSpeed(edgeid))
+            #     state = next_state
             # info
             arrived_vehicles += traci.simulation.getArrivedNumber()
 
