@@ -141,7 +141,11 @@ def simulate(flags, configs, sumoConfig):
     step = 0
     # agent setting
     arrived_vehicles = 0
+    avg_velocity = 0
     part_velocity = list()
+    # travel time
+    i=0
+    total_velocity=list()
     # travel time
     travel_time=list()
     while step < MAX_STEPS:
@@ -170,27 +174,23 @@ def simulate(flags, configs, sumoConfig):
                 if outflow != None and outflow not in dup_list:
                     if traci.edge.getLastStepVehicleNumber(outflow) != 0:
                         part_velocity.append(
-                            traci.edge.getLastStepMeanSpeed(outflow))
-                        travel_time.append(traci.edge.getTraveltime(outflow))
-                    dup_list.append(outflow)
+                            traci.edge.getLastStepMeanSpeed(interest['outflow']))
+                    dup_list.append(interest['outflow'])
 
-        # for _, edge in enumerate(configs['interest_list']):
-        #     avg_waiting_time += traci.edge.getWaitingTime(edge['inflow'])
-
-        # vehicle_list = traci.vehicle.getIDList()
-        # for i, vehicle in enumerate(vehicle_list):
-        #     speed = traci.vehicle.getSpeed(vehicle)
-        #     avg_velocity = float((i)*avg_velocity+speed) / \
-        #         float(i+1)  # incremental avg
+        edge_list=traci.edge.getIDList()
+        for edgeid in edge_list:
+            if traci.edge.getLastStepVehicleNumber(edgeid) !=None:
+                total_velocity.append(traci.edge.getLastStepMeanSpeed(edgeid))
 
         arrived_vehicles += traci.simulation.getAllSubscriptionResults()[
             ''][0x79]  # throughput
     b = time.time()
     traci.close()
     avg_part_velocity = torch.tensor(part_velocity, dtype=torch.float).mean()
+    avg_velocity=torch.tensor(total_velocity,dtype=torch.float).mean()
     avg_travel_time=torch.tensor(travel_time,dtype=torch.float).mean()
     print('======== arrived number:{} avg waiting time:{},avg velocity:{} avg_part_velocity: {} avg_travel_time: {}'.format(
-    arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity,avg_travel_time/MAX_STEPS))
+    arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity,avg_travel_time))
     print("sim_time=", b-a)
 
 
