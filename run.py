@@ -177,7 +177,7 @@ def simulate(flags, configs, sumoConfig):
                             traci.edge.getLastStepMeanSpeed(interest['outflow']))
                     dup_list.append(interest['outflow'])
 
-        edge_list=traci.simulation.getEdgeList()
+        edge_list=traci.edge.getIDList()
         for edgeid in edge_list:
             if traci.edge.getLastStepVehicleNumber(edgeid) !=None:
                 total_velocity.append(traci.edge.getLastStepMeanSpeed(edgeid))
