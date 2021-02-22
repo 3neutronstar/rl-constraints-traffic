@@ -102,7 +102,7 @@ class SuperQNetwork(nn.Module):
     def forward(self, x):
         x = f.relu(self.conv1(x))
         x = f.relu(self.conv2(x))
-        x = x.view(-1, self.num_agent*self.state_space)
+        x = x.view(-1, self.num_agent)
         x = f.relu(self.fc1(x))
         x = f.relu(self.fc2(x))
         x = f.relu(self.fc3(x))
