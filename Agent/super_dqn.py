@@ -104,7 +104,9 @@ class SuperQNetwork(nn.Module):
         x = f.relu(self.conv2(x))
         x = x.view(-1, self.num_agent)
         x = f.relu(self.fc1(x))
+        x=f.dropout(x,0.4)
         x = f.relu(self.fc2(x))
+        x=f.dropout(x,0.3)
         x = f.relu(self.fc3(x))
         x = self.fc4(x)  # .view(-1, self.num_agent,
         #                      int(self.configs['state_space']/2))

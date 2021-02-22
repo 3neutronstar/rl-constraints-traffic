@@ -28,8 +28,9 @@ class Network():
         self.sim_start = self.configs['sim_start']
         self.max_steps = self.configs['max_steps']
         self.current_path = os.path.dirname(os.path.abspath(__file__))
-        gen_training_data_path=os.path.join(self.current_path,'training_data')
-        if os.path.exists(gen_training_data_path)==False:
+        gen_training_data_path = os.path.join(
+            self.current_path, 'training_data')
+        if os.path.exists(gen_training_data_path) == False:
             os.mkdir(gen_training_data_path)
         if self.configs['mode'] == 'train' or self.configs['mode'] == 'train_old':
             self.file_name = self.configs['file_name']
@@ -39,7 +40,7 @@ class Network():
                                   self.configs['time_data'], 'net_data'))
             self.current_Env_path = os.path.join(
                 self.current_path, 'training_data', self.configs['time_data'], 'net_data')
-        elif self.configs['mode']=='test':
+        elif self.configs['mode'] == 'test':
             self.file_name = self.configs['file_name']
             os.mkdir(os.path.join(self.current_path, 'training_data',
                                   self.configs['time_data']))
@@ -48,16 +49,16 @@ class Network():
             self.current_Env_path = os.path.join(
                 self.current_path, 'training_data', self.configs['time_data'], 'net_data')
 
-        else: # simulate
+        else:  # simulate
             self.file_name = self.configs['file_name']
             self.current_Env_path = os.path.join(
                 self.current_path, 'Net_data')
-            if os.path.exists(self.current_Env_path)==False:
+            if os.path.exists(self.current_Env_path) == False:
                 os.mkdir(self.current_Env_path)
 
         # data directory generate
-        gen_data_path=os.path.join(self.current_path,'data')
-        if os.path.exists(gen_data_path)==False:
+        gen_data_path = os.path.join(self.current_path, 'data')
+        if os.path.exists(gen_data_path) == False:
             os.mkdir(gen_data_path)
 
         self.num_cars = str(self.configs['num_cars'])
@@ -227,19 +228,19 @@ class Network():
         sumocfg = ET.Element('configuration')
         inputXML = ET.SubElement(sumocfg, 'input')
         inputXML.append(
-            E('net-file', attrib={'value': os.path.join(self.current_Env_path,self.file_name+'.net.xml')}))
+            E('net-file', attrib={'value': os.path.join(self.current_Env_path, self.file_name+'.net.xml')}))
         indent(sumocfg)
         if route_exist == True:
-            if self.configs['network']=='grid':#grid에서만 생성
+            if self.configs['network'] == 'grid':  # grid에서만 생성
                 self._generate_rou_xml()
             if os.path.exists(os.path.join(self.current_Env_path, self.file_name+'.rou.xml')):
                 inputXML.append(
-                    E('route-files', attrib={'value':os.path.join(self.current_Env_path, self.file_name+'.rou.xml')}))
+                    E('route-files', attrib={'value': os.path.join(self.current_Env_path, self.file_name+'.rou.xml')}))
                 indent(sumocfg)
 
         if os.path.exists(os.path.join(self.current_Env_path, self.file_name+'_data.add.xml')):
             inputXML.append(
-                E('additional-files', attrib={'value': os.path.join(self.current_Env_path,self.file_name+'_data.add.xml')}))
+                E('additional-files', attrib={'value': os.path.join(self.current_Env_path, self.file_name+'_data.add.xml')}))
             indent(sumocfg)
 
         time = ET.SubElement(sumocfg, 'time')
@@ -255,7 +256,6 @@ class Network():
             tree.write(os.path.join(self.current_Env_path, self.file_name+'_simulate.sumocfg'),
                        pretty_print=True, encoding='UTF-8', xml_declaration=True)
         elif mode == 'test':
-            print("test")
             tree.write(os.path.join(self.current_Env_path, self.file_name+'_test.sumocfg'),
                        pretty_print=True, encoding='UTF-8', xml_declaration=True)
         elif mode == 'train' or mode == 'train_old':
@@ -279,6 +279,7 @@ class Network():
         self._generate_add_xml()
         self._generate_net_xml()
         self._generate_rou_xml()
+
 
 if __name__ == '__main__':
     network = Network(EXP_CONFIGS)
