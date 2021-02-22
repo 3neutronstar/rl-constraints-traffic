@@ -836,128 +836,92 @@
     <tlLogic id="n_0_0" type="static" programID="n_0_0" offset="0">
         <phase duration="37" state="rrrrGgrrrrrrrrrrGgrrrrrr" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="GGGGrrrrrrrrGGGGrrrrrrrr" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="rrrrrrrrrrGgrrrrrrrrrrGg" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="rrrrrrGGGGrrrrrrrrGGGGrg" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
     </tlLogic>
     <tlLogic id="n_0_1" type="static" programID="n_0_1" offset="0">
         <phase duration="37" state="rrrrGgrrrrrrrrrrGgrrrrrr" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="GGGGrrrrrrrrGGGGrrrrrrrr" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="rrrrrrrrrrGgrrrrrrrrrrGg" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="rrrrrrGGGGrrrrrrrrGGGGrg" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
     </tlLogic>
     <tlLogic id="n_0_2" type="static" programID="n_0_2" offset="0">
         <phase duration="37" state="rrrrGgrrrrrrrrrrGgrrrrrr" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="GGGGrrrrrrrrGGGGrrrrrrrr" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="rrrrrrrrrrGgrrrrrrrrrrGg" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="rrrrrrGGGGrrrrrrrrGGGGrg" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
     </tlLogic>
     <tlLogic id="n_1_0" type="static" programID="n_1_0" offset="0">
         <phase duration="37" state="rrrrGgrrrrrrrrrrGgrrrrrr" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="GGGGrrrrrrrrGGGGrrrrrrrr" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="rrrrrrrrrrGgrrrrrrrrrrGg" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="rrrrrrGGGGrrrrrrrrGGGGrg" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
     </tlLogic>
     <tlLogic id="n_1_1" type="static" programID="n_1_1" offset="0">
         <phase duration="37" state="rrrrGgrrrrrrrrrrGgrrrrrr" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="GGGGrrrrrrrrGGGGrrrrrrrr" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="rrrrrrrrrrGgrrrrrrrrrrGg" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="rrrrrrGGGGrrrrrrrrGGGGrg" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
     </tlLogic>
     <tlLogic id="n_1_2" type="static" programID="n_1_2" offset="0">
         <phase duration="37" state="rrrrGgrrrrrrrrrrGgrrrrrr" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="GGGGrrrrrrrrGGGGrrrrrrrr" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="rrrrrrrrrrGgrrrrrrrrrrGg" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="rrrrrrGGGGrrrrrrrrGGGGrg" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
     </tlLogic>
     <tlLogic id="n_2_0" type="static" programID="n_2_0" offset="0">
         <phase duration="37" state="rrrrGgrrrrrrrrrrGgrrrrrr" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="GGGGrrrrrrrrGGGGrrrrrrrr" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="rrrrrrrrrrGgrrrrrrrrrrGg" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="rrrrrrGGGGrrrrrrrrGGGGrg" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
     </tlLogic>
     <tlLogic id="n_2_1" type="static" programID="n_2_1" offset="0">
         <phase duration="37" state="rrrrGgrrrrrrrrrrGgrrrrrr" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="GGGGrrrrrrrrGGGGrrrrrrrr" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="rrrrrrrrrrGgrrrrrrrrrrGg" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="rrrrrrGGGGrrrrrrrrGGGGrg" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
     </tlLogic>
     <tlLogic id="n_2_2" type="static" programID="n_2_2" offset="0">
         <phase duration="37" state="rrrrGgrrrrrrrrrrGgrrrrrr" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="GGGGrrrrrrrrGGGGrrrrrrrr" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="rrrrrrrrrrGgrrrrrrrrrrGg" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
         <phase duration="37" state="rrrrrrGGGGrrrrrrrrGGGGrg" minDuration="32" maxDuration="42"/>
         <phase duration="3"  state="yyyyyyyyyyyyyyyyyyyyyyyy"/>
-        <phase duration="3"  state="rrrrrrrrrrrrrrrrrrrrrrrr"/>
     </tlLogic>
 
     <junction id="n_0_0" type="traffic_light" x="300.00" y="900.00" incLanes="n_0_u_to_n_0_0_0 n_0_u_to_n_0_0_1 n_0_u_to_n_0_0_2 n_1_0_to_n_0_0_0 n_1_0_to_n_0_0_1 n_1_0_to_n_0_0_2 n_0_1_to_n_0_0_0 n_0_1_to_n_0_0_1 n_0_1_to_n_0_0_2 n_0_l_to_n_0_0_0 n_0_l_to_n_0_0_1 n_0_l_to_n_0_0_2" intLanes=":n_0_0_0_0 :n_0_0_1_0 :n_0_0_1_1 :n_0_0_1_2 :n_0_0_4_0 :n_0_0_5_0 :n_0_0_6_0 :n_0_0_7_0 :n_0_0_7_1 :n_0_0_7_2 :n_0_0_10_0 :n_0_0_11_0 :n_0_0_12_0 :n_0_0_13_0 :n_0_0_13_1 :n_0_0_13_2 :n_0_0_16_0 :n_0_0_17_0 :n_0_0_18_0 :n_0_0_19_0 :n_0_0_19_1 :n_0_0_19_2 :n_0_0_22_0 :n_0_0_24_0" shape="290.40,913.60 309.60,913.60 310.04,911.38 310.60,910.60 311.38,910.04 312.38,909.71 313.60,909.60 313.60,890.40 311.38,889.96 310.60,889.40 310.04,888.62 309.71,887.62 309.60,886.40 290.40,886.40 289.96,888.62 289.40,889.40 288.62,889.96 287.62,890.29 286.40,890.40 286.40,909.60 288.62,910.04 289.40,910.60 289.96,911.38 290.29,912.38">

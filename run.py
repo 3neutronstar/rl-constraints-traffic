@@ -108,7 +108,7 @@ def test(flags, configs, sumoConfig):
     else:
         sumoBinary = checkBinary('sumo')
     if flags.network.lower() == "3x3grid":
-        sumoCmd = [sumoBinary, "-c", sumoConfig, "--scale", "1.1"]
+        sumoCmd = [sumoBinary, "-c", sumoConfig, "--scale", "1.5"]
     elif flags.network.lower() == 'dunsan':
         sumoCmd = [sumoBinary, "-c", sumoConfig, "--scale", "2.0"]
     else:
@@ -124,7 +124,7 @@ def simulate(flags, configs, sumoConfig):
     else:
         sumoBinary = checkBinary('sumo')
     if flags.network.lower() == "3x3grid":
-        sumoCmd = [sumoBinary, "-c", sumoConfig, "--scale", "1.1"]
+        sumoCmd = [sumoBinary, "-c", sumoConfig, "--scale", "1.5"]
     elif flags.network.lower() == 'dunsan':
         sumoCmd = [sumoBinary, "-c", sumoConfig, "--scale", "2.0"]
     else:
