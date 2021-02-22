@@ -164,7 +164,7 @@ def simulate(flags, configs, sumoConfig):
                 if interest['outflow'] != None:
                     if traci.edge.getLastStepVehicleNumber(interest['outflow']) != 0:
                         part_velocity.append(
-                            traci.edge.getLastStepMeanSpeed(interest['inflow']))
+                            traci.edge.getLastStepMeanSpeed(interest['outflow']))
 
         # for _, edge in enumerate(configs['interest_list']):
         #     avg_waiting_time += traci.edge.getWaitingTime(edge['inflow'])
