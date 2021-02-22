@@ -145,7 +145,8 @@ def simulate(flags, configs, sumoConfig):
     part_velocity = list()
     # travel time
     i=0
-    avg_travel_time=0
+    # travel time
+    travel_time=list()
     while step < MAX_STEPS:
 
         traci.simulationStep()
@@ -155,23 +156,26 @@ def simulate(flags, configs, sumoConfig):
             # delete 중복
             dup_list=list()
             for interest in interests:
+                inflow=interest['inflow']
+                outflow=interest['outflow']
                 # 신호군 흐름
-                if interest['inflow'] != None and interest['inflow'] not in dup_list:
+                if inflow != None and inflow not in dup_list:
                     # 차량의 대기시간, 차량이 있을 때만
-                    if traci.edge.getLastStepVehicleNumber(interest['inflow']) != 0:
-                        avg_waiting_time += traci.edge.getWaitingTime(interest['inflow'])/float(
-                            traci.edge.getLastStepVehicleNumber(interest['inflow']))
+                    if traci.edge.getLastStepVehicleNumber(inflow) != 0:
+                        avg_waiting_time += traci.edge.getWaitingTime(inflow)/float(
+                            traci.edge.getLastStepVehicleNumber(inflow))
                         # 차량의 평균속도
                         part_velocity.append(
-                            traci.edge.getLastStepMeanSpeed(interest['inflow']))
-                    dup_list.append(interest['inflow'])
+                            traci.edge.getLastStepMeanSpeed(inflow))
+                        travel_time.append(traci.edge.getTraveltime(inflow))
+                    dup_list.append(inflow)
 
-                if interest['outflow'] != None and interest['inflow'] not in dup_list:
-                    if traci.edge.getLastStepVehicleNumber(interest['outflow']) != 0:
+                if outflow != None and outflow not in dup_list:
+                    if traci.edge.getLastStepVehicleNumber(outflow) != 0:
                         part_velocity.append(
-                            traci.edge.getLastStepMeanSpeed(interest['outflow']))
-                    dup_list.append(interest['outflow'])
-
+                            traci.edge.getLastStepMeanSpeed(outflow))
+                        travel_time.append(traci.edge.getTraveltime(outflow))
+                    dup_list.append(outflow)
         # # 전체 흐름
         # vehicle_list = traci.vehicle.getIDList()
         # for i, vehicle in enumerate(vehicle_list):
@@ -181,11 +185,12 @@ def simulate(flags, configs, sumoConfig):
 
         arrived_vehicles += traci.simulation.getAllSubscriptionResults()[
             ''][0x79]  # throughput
-    avg_part_velocity = torch.tensor(part_velocity, dtype=torch.float).mean()
     b = time.time()
-    traci.close()
-    # edgesss = traci.edge.getSubscriptionResults('n_2_2_to_n_2_1')
-    # print(edgesss)
+    traci.close()    
+    avg_part_velocity = torch.tensor(part_velocity, dtype=torch.float).mean()
+    avg_travel_time=torch.tensor(travel_time,dtype=torch.float).mean()
+    print('======== arrived number:{} avg waiting time:{},avg velocity:{} avg_part_velocity: {} avg_travel_time: {}'.format(
+    arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity,avg_travel_time))
     print('======== arrived number:{} avg waiting time:{},avg velocity:{} avg_part_velocity: {}'.format(
         arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity))
     print("sim_time=", b-a)
