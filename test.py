@@ -42,6 +42,8 @@ def city_dqn_test(flags, sumoCmd, configs):
     arrived_vehicles = 0
     part_velocity = list()
     total_velocity=list()
+    # travel time
+    travel_time=list()
     with torch.no_grad():
         step = 0
         traci.start(sumoCmd)
@@ -114,19 +116,22 @@ def city_dqn_test(flags, sumoCmd, configs):
                 # delete 중복
                 dup_list=list()
                 for interest in interests:
+                    inflow=interest['inflow']
+                    outflow=interest['outflow']
                     # 신호군 흐름
-                    if interest['inflow'] != None and interest['inflow'] not in dup_list:
+                    if inflow != None and inflow not in dup_list:
                         # 차량의 대기시간, 차량이 있을 때만
-                        if traci.edge.getLastStepVehicleNumber(interest['inflow']) != 0:
-                            avg_waiting_time += traci.edge.getWaitingTime(interest['inflow'])/float(
-                                traci.edge.getLastStepVehicleNumber(interest['inflow']))
+                        if traci.edge.getLastStepVehicleNumber(inflow) != 0:
+                            avg_waiting_time += traci.edge.getWaitingTime(inflow)/float(
+                                traci.edge.getLastStepVehicleNumber(inflow))
                             # 차량의 평균속도
                             part_velocity.append(
-                                traci.edge.getLastStepMeanSpeed(interest['inflow']))
-                        dup_list.append(interest['inflow'])
+                                traci.edge.getLastStepMeanSpeed(inflow))
+                            travel_time.append(traci.edge.getTraveltime(inflow))
+                        dup_list.append(inflow)
 
-                    if interest['outflow'] != None and interest['inflow'] not in dup_list:
-                        if traci.edge.getLastStepVehicleNumber(interest['outflow']) != 0:
+                    if outflow != None and outflow not in dup_list:
+                        if traci.edge.getLastStepVehicleNumber(outflow) != 0:
                             part_velocity.append(
                                 traci.edge.getLastStepMeanSpeed(interest['outflow']))
                         dup_list.append(interest['outflow'])
@@ -138,11 +143,19 @@ def city_dqn_test(flags, sumoCmd, configs):
             # info
             arrived_vehicles += traci.simulation.getArrivedNumber()
 
-        avg_part_velocity = torch.tensor(
-            part_velocity, dtype=torch.float).mean()
-        avg_velocity=torch.tensor(total_velocity,dtype=torch.float).mean()
+            state = next_state
+            # info
+            arrived_vehicles += traci.simulation.getArrivedNumber()
+
+
+
         b = time.time()
         traci.close()
         print("time:", b-a)
-        print('======== return: {} arrived number:{}, avg_waiting_time:{}, avg_velocity:{}, avg_part_velocity: {}'.format(
-            total_reward, arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity))
+        avg_part_velocity = torch.tensor(
+            part_velocity, dtype=torch.float).mean()
+        avg_velocity=torch.tensor(total_velocity,dtype=torch.float).mean()
+        avg_part_velocity = torch.tensor(part_velocity, dtype=torch.float).mean()
+        avg_travel_time=torch.tensor(travel_time,dtype=torch.float).mean()
+        print('======== arrived number:{} avg waiting time:{},avg velocity:{} avg_part_velocity: {} avg_travel_time: {}'.format(
+        arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity,avg_travel_time))
