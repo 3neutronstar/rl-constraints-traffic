@@ -143,28 +143,34 @@ def simulate(flags, configs, sumoConfig):
     arrived_vehicles = 0
     avg_velocity = 0
     part_velocity = list()
+    # travel time
+    i=0
+    avg_travel_time=0
     while step < MAX_STEPS:
 
         traci.simulationStep()
         step += 1
         # check performance
         for _, interests in enumerate(configs['interest_list']):
+            # delete 중복
+            dup_list=list()
             for interest in interests:
                 # 신호군 흐름
-                if interest['inflow'] != None:
-                    # 차량의 대기시간
-                    # 차량이 있을 때만
+                if interest['inflow'] != None and interest['inflow'] not in dup_list:
+                    # 차량의 대기시간, 차량이 있을 때만
                     if traci.edge.getLastStepVehicleNumber(interest['inflow']) != 0:
                         avg_waiting_time += traci.edge.getWaitingTime(interest['inflow'])/float(
                             traci.edge.getLastStepVehicleNumber(interest['inflow']))
                         # 차량의 평균속도
                         part_velocity.append(
                             traci.edge.getLastStepMeanSpeed(interest['inflow']))
+                    dup_list.append(interest['inflow'])
 
-                if interest['outflow'] != None:
+                if interest['outflow'] != None and interest['inflow'] not in dup_list:
                     if traci.edge.getLastStepVehicleNumber(interest['outflow']) != 0:
                         part_velocity.append(
-                            traci.edge.getLastStepMeanSpeed(interest['inflow']))
+                            traci.edge.getLastStepMeanSpeed(interest['outflow']))
+                    dup_list.append(interest['outflow'])
 
         # # 전체 흐름
         # vehicle_list = traci.vehicle.getIDList()
