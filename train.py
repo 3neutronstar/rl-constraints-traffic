@@ -46,7 +46,7 @@ def city_dqn_train(configs, time_data, sumoCmd):
             tmp_sumoCmd = sumoCmd+['--scale', str(1.5+random())]  # 1.5~2.5
         else:
             if configs['network'] == 'dunsan':
-                tmp_sumoCmd = sumoCmd+['--scale', str(2.0)]
+                tmp_sumoCmd = sumoCmd+['--scale', str(1.5)]
             elif configs['network'] == '3x3grid':
                 tmp_sumoCmd = sumoCmd+['--scale', str(1.1)]
             else:
@@ -129,13 +129,13 @@ def city_dqn_train(configs, time_data, sumoCmd):
             state = next_state
             # info
             arrived_vehicles += traci.simulation.getArrivedNumber()
-            # #soft update
-            # agent.target_update()
+            #soft update
+            agent.target_update()
 
         agent.update_hyperparams(epoch)  # lr and epsilon upate
         # hard update
-        if epoch % agent.configs['target_update_period'] == 0:
-            agent.target_update()  # dqn
+        # if epoch % agent.configs['target_update_period'] == 0:
+        #     agent.target_update()  # dqn
         b = time.time()
         traci.close()
         print("time:", b-a)
