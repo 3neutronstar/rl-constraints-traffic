@@ -186,13 +186,14 @@ class CityEnv(baseEnv):
         # action update
         for index in torch.nonzero(mask_matrix):
             # action의 변환 -> 각 phase의 길이
+            tl_rl = self.tl_rl_list[index]
             phase_length_set = self._toPhaseLength(
-                self.tl_rl_list[index], action[0, index])
+                tl_rl, action[0, index])
             # tls재설정
-            tls = self.traffic_node_info[self.tl_rl_list[index]]['program']
-            for phase_idx in self.traffic_node_info[self.tl_rl_list[index]]['phase_index']:
+            tls = self.traffic_node_info[tl_rl]['program']
+            for phase_idx in self.traffic_node_info[tl_rl]['phase_index']:
                 tls[0].phases[phase_idx].duration = phase_length_set[phase_idx]
-            traci.trafficlight.setProgramLogic(self.tl_rl_list[index], tls[0])
+            traci.trafficlight.setProgramLogic(tl_rl, tls[0])
             self.tl_rl_memory[index].action = action.int()
         # action을 environment에 등록 후 상황 살피기,action을 저장
 

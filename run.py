@@ -136,7 +136,6 @@ def simulate(flags, configs, sumoConfig):
     traci.simulation.subscribe([tc.VAR_ARRIVED_VEHICLES_NUMBER])
     # traci.edge.subscribe('n_2_2_to_n_2_1', [
     #                      tc.LAST_STEP_VEHICLE_HALTING_NUMBER], 0, 2000)
-    avg_waiting_time = 0
     avg_velocity = 0
     step = 0
     # agent setting
@@ -144,10 +143,11 @@ def simulate(flags, configs, sumoConfig):
     avg_velocity = 0
     part_velocity = list()
     # travel time
-    i=0
-    total_velocity=list()
+    i = 0
+    total_velocity = list()
     # travel time
-    travel_time=list()
+    travel_time = list()
+    waiting_time = list()
     while step < MAX_STEPS:
 
         traci.simulationStep()
@@ -155,20 +155,24 @@ def simulate(flags, configs, sumoConfig):
         # check performance
         for _, interests in enumerate(configs['interest_list']):
             # delete 중복
-            dup_list=list()
+            dup_list = list()
             for interest in interests:
-                inflow=interest['inflow']
-                outflow=interest['outflow']
+                inflow = interest['inflow']
+                outflow = interest['outflow']
                 # 신호군 흐름
                 if inflow != None and inflow not in dup_list:
                     # 차량의 대기시간, 차량이 있을 때만
                     if traci.edge.getLastStepVehicleNumber(inflow) != 0:
-                        avg_waiting_time += traci.edge.getWaitingTime(inflow)/float(
-                            traci.edge.getLastStepVehicleNumber(inflow))
+                        # waiting time 으로해서 append 후 avg
+                        waiting_time.append(traci.edge.getWaitingTime(inflow)/float(
+                            traci.edge.getLastStepVehicleNumber(inflow)))
                         # 차량의 평균속도
                         part_velocity.append(
                             traci.edge.getLastStepMeanSpeed(inflow))
-                        travel_time.append(traci.edge.getTraveltime(inflow))
+                        tmp_travel = traci.edge.getTraveltime(inflow)
+                        if tmp_travel <= 200:  # 이상한 값 거르기
+                            travel_time.append(tmp_travel)
+                        # print(travel_time)
                     dup_list.append(inflow)
 
                 if outflow != None and outflow not in dup_list:
@@ -187,10 +191,11 @@ def simulate(flags, configs, sumoConfig):
     b = time.time()
     traci.close()
     avg_part_velocity = torch.tensor(part_velocity, dtype=torch.float).mean()
-    avg_velocity=torch.tensor(total_velocity,dtype=torch.float).mean()
-    avg_travel_time=torch.tensor(travel_time,dtype=torch.float).mean()
+    avg_velocity = torch.tensor(total_velocity, dtype=torch.float).mean()
+    avg_travel_time = torch.tensor(travel_time, dtype=torch.float).mean()
+    avg_waiting_time = torch.tensor(waiting_time, dtype=torch.float).mean()
     print('======== arrived number:{} avg waiting time:{},avg velocity:{} avg_part_velocity: {} avg_travel_time: {}'.format(
-    arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity,avg_travel_time))
+        arrived_vehicles, avg_waiting_time, avg_velocity, avg_part_velocity, avg_travel_time))
     print("sim_time=", b-a)
 
 
