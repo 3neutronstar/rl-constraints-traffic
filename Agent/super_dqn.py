@@ -16,11 +16,11 @@ DEFAULT_CONFIG = {
     'batch_size': 64,
     'experience_replay_size': 1e5,
     'epsilon': 0.8,
-    'epsilon_decay_rate': 0.98,
+    'epsilon_decay_rate': 0.99,
     'fc_net': [36, 48, 24],
     'lr': 1e-4,
     'lr_decay_rate': 0.99,
-    'target_update_period': 10,
+    'target_update_period': 30,
     'final_epsilon': 0.0005,
     'final_lr': 1e-6,
 }
@@ -137,7 +137,7 @@ class Trainer(RLAlgorithm):
         self.action_size = self.configs['action_size']
         self.gamma = self.configs['gamma']
         self.epsilon = self.configs['epsilon']
-        self.criterion = nn.MSELoss()
+        self.criterion = nn.SmoothL1Loss()
         self.lr = self.configs['lr']
         self.lr_decay_rate = self.configs['lr_decay_rate']
         self.epsilon_decay_rate = self.configs['epsilon_decay_rate']
@@ -221,17 +221,17 @@ class Trainer(RLAlgorithm):
         return actions
 
     def target_update(self):
-        # Hard Update
-        for target, source in zip(self.targetQNetwork, self.mainQNetwork):
-            hard_update(target, source)
-        # Total Update
-        hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
-
-        # # Soft Update
+        # # Hard Update
         # for target, source in zip(self.targetQNetwork, self.mainQNetwork):
-        #     soft_update(target, source,self.configs)
+        #     hard_update(target, source)
         # # Total Update
-        # soft_update(self.targetSuperQNetwork, self.mainSuperQNetwork,self.configs)
+        # hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
+
+        # Soft Update
+        for target, source in zip(self.targetQNetwork, self.mainQNetwork):
+            soft_update(target, source,self.configs)
+        # Total Update
+        soft_update(self.targetSuperQNetwork, self.mainSuperQNetwork,self.configs)
 
     def save_replay(self, state, action, reward, next_state, mask):
         for i in torch.nonzero(mask):
