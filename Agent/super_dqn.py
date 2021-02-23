@@ -16,11 +16,11 @@ DEFAULT_CONFIG = {
     'batch_size': 64,
     'experience_replay_size': 1e5,
     'epsilon': 0.8,
-    'epsilon_decay_rate': 0.98,
+    'epsilon_decay_rate': 0.99,
     'fc_net': [36, 48, 24],
     'lr': 1e-4,
     'lr_decay_rate': 0.99,
-    'target_update_period': 10,
+    'target_update_period': 30,
     'final_epsilon': 0.0005,
     'final_lr': 1e-6,
 }
