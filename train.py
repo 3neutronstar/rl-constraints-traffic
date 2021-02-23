@@ -46,7 +46,7 @@ def city_dqn_train(configs, time_data, sumoCmd):
             tmp_sumoCmd = sumoCmd+['--scale', str(1.5+random())]  # 1.5~2.5
         else:
             if configs['network'] == 'dunsan':
-                tmp_sumoCmd = sumoCmd+['--scale', str(1.5)]
+                tmp_sumoCmd = sumoCmd+['--scale', str(0.7)]
             elif configs['network'] == '3x3grid':
                 tmp_sumoCmd = sumoCmd+['--scale', str(1.1)]
             else:
