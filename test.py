@@ -41,9 +41,9 @@ def city_dqn_test(flags, sumoCmd, configs):
     avg_velocity = 0
     arrived_vehicles = 0
     part_velocity = list()
-    total_velocity=list()
+    total_velocity = list()
     # travel time
-    travel_time=list()
+    travel_time = list()
     with torch.no_grad():
         step = 0
         traci.start(sumoCmd)
@@ -114,10 +114,10 @@ def city_dqn_test(flags, sumoCmd, configs):
             # check performance
             for _, interests in enumerate(configs['interest_list']):
                 # delete 중복
-                dup_list=list()
+                dup_list = list()
                 for interest in interests:
-                    inflow=interest['inflow']
-                    outflow=interest['outflow']
+                    inflow = interest['inflow']
+                    outflow = interest['outflow']
                     # 신호군 흐름
                     if inflow != None and inflow not in dup_list:
                         # 차량의 대기시간, 차량이 있을 때만
@@ -127,7 +127,8 @@ def city_dqn_test(flags, sumoCmd, configs):
                             # 차량의 평균속도
                             part_velocity.append(
                                 traci.edge.getLastStepMeanSpeed(inflow))
-                            travel_time.append(traci.edge.getTraveltime(inflow))
+                            travel_time.append(
+                                traci.edge.getTraveltime(inflow))
                         dup_list.append(inflow)
 
                     if outflow != None and outflow not in dup_list:
@@ -145,13 +146,12 @@ def city_dqn_test(flags, sumoCmd, configs):
 
             state = next_state
 
-
-
         b = time.time()
         traci.close()
         print("time:", b-a)
-        avg_velocity=torch.tensor(total_velocity,dtype=torch.float).mean()
-        avg_part_velocity = torch.tensor(part_velocity, dtype=torch.float).mean()
-        avg_travel_time=torch.tensor(travel_time,dtype=torch.float).mean()
+        avg_velocity = torch.tensor(total_velocity, dtype=torch.float).mean()
+        avg_part_velocity = torch.tensor(
+            part_velocity, dtype=torch.float).mean()
+        avg_travel_time = torch.tensor(travel_time, dtype=torch.float).mean()
         print('======== arrived number:{} avg waiting time:{},avg velocity:{} avg_part_velocity: {} avg_travel_time: {}'.format(
-        arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity,avg_travel_time/MAX_STEPS))
+            arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity, avg_travel_time/MAX_STEPS))

@@ -144,10 +144,10 @@ def simulate(flags, configs, sumoConfig):
     avg_velocity = 0
     part_velocity = list()
     # travel time
-    i=0
-    total_velocity=list()
+    i = 0
+    total_velocity = list()
     # travel time
-    travel_time=list()
+    travel_time = list()
     while step < MAX_STEPS:
 
         traci.simulationStep()
@@ -155,10 +155,10 @@ def simulate(flags, configs, sumoConfig):
         # check performance
         for _, interests in enumerate(configs['interest_list']):
             # delete 중복
-            dup_list=list()
+            dup_list = list()
             for interest in interests:
-                inflow=interest['inflow']
-                outflow=interest['outflow']
+                inflow = interest['inflow']
+                outflow = interest['outflow']
                 # 신호군 흐름
                 if inflow != None and inflow not in dup_list:
                     # 차량의 대기시간, 차량이 있을 때만
@@ -187,10 +187,10 @@ def simulate(flags, configs, sumoConfig):
     b = time.time()
     traci.close()
     avg_part_velocity = torch.tensor(part_velocity, dtype=torch.float).mean()
-    avg_velocity=torch.tensor(total_velocity,dtype=torch.float).mean()
-    avg_travel_time=torch.tensor(travel_time,dtype=torch.float).mean()
+    avg_velocity = torch.tensor(total_velocity, dtype=torch.float).mean()
+    avg_travel_time = torch.tensor(travel_time, dtype=torch.float).mean()
     print('======== arrived number:{} avg waiting time:{},avg velocity:{} avg_part_velocity: {} avg_travel_time: {}'.format(
-    arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity,avg_travel_time))
+        arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity, avg_travel_time))
     print("sim_time=", b-a)
 
 

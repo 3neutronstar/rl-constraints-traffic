@@ -18,7 +18,7 @@ class MapNetwork(Network):
             self.configs['current_path'], 'Network', self.configs['load_file_name']+'.net.xml')
         self.rou_file_path = os.path.join(
             self.configs['current_path'], 'Network', self.configs['load_file_name']+'.rou.xml')
-    
+
     def get_tl_from_add_xml(self):
         add_file_path = os.path.join(
             self.configs['current_path'], 'Network', self.configs['load_file_name']+'.add.xml')
@@ -27,11 +27,12 @@ class MapNetwork(Network):
                                             3: [[0, 0, 0], [1, 0, -1], [1, -1, 0], [0, 1, -1], [-1, 0, 1], [0, -1, 1], [-1, 1, 0]],
                                             4: [[0, 0, 0, 0], [1, 0, 0, -1], [1, 0, -1, 0], [1, -1, 0, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1],
                                                 [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]],
-                                            5: [[0,0,0,0,0]],
-                                            6:[[0,0,0,0,0,0]],}
-        NET_CONFIGS['rate_action_space']=dict()
-        for i in range(2,7): # rate action_space 지정
-            NET_CONFIGS['rate_action_space'][i]=len(NET_CONFIGS['phase_num_actions'][i])
+                                            5: [[0, 0, 0, 0, 0]],
+                                            6: [[0, 0, 0, 0, 0, 0]], }
+        NET_CONFIGS['rate_action_space'] = dict()
+        for i in range(2, 7):  # rate action_space 지정
+            NET_CONFIGS['rate_action_space'][i] = len(
+                NET_CONFIGS['phase_num_actions'][i])
 
         NET_CONFIGS['tl_period'] = list()
         traffic_info = dict()
@@ -39,7 +40,7 @@ class MapNetwork(Network):
         tlLogicList = add_net_tree.findall('tlLogic')
         NET_CONFIGS['time_action_space'] = list()
 
-        #traffic info 저장
+        # traffic info 저장
         for tlLogic in tlLogicList:
             tl_id = tlLogic.attrib['id']
             traffic_info[tl_id] = dict()
@@ -93,7 +94,7 @@ class MapNetwork(Network):
             # 각 tl_rl의 time_action_space지정
             # NET_CONFIGS['time_action_space'].append(abs(round((torch.min(torch.tensor(traffic_node_info['max_phase'])-torch.tensor(
             #     traffic_node_info['common_phase']), torch.tensor(traffic_node_info['common_phase'])-torch.tensor(traffic_node_info['min_phase']))/2).mean().item())))
-            NET_CONFIGS['time_action_space'].append(4) #임의 초 지정
+            NET_CONFIGS['time_action_space'].append(4)  # 임의 초 지정
 
             self.phase_list.append(phase_state_list)
             self.common_phase.append(phase_duration_list)
@@ -107,81 +108,81 @@ class MapNetwork(Network):
 
         # road용
         # edge info 저장
-        self.configs['edge_info']=list()
-        edge_list=list() # edge존재 확인용
-        net_tree=parse(self.net_file_path)
-        edges=net_tree.findall('edge')
+        self.configs['edge_info'] = list()
+        edge_list = list()  # edge존재 확인용
+        net_tree = parse(self.net_file_path)
+        edges = net_tree.findall('edge')
         for edge in edges:
             if 'function' not in edge.attrib.keys():
                 edge_list.append({
-                    'id':edge.attrib['id'],
-                    'from':edge.attrib['from'],
-                    'to':edge.attrib['to'],
+                    'id': edge.attrib['id'],
+                    'from': edge.attrib['from'],
+                    'to': edge.attrib['to'],
                 })
-            self.configs['edge_info'].append(edge.attrib['id']) # 모든 엣지 저장
+            self.configs['edge_info'].append(edge.attrib['id'])  # 모든 엣지 저장
         # node info 저장
         self.configs['node_info'] = list()
-        node_list=list()
+        node_list = list()
         # interest list
         interest_list = list()
         # node interest pair
         node_interest_pair = dict()
         junctions = net_tree.findall('junction')
         # state space size 결정
-        inflow_size=0
+        inflow_size = 0
         # network용
         for junction in junctions:
-            node_id=junction.attrib['id']
-            if junction.attrib['type'] == "traffic_light": # 정상 node만 분리, 신호등 노드
+            node_id = junction.attrib['id']
+            if junction.attrib['type'] == "traffic_light":  # 정상 node만 분리, 신호등 노드
                 node_list.append({
                     'id': node_id,
                     'type': junction.attrib['type'],
                 })
-                if node_id in self.tl_rl_list: # 학습하는 tl만 저장
-                    i=0
-                    interests=list()
+                if node_id in self.tl_rl_list:  # 학습하는 tl만 저장
+                    i = 0
+                    interests = list()
                     for edge in edge_list:
-                        interest=dict()
-                        if edge['to']==node_id: # inflow
-                            interest['id']=node_id+'_{}'.format(i)
-                            interest['inflow']=edge['id']
+                        interest = dict()
+                        if edge['to'] == node_id:  # inflow
+                            interest['id'] = node_id+'_{}'.format(i)
+                            interest['inflow'] = edge['id']
                             for target_edge in edge_list:
-                                if target_edge['from']==edge['to'] and target_edge['to']==edge['from']:
-                                    interest['outflow']=target_edge['id']
+                                if target_edge['from'] == edge['to'] and target_edge['to'] == edge['from']:
+                                    interest['outflow'] = target_edge['id']
                                     break
                                 else:
-                                    interest['outflow']=None
+                                    interest['outflow'] = None
 
-                            
                             interests.append(interest)
-                            i+=1 # index표기용
+                            i += 1  # index표기용
 
-                        elif edge['from']==node_id:
-                            interest['id']=node_id+'_{}'.format(i)
-                            interest['outflow']=edge['id']
+                        elif edge['from'] == node_id:
+                            interest['id'] = node_id+'_{}'.format(i)
+                            interest['outflow'] = edge['id']
                             for target_edge in edge_list:
-                                if target_edge['from']==edge['to'] and target_edge['to']==edge['from']:
-                                    interest['inflow']=target_edge['id']
+                                if target_edge['from'] == edge['to'] and target_edge['to'] == edge['from']:
+                                    interest['inflow'] = target_edge['id']
                                     break
                                 else:
-                                    interest['inflow']=None
+                                    interest['inflow'] = None
                             interests.append(interest)
-                            i+=1 # index표기용
+                            i += 1  # index표기용
 
                     # 중복이 존재하는지 확인 후 list에 삽입
-                    no_dup_outflow_list=list()
-                    no_dup_interest_list=list()
+                    no_dup_outflow_list = list()
+                    no_dup_interest_list = list()
                     for interest_comp in interests:
                         if interest_comp['outflow'] not in no_dup_outflow_list:
-                            no_dup_outflow_list.append(interest_comp['outflow'])
+                            no_dup_outflow_list.append(
+                                interest_comp['outflow'])
                             no_dup_interest_list.append(interest_comp)
                     interest_list.append(no_dup_interest_list)
-                    node_interest_pair[node_id]=no_dup_interest_list
-                    if inflow_size<len(no_dup_interest_list):
-                        inflow_size=len(no_dup_interest_list)
-                
-            #일반 노드 
-            elif junction.attrib['type'] == "priority": # 정상 node만 분리
+                    node_interest_pair[node_id] = no_dup_interest_list
+                    if inflow_size < len(no_dup_interest_list):
+                        inflow_size = len(no_dup_interest_list)
+
+            # 일반 노드
+            elif junction.attrib['type'] == "priority":  # 정상 node만 분리
                 node_list.append({
                     'id': node_id,
                     'type': junction.attrib['type'],
@@ -189,12 +190,12 @@ class MapNetwork(Network):
             else:
                 pass
             self.configs['node_info'].append({
-                    'id': node_id,
-                    'type': junction.attrib['type'],
-                })
-                    #정리
-        NET_CONFIGS['edge_info']=self.configs['edge_info']
-        NET_CONFIGS['node_info']=self.configs['node_info']
+                'id': node_id,
+                'type': junction.attrib['type'],
+            })
+            # 정리
+        NET_CONFIGS['edge_info'] = self.configs['edge_info']
+        NET_CONFIGS['node_info'] = self.configs['node_info']
         NET_CONFIGS['traffic_node_info'] = traffic_info
         NET_CONFIGS['interest_list'] = interest_list
         NET_CONFIGS['node_interest_pair'] = node_interest_pair
@@ -202,12 +203,13 @@ class MapNetwork(Network):
         NET_CONFIGS['offset'] = self.offset_list
         NET_CONFIGS['phase_list'] = self.phase_list
         NET_CONFIGS['common_phase'] = self.common_phase
-        NET_CONFIGS['state_space']=inflow_size*2 # 좌회전,직전 
-        print("Agent Num:{}, Traffic Num:{}".format(len(self.tl_rl_list),len(node_list)))
+        NET_CONFIGS['state_space'] = inflow_size*2  # 좌회전,직전
+        print("Agent Num:{}, Traffic Num:{}".format(
+            len(self.tl_rl_list), len(node_list)))
         return NET_CONFIGS
 
     def get_tl_from_xml(self):
-        if os.path.exists(os.path.join(self.configs['current_path'],'Network',self.configs['load_file_name']+'.add.xml')):
+        if os.path.exists(os.path.join(self.configs['current_path'], 'Network', self.configs['load_file_name']+'.add.xml')):
             print("additional exists")
             return self.get_tl_from_add_xml()
         else:
@@ -215,12 +217,13 @@ class MapNetwork(Network):
             NET_CONFIGS['phase_num_actions'] = {2: [[0, 0], [1, -1]],
                                                 3: [[0, 0, 0], [1, 0, -1], [1, -1, 0], [0, 1, -1], [-1, 0, 1], [0, -1, 1], [-1, 1, 0]],
                                                 4: [[0, 0, 0, 0], [1, 0, 0, -1], [1, 0, -1, 0], [1, -1, 0, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1],
-                                                    [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]],
-                                                5: [[0,0,0,0,0]],
-                                                6:[[0,0,0,0,0,0]],}
-            NET_CONFIGS['rate_action_space']=dict()
-            for i in range(2,7): # rate action_space 지정
-                NET_CONFIGS['rate_action_space'][i]=len(NET_CONFIGS['phase_num_actions'][i])
+                                                    [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1], [1, -1, -1, 1]],
+                                                5: [[0, 0, 0, 0, 0]],
+                                                6: [[0, 0, 0, 0, 0, 0]], }
+            NET_CONFIGS['rate_action_space'] = dict()
+            for i in range(2, 7):  # rate action_space 지정
+                NET_CONFIGS['rate_action_space'][i] = len(
+                    NET_CONFIGS['phase_num_actions'][i])
 
             NET_CONFIGS['tl_period'] = list()
             traffic_info = dict()
@@ -228,7 +231,7 @@ class MapNetwork(Network):
             tlLogicList = net_tree.findall('tlLogic')
             NET_CONFIGS['time_action_space'] = list()
 
-            #traffic info 저장
+            # traffic info 저장
             for tlLogic in tlLogicList:
                 tl_id = tlLogic.attrib['id']
                 traffic_info[tl_id] = dict()
@@ -262,8 +265,10 @@ class MapNetwork(Network):
                     tl_period += int(phase.attrib['duration'])
                     if int(phase.attrib['duration']) > 5:  # Phase 로 간주할 숫자
                         num_phase += 1
-                        min_duration_list.append(int(phase.attrib['minDuration']))
-                        max_duration_list.append(int(phase.attrib['maxDuration']))
+                        min_duration_list.append(
+                            int(phase.attrib['minDuration']))
+                        max_duration_list.append(
+                            int(phase.attrib['maxDuration']))
                         phase_index_list.append(i)
                         common_phase_list.append(int(phase.attrib['duration']))
 
@@ -295,78 +300,79 @@ class MapNetwork(Network):
 
             # road용
             # edge info 저장
-            self.configs['edge_info']=list()
-            edge_list=list() # edge존재 확인용
-            edges=net_tree.findall('edge')
+            self.configs['edge_info'] = list()
+            edge_list = list()  # edge존재 확인용
+            edges = net_tree.findall('edge')
             for edge in edges:
                 if 'function' not in edge.attrib.keys():
                     self.configs['edge_info'].append({
-                        'id':edge.attrib['id'],
-                        'from':edge.attrib['from'],
-                        'to':edge.attrib['to'],
+                        'id': edge.attrib['id'],
+                        'from': edge.attrib['from'],
+                        'to': edge.attrib['to'],
                     })
             # node info 저장
             self.configs['node_info'] = list()
-            node_list=list()
+            node_list = list()
             # interest list
             interest_list = list()
             # node interest pair
             node_interest_pair = dict()
             junctions = net_tree.findall('junction')
             # state space size 결정
-            inflow_size=0
+            inflow_size = 0
             # network용
             for junction in junctions:
-                node_id=junction.attrib['id']
-                if junction.attrib['type'] == "traffic_light": # 정상 node만 분리, 신호등 노드
+                node_id = junction.attrib['id']
+                if junction.attrib['type'] == "traffic_light":  # 정상 node만 분리, 신호등 노드
                     node_list.append({
                         'id': node_id,
                         'type': junction.attrib['type'],
                     })
                     # node 결정 완료
                     # edge는?
-                    i=0
-                    interests=list()
+                    i = 0
+                    interests = list()
                     for edge in self.configs['edge_info']:
-                        interest=dict()
-                        if edge['to']==node_id: # inflow
-                            interest['id']=node_id+'_{}'.format(i)
-                            interest['inflow']=edge['id']
-                            for tmpEdge in self.configs['edge_info']: #outflow
-                                if tmpEdge['from']==node_id and edge['from']==tmpEdge['to']:
-                                    interest['outflow']=tmpEdge['id']
+                        interest = dict()
+                        if edge['to'] == node_id:  # inflow
+                            interest['id'] = node_id+'_{}'.format(i)
+                            interest['inflow'] = edge['id']
+                            for tmpEdge in self.configs['edge_info']:  # outflow
+                                if tmpEdge['from'] == node_id and edge['from'] == tmpEdge['to']:
+                                    interest['outflow'] = tmpEdge['id']
                                     break
                                 else:
-                                    interest['outflow']=None
+                                    interest['outflow'] = None
                             interests.append(interest)
-                            i+=1 # index표기용
+                            i += 1  # index표기용
 
-                        elif edge['from']==node_id:
-                            interest['id']=node_id+'_{}'.format(i)
-                            interest['outflow']=edge['id']
-                            for tmpEdge in self.configs['edge_info']: #outflow
-                                if tmpEdge['to']==node_id and edge['to']==tmpEdge['from']:
-                                    interest['inflow']=tmpEdge['id']
+                        elif edge['from'] == node_id:
+                            interest['id'] = node_id+'_{}'.format(i)
+                            interest['outflow'] = edge['id']
+                            for tmpEdge in self.configs['edge_info']:  # outflow
+                                if tmpEdge['to'] == node_id and edge['to'] == tmpEdge['from']:
+                                    interest['inflow'] = tmpEdge['id']
                                     break
                                 else:
-                                    interest['inflow']=None
+                                    interest['inflow'] = None
                             interests.append(interest)
-                            i+=1 # index표기용
+                            i += 1  # index표기용
 
                     # 중복이 존재하는지 확인 후 list에 삽입
-                    no_dup_outflow_list=list()
-                    no_dup_interest_list=list()
+                    no_dup_outflow_list = list()
+                    no_dup_interest_list = list()
                     for interest_comp in interests:
                         if interest_comp['outflow'] not in no_dup_outflow_list:
-                            no_dup_outflow_list.append(interest_comp['outflow'])
+                            no_dup_outflow_list.append(
+                                interest_comp['outflow'])
                             no_dup_interest_list.append(interest_comp)
                     interest_list.append(no_dup_interest_list)
-                    node_interest_pair[node_id]=no_dup_interest_list
-                    if inflow_size<len(no_dup_interest_list):
-                        inflow_size=len(no_dup_interest_list)
-                
-                #일반 노드 
-                elif junction.attrib['type'] == "priority": # 정상 node만 분리
+                    node_interest_pair[node_id] = no_dup_interest_list
+                    if inflow_size < len(no_dup_interest_list):
+                        inflow_size = len(no_dup_interest_list)
+
+                # 일반 노드
+                elif junction.attrib['type'] == "priority":  # 정상 node만 분리
                     node_list.append({
                         'id': node_id,
                         'type': junction.attrib['type'],
@@ -378,9 +384,9 @@ class MapNetwork(Network):
                     'type': junction.attrib['type'],
                 })
 
-            #정리
-            NET_CONFIGS['node_info']=self.configs['node_info']
-            NET_CONFIGS['edge_info']=self.configs['edge_info']
+            # 정리
+            NET_CONFIGS['node_info'] = self.configs['node_info']
+            NET_CONFIGS['edge_info'] = self.configs['edge_info']
 
             NET_CONFIGS['traffic_node_info'] = traffic_info
             NET_CONFIGS['interest_list'] = interest_list
@@ -389,27 +395,32 @@ class MapNetwork(Network):
             NET_CONFIGS['offset'] = self.offset_list
             NET_CONFIGS['phase_list'] = self.phase_list
             NET_CONFIGS['common_phase'] = self.common_phase
-            NET_CONFIGS['state_space']=inflow_size*2 # 좌회전,직전 
+            NET_CONFIGS['state_space'] = inflow_size*2  # 좌회전,직전
 
             return NET_CONFIGS
 
     def gen_net_from_xml(self):
         net_tree = parse(self.net_file_path)
-        if self.configs['mode']=='train' or self.configs['mode']=='test':
+        if self.configs['mode'] == 'train' or self.configs['mode'] == 'test':
             gen_file_name = str(os.path.join(self.configs['current_path'], 'training_data',
-                                            self.configs['time_data'], 'net_data', self.configs['time_data']+'.net.xml'))
-            net_tree.write(gen_file_name, encoding='UTF-8', xml_declaration=True)
-        else: #simulate
-            gen_file_name = str(os.path.join(self.configs['current_path'], 'Net_data', self.configs['time_data']+'.net.xml'))
-            net_tree.write(gen_file_name, encoding='UTF-8', xml_declaration=True)
+                                             self.configs['time_data'], 'net_data', self.configs['time_data']+'.net.xml'))
+            net_tree.write(gen_file_name, encoding='UTF-8',
+                           xml_declaration=True)
+        else:  # simulate
+            gen_file_name = str(os.path.join(
+                self.configs['current_path'], 'Net_data', self.configs['time_data']+'.net.xml'))
+            net_tree.write(gen_file_name, encoding='UTF-8',
+                           xml_declaration=True)
 
     def gen_rou_from_xml(self):
         net_tree = parse(self.rou_file_path)
-        if self.configs['mode']=='train' or self.configs['mode']== 'test':
+        if self.configs['mode'] == 'train' or self.configs['mode'] == 'test':
             gen_file_name = str(os.path.join(self.configs['current_path'], 'training_data',
-                                            self.configs['time_data'], 'net_data', self.configs['time_data']+'.rou.xml'))
-            net_tree.write(gen_file_name, encoding='UTF-8', xml_declaration=True)
+                                             self.configs['time_data'], 'net_data', self.configs['time_data']+'.rou.xml'))
+            net_tree.write(gen_file_name, encoding='UTF-8',
+                           xml_declaration=True)
         else:
             gen_file_name = str(os.path.join(self.configs['current_path'], 'Net_data',
                                              self.configs['time_data']+'.rou.xml'))
-            net_tree.write(gen_file_name, encoding='UTF-8', xml_declaration=True)
+            net_tree.write(gen_file_name, encoding='UTF-8',
+                           xml_declaration=True)

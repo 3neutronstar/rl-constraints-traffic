@@ -188,9 +188,9 @@ class GridNetwork(Network):
                                 'begin': str(self.configs['flow_start']),
                                 'end': str(self.configs['flow_end']),
                                 # 'probability': self.configs['probability'],
-                                'vehsPerHour':self.configs['vehsPerHour'],
+                                'vehsPerHour': self.configs['vehsPerHour'],
                                 'reroute': 'false',
-                                #'via': edge['id']+" "+via_string+" "+checkEdge['id'],
+                                # 'via': edge['id']+" "+via_string+" "+checkEdge['id'],
                                 'departPos': "base",
                                 'departLane': 'best',
                             })
@@ -396,7 +396,7 @@ class GridNetwork(Network):
         NET_CONFIGS['phase_num_actions'] = {2: [[0, 0], [1, -1]],
                                             3: [[0, 0, 0], [1, 0, -1], [1, -1, 0], [0, 1, -1], [-1, 0, 1], [0, -1, 1], [-1, 1, 0]],
                                             4: [[0, 0, 0, 0], [1, 0, 0, -1], [1, 0, -1, 0], [1, -1, 0, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1],
-                                                [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]]}
+                                                [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1], [1, -1, -1, 1]]}
         NET_CONFIGS['rate_action_space'] = {2: len(NET_CONFIGS['phase_num_actions'][2]), 3: len(
             NET_CONFIGS['phase_num_actions'][3]), 4: len(NET_CONFIGS['phase_num_actions'][4])}
         # time_action_space
