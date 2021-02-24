@@ -221,17 +221,17 @@ class Trainer(RLAlgorithm):
         return actions
 
     def target_update(self):
-        # # Hard Update
-        # for target, source in zip(self.targetQNetwork, self.mainQNetwork):
-        #     hard_update(target, source)
-        # # Total Update
-        # hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
-
-        # Soft Update
+        # Hard Update
         for target, source in zip(self.targetQNetwork, self.mainQNetwork):
-            soft_update(target, source,self.configs)
+            hard_update(target, source)
         # Total Update
-        soft_update(self.targetSuperQNetwork, self.mainSuperQNetwork,self.configs)
+        hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
+
+        # # Soft Update
+        # for target, source in zip(self.targetQNetwork, self.mainQNetwork):
+        #     soft_update(target, source,self.configs)
+        # # Total Update
+        # soft_update(self.targetSuperQNetwork, self.mainSuperQNetwork,self.configs)
 
     def save_replay(self, state, action, reward, next_state, mask):
         for i in torch.nonzero(mask):

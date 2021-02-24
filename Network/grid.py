@@ -425,17 +425,7 @@ class GridNetwork(Network):
                     if node['id'][-3:] == interest['id'][-3:]:  # 좌표만 받기
                         node_interest_pair[node['id']].append(interest)
         
-        # 중복이 존재하는지 확인 후 list에 삽입
-        for tl_rl in self.tl_rl_list:
-            no_dup_outflow_list = list()
-            no_dup_interest_list = list()
-            for interest_comp in interests:
-                if interest_comp['outflow'] not in no_dup_outflow_list:
-                    no_dup_outflow_list.append(
-                        interest_comp['outflow'])
-                    no_dup_interest_list.append(interest_comp)
-            interest_list.append(no_dup_interest_list)
-            node_interest_pair[tl_rl['id']] = no_dup_interest_list
+        
         # TODO, common phase 결정하면서 phase_index 만들기
         for key in traffic_info.keys():
             traffic_info[key]['common_phase'] = list()  # 실제 현시로 분류되는 phase
