@@ -15,7 +15,7 @@ DEFAULT_CONFIG = {
     'tau': 0.001,
     'batch_size': 64,
     'experience_replay_size': 1e5,
-    'epsilon': 0.4,
+    'epsilon': 0.8,
     'epsilon_decay_rate': 0.99,
     'fc_net': [36, 48, 24],
     'lr': 1e-4,
