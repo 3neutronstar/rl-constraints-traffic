@@ -11,7 +11,7 @@ EXP_CONFIGS = {
     'flow_start': 0,
     'flow_end': 3600,
     'sim_start': 0,
-    'max_steps': 10800,
+    'max_steps': 3600,
     'num_epochs': 1000,
     'edge_info': Edges,
     'node_info': Nodes,
