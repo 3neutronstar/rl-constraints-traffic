@@ -128,21 +128,21 @@ class CityEnv(baseEnv):
                 (inflow-outflow), dtype=torch.int, device=self.configs['device'])
             self.tl_rl_memory[index].reward -= pressure
             self.reward -= pressure
-        # # penalty
-        # if mask_matrix.sum() > 0: # phase 어긋날 때 문제
-        #     # save reward
-        #     for index in torch.nonzero(mask_matrix):
-        #         if self.phase_action_matrix[index].sum() != 0:
-        #             phase_index = torch.tensor(
-        #                 self.configs['traffic_node_info'][self.tl_rl_list[index]]['phase_index'], device=self.configs['device']).view(1, -1).long()
-        #             # penalty for phase duration more than maxDuration
-        #             if torch.gt(self.phase_action_matrix[index].gather(dim=1, index=phase_index), torch.tensor(self.configs['traffic_node_info'][self.tl_rl_list[index]]['max_phase'])).sum():
-        #                 self.tl_rl_memory[index].reward -= 99  # penalty
-        #                 self.reward -= 99
-        #             # penalty for phase duration less than minDuration
-        #             if torch.gt(torch.tensor(self.configs['traffic_node_info'][self.tl_rl_list[index]]['min_phase']), self.phase_action_matrix[index].gather(dim=1, index=phase_index)).sum():
-        #                 self.tl_rl_memory[index].reward -= 99  # penalty
-        #                 self.reward -= 99
+        # penalty
+        if mask_matrix.sum() > 0: # phase 어긋날 때 문제
+            # save reward
+            for index in torch.nonzero(mask_matrix):
+                if self.phase_action_matrix[index].sum() != 0:
+                    phase_index = torch.tensor(
+                        self.configs['traffic_node_info'][self.tl_rl_list[index]]['phase_index'], device=self.configs['device']).view(1, -1).long()
+                    # penalty for phase duration more than maxDuration
+                    if torch.gt(self.phase_action_matrix[index].gather(dim=1, index=phase_index), torch.tensor(self.configs['traffic_node_info'][self.tl_rl_list[index]]['max_phase'])).sum():
+                        self.tl_rl_memory[index].reward -= 99  # penalty
+                        self.reward -= 99
+                    # penalty for phase duration less than minDuration
+                    if torch.gt(torch.tensor(self.configs['traffic_node_info'][self.tl_rl_list[index]]['min_phase']), self.phase_action_matrix[index].gather(dim=1, index=phase_index)).sum():
+                        self.tl_rl_memory[index].reward -= 99  # penalty
+                        self.reward -= 99
 
         # action 변화를 위한 state
         if mask_matrix.sum() > 0:  # 검색의 필요가 없다면 검색x
