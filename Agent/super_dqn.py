@@ -20,7 +20,7 @@ DEFAULT_CONFIG = {
     'fc_net': [36, 48, 24],
     'lr': 1e-4,
     'lr_decay_rate': 0.99,
-    'target_update_period': 30,
+    'target_update_period': 20,
     'final_epsilon': 0.0005,
     'final_lr': 1e-6,
 }
@@ -221,17 +221,17 @@ class Trainer(RLAlgorithm):
         return actions
 
     def target_update(self):
-        # Hard Update
-        for target, source in zip(self.targetQNetwork, self.mainQNetwork):
-            hard_update(target, source)
-        # Total Update
-        hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
-
-        # # Soft Update
+        # # Hard Update
         # for target, source in zip(self.targetQNetwork, self.mainQNetwork):
-        #     soft_update(target, source,self.configs)
+        #     hard_update(target, source)
         # # Total Update
-        # soft_update(self.targetSuperQNetwork, self.mainSuperQNetwork,self.configs)
+        # hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
+
+        # Soft Update
+        for target, source in zip(self.targetQNetwork, self.mainQNetwork):
+            soft_update(target, source,self.configs)
+        # Total Update
+        soft_update(self.targetSuperQNetwork, self.mainSuperQNetwork,self.configs)
 
     def save_replay(self, state, action, reward, next_state, mask):
         for i in torch.nonzero(mask):

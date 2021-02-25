@@ -123,13 +123,13 @@ def city_dqn_test(flags, sumoCmd, configs):
                     if inflow != None and inflow not in dup_list:
                         # 차량의 대기시간, 차량이 있을 때만
                         if traci.edge.getLastStepVehicleNumber(inflow) != 0:
-                            waiting_time.append(traci.edge.getWaitingTime(inflow)/float(
-                                traci.edge.getLastStepVehicleNumber(inflow)))
+                            waiting_time.append(traci.edge.getWaitingTime(inflow))#/float(
+                                #traci.edge.getLastStepVehicleNumber(inflow)))
                             # 차량의 평균속도
                             part_velocity.append(
                                 traci.edge.getLastStepMeanSpeed(inflow))
                             tmp_travel = traci.edge.getTraveltime(inflow)
-                            if tmp_travel <= 300:  # 이상한 값 거르기
+                            if tmp_travel <= 320:  # 이상한 값 거르기
                                 travel_time.append(tmp_travel)
                         dup_list.append(inflow)
 
@@ -159,4 +159,4 @@ def city_dqn_test(flags, sumoCmd, configs):
         avg_travel_time = torch.tensor(travel_time, dtype=torch.float).mean()
         avg_waiting_time = torch.tensor(waiting_time, dtype=torch.float).mean()
         print('======== arrived number:{} avg waiting time:{},avg velocity:{} avg_part_velocity: {} avg_travel_time: {}'.format(
-            arrived_vehicles, avg_waiting_time, avg_velocity, avg_part_velocity, avg_travel_time/MAX_STEPS))
+            arrived_vehicles, avg_waiting_time, avg_velocity, avg_part_velocity, avg_travel_time))

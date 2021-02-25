@@ -136,11 +136,11 @@ class CityEnv(baseEnv):
                     phase_index = torch.tensor(
                         self.configs['traffic_node_info'][self.tl_rl_list[index]]['phase_index'], device=self.configs['device']).view(1, -1).long()
                     # penalty for phase duration more than maxDuration
-                    if torch.ge(self.phase_action_matrix[index].gather(dim=1, index=phase_index), torch.tensor(self.configs['traffic_node_info'][self.tl_rl_list[index]]['max_phase'])).sum():
+                    if torch.gt(self.phase_action_matrix[index].gather(dim=1, index=phase_index), torch.tensor(self.configs['traffic_node_info'][self.tl_rl_list[index]]['max_phase'])).sum():
                         self.tl_rl_memory[index].reward -= 99  # penalty
                         self.reward -= 99
                     # penalty for phase duration less than minDuration
-                    if torch.ge(torch.tensor(self.configs['traffic_node_info'][self.tl_rl_list[index]]['min_phase']), self.phase_action_matrix[index].gather(dim=1, index=phase_index)).sum():
+                    if torch.gt(torch.tensor(self.configs['traffic_node_info'][self.tl_rl_list[index]]['min_phase']), self.phase_action_matrix[index].gather(dim=1, index=phase_index)).sum():
                         self.tl_rl_memory[index].reward -= 99  # penalty
                         self.reward -= 99
 
