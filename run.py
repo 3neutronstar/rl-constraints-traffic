@@ -222,7 +222,7 @@ def main(args):
     if configs['network'] == 'grid':
         from Network.grid import GridNetwork  # network바꿀때 이걸로 바꾸세요(수정 예정)
         configs['grid_num'] = 3
-        configs['scale']=1
+        configs['scale'] = 1
         if configs['mode'] == 'simulate':
             configs['file_name'] = '{}x{}grid'.format(
                 configs['grid_num'], configs['grid_num'])
@@ -251,10 +251,10 @@ def main(args):
         mapnet.gen_net_from_xml()
         mapnet.gen_rou_from_xml()
         mapnet.generate_cfg(True, configs['mode'])
-        if configs['network']=='3x3grid':
-            configs['scale']=str(1.1)
-        elif configs['network']=='dunsan':
-            configs['scale']=str(0.7)
+        if configs['network'] == '3x3grid':
+            configs['scale'] = str(1.1)
+        elif configs['network'] == 'dunsan':
+            configs['scale'] = str(0.7)
 
     # check the environment
     if 'SUMO_HOME' in os.environ:

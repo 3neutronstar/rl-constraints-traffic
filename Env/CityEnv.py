@@ -129,7 +129,7 @@ class CityEnv(baseEnv):
             self.tl_rl_memory[index].reward -= pressure
             self.reward -= pressure
         # penalty
-        if mask_matrix.sum() > 0: # phase 어긋날 때 문제
+        if mask_matrix.sum() > 0:  # phase 어긋날 때 문제
             # save reward
             for index in torch.nonzero(mask_matrix):
                 if self.phase_action_matrix[index].sum() != 0:

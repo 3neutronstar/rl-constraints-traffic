@@ -323,9 +323,9 @@ class GridNetwork(Network):
     def get_configs(self):
         side_list = ['u', 'r', 'd', 'l']
         NET_CONFIGS = dict()
-        interest_list=list()
+        interest_list = list()
         interests = list()
-        interest_set=list()
+        interest_set = list()
         node_list = self.configs['node_info']
         # grid에서는 자동 생성기 따라서 사용해도 무방함 #map완성되면 통일 가능
         x_y_end = self.configs['grid_num']-1
@@ -385,14 +385,14 @@ class GridNetwork(Network):
                     }
                 )
                 interest_list.append(interests)
-                interest_set+=list(interests)
+                interest_set += list(interests)
         # phase 생성
         '''
             key 에는 node id
             value에는 dictionary해서 그 속에 모든 내용 다들어가게
         '''
         # rate_action_space
-        NET_CONFIGS['phase_num_actions'] = {2: [[0, 0], [1, -1],[-1, 1]],
+        NET_CONFIGS['phase_num_actions'] = {2: [[0, 0], [1, -1], [-1, 1]],
                                             3: [[0, 0, 0], [1, 0, -1], [1, -1, 0], [0, 1, -1], [-1, 0, 1], [0, -1, 1], [-1, 1, 0]],
                                             4: [[0, 0, 0, 0], [1, 0, 0, -1], [1, 0, -1, 0], [1, -1, 0, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1],
                                                 [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]]}
@@ -424,8 +424,7 @@ class GridNetwork(Network):
                 for _, interest in enumerate(interest_set):
                     if node['id'][-3:] == interest['id'][-3:]:  # 좌표만 받기
                         node_interest_pair[node['id']].append(interest)
-        
-        
+
         # TODO, common phase 결정하면서 phase_index 만들기
         for key in traffic_info.keys():
             traffic_info[key]['common_phase'] = list()  # 실제 현시로 분류되는 phase
