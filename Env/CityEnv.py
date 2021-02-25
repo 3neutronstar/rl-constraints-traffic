@@ -8,7 +8,7 @@ from copy import deepcopy
 class Memory():
     def __init__(self, configs):
         self.configs = configs
-        self.reward = torch.zeros(1, dtype=torch.int, device=configs['device'])
+        self.reward = torch.zeros(1, dtype=torch.float, device=configs['device'])
         self.state = torch.zeros(
             (1, self.configs['state_space'], len(configs['tl_rl_list'])), dtype=torch.float, device=configs['device'])
         self.next_state = torch.zeros_like(self.state)
@@ -84,7 +84,7 @@ class CityEnv(baseEnv):
         action = torch.zeros(
             (1, self.num_agent, self.num_agent, 2), dtype=torch.int, device=self.configs['device'])
         reward = torch.zeros((1, self.num_agent),
-                             dtype=torch.int, device=self.configs['device'])
+                             dtype=torch.float, device=self.configs['device'])
         for index in torch.nonzero(mask):
             state[0, index, :] = deepcopy(self.tl_rl_memory[index].state)
             action[0, index, :] = deepcopy(self.tl_rl_memory[index].action)
@@ -125,7 +125,7 @@ class CityEnv(baseEnv):
             # pressure=inflow-outflow
             # reward cumulative sum
             pressure = torch.tensor(
-                (inflow-outflow), dtype=torch.int, device=self.configs['device'])
+                (inflow-outflow), dtype=torch.float, device=self.configs['device'])/100.0
             self.tl_rl_memory[index].reward -= pressure
             self.reward -= pressure
         # penalty
@@ -137,12 +137,12 @@ class CityEnv(baseEnv):
                         self.configs['traffic_node_info'][self.tl_rl_list[index]]['phase_index'], device=self.configs['device']).view(1, -1).long()
                     # penalty for phase duration more than maxDuration
                     if torch.gt(self.phase_action_matrix[index].gather(dim=1, index=phase_index), torch.tensor(self.configs['traffic_node_info'][self.tl_rl_list[index]]['max_phase'])).sum():
-                        self.tl_rl_memory[index].reward -= 99  # penalty
-                        self.reward -= 99
+                        self.tl_rl_memory[index].reward -= 1  # penalty
+                        self.reward -= 1
                     # penalty for phase duration less than minDuration
                     if torch.gt(torch.tensor(self.configs['traffic_node_info'][self.tl_rl_list[index]]['min_phase']), self.phase_action_matrix[index].gather(dim=1, index=phase_index)).sum():
-                        self.tl_rl_memory[index].reward -= 99  # penalty
-                        self.reward -= 99
+                        self.tl_rl_memory[index].reward -= 1  # penalty
+                        self.reward -= 1
 
         # action 변화를 위한 state
         if mask_matrix.sum() > 0:  # 검색의 필요가 없다면 검색x
@@ -159,10 +159,10 @@ class CityEnv(baseEnv):
                         veh_state[j*2+1] = 0.0
                     else:
                         left_movement = traci.lane.getLastStepHaltingNumber(
-                            pair['inflow']+'_{}'.format(self.left_lane_num_dict[pair['inflow']]))  # 멈춘애들 계산
+                            pair['inflow']+'_{}'.format(self.left_lane_num_dict[pair['inflow']]))/100.0  # 멈춘애들 계산
                         # 직진
                         veh_state[j*2] = traci.edge.getLastStepHaltingNumber(
-                            pair['inflow'])-left_movement  # 가장 좌측에 멈춘 친구를 왼쪽차선 이용자로 판단
+                            pair['inflow'])/100.0-left_movement  # 가장 좌측에 멈춘 친구를 왼쪽차선 이용자로 판단
                         # 좌회전
                         veh_state[j*2+1] = left_movement
                 next_state.append(veh_state)
@@ -175,7 +175,7 @@ class CityEnv(baseEnv):
         else:
             next_state = torch.zeros(
                 1, self.state_space, self.num_agent, dtype=torch.float, device=self.configs['device'])
-
+        print(next_state)
         return next_state
 
     def step(self, action, mask_matrix, action_index_matrix, action_update_mask):
