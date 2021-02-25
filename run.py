@@ -164,8 +164,8 @@ def simulate(flags, configs, sumoConfig):
                     # 차량의 대기시간, 차량이 있을 때만
                     if traci.edge.getLastStepVehicleNumber(inflow) != 0:
                         # waiting time 으로해서 append 후 avg
-                        waiting_time.append(traci.edge.getWaitingTime(inflow)/float(
-                            traci.edge.getLastStepVehicleNumber(inflow)))
+                        waiting_time.append(traci.edge.getWaitingTime(inflow))#/float(
+                            #traci.edge.getLastStepVehicleNumber(inflow)))
                         # 차량의 평균속도
                         part_velocity.append(
                             traci.edge.getLastStepMeanSpeed(inflow))
