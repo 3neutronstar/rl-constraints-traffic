@@ -108,8 +108,9 @@ class CityEnv(baseEnv):
         action_change_mask = torch.zeros_like(action_update_mask)
         for index in torch.nonzero(action_update_mask):
             if action_index_matrix[index] in self.traffic_node_info[self.tl_rl_list[index]]['phase_index']:
-                action_change_mask[index] = True
                 # action_index_matrix상의 값이 next state를 받아와야하는 index일 경우
+                action_change_mask[index] = True
+
         # Reward
         for index in torch.nonzero(action_change_mask):
             outflow = 0

@@ -261,16 +261,26 @@ class MapNetwork(Network):
                 num_phase = 0  # phase갯수 filtering
                 for i, phase in enumerate(phaseList):
                     phase_state_list.append(phase.attrib['state'])
-                    phase_duration_list.append(int(phase.attrib['duration']))
-                    tl_period += int(phase.attrib['duration'])
-                    if int(phase.attrib['duration']) > 5:  # Phase 로 간주할 숫자
+                    this_phase_dur = phase.attrib['duration']
+                    phase_duration_list.append(int(this_phase_dur))
+                    tl_period += int(this_phase_dur)
+                    # Phase 로 간주할 숫자
+                    if int(this_phase_dur) > 5 and 'minDur' in phase.attrib.keys() and 'maxDur' in phase.attrib.keys():
                         num_phase += 1
                         min_duration_list.append(
-                            int(phase.attrib['minDuration']))
+                            int(phase.attrib['minDur']))
                         max_duration_list.append(
-                            int(phase.attrib['maxDuration']))
+                            int(phase.attrib['maxDur']))
                         phase_index_list.append(i)
-                        common_phase_list.append(int(phase.attrib['duration']))
+                        common_phase_list.append(int(this_phase_dur))
+                    elif int(this_phase_dur) > 5:
+                        num_phase += 1
+                        min_duration_list.append(
+                            int(this_phase_dur)-5)
+                        max_duration_list.append(
+                            int(this_phase_dur)+5)
+                        phase_index_list.append(i)
+                        common_phase_list.append(int(this_phase_dur))
 
                 # dictionary에 담기
                 traffic_node_info['phase_list'] = phase_state_list

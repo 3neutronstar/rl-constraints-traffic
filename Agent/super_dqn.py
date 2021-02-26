@@ -54,7 +54,7 @@ class QNetwork(nn.Module):
             self.configs['fc_net'][1], self.configs['fc_net'][2])
         self.fc_y4 = nn.Linear(
             self.configs['fc_net'][2], self.time_output_size)
-        if configs['mode']=='test':
+        if configs['mode'] == 'test':
             self.eval()
 
         # Experience Replay
@@ -100,7 +100,7 @@ class SuperQNetwork(nn.Module):
             int(self.state_space*1.5*self.num_agent), int(self.state_space*1*self.num_agent))
         self.fc4 = nn.Linear(
             self.state_space*1*self.num_agent, self.output_size)
-        if configs['mode']=='test':
+        if configs['mode'] == 'test':
             self.eval()
 
     def forward(self, x):
@@ -108,9 +108,9 @@ class SuperQNetwork(nn.Module):
         x = f.relu(self.conv2(x))
         x = x.view(-1, self.num_agent)
         x = f.relu(self.fc1(x))
-        x=f.dropout(x,0.4)
+        x = f.dropout(x, 0.4)
         x = f.relu(self.fc2(x))
-        x=f.dropout(x,0.3)
+        x = f.dropout(x, 0.3)
         x = f.relu(self.fc3(x))
         x = self.fc4(x)  # .view(-1, self.num_agent,
         #                      int(self.configs['state_space']/2))
@@ -182,11 +182,6 @@ class Trainer(RLAlgorithm):
             print(self.mainQNetwork[i])
 
     def get_action(self, state, mask):
-        # with torch.no_grad():
-        #     action=torch.max(self.mainQNetwork(state),dim=2)[1].view(-1,self.num_agent,self.action_size)
-        #     for i in range(self.num_agent):
-        #         if random.random()<self.epsilon:
-        #             action[0][i]=random.randint(0,7)
 
         # 전체를 날리는 epsilon greedy
         actions = torch.zeros((1, self.num_agent, self.action_size),
@@ -212,7 +207,7 @@ class Trainer(RLAlgorithm):
                     (1, self.num_agent, 1), dtype=torch.int, device=self.configs['device'])
                 time_actions = torch.zeros(
                     (1, self.num_agent, 1), dtype=torch.int, device=self.configs['device'])
-                for index in torch.nonzero(mask):
+                for index in torch.nonzero(mask):  # TODO masking
                     rate_actions[0, index] = torch.tensor(random.randint(
                         0, self.rate_action_space[self.rate_key_list[index]]-1), dtype=torch.int, device=self.configs['device'])
                     time_actions[0, index] = torch.tensor(random.randint(
@@ -229,9 +224,10 @@ class Trainer(RLAlgorithm):
 
         # Soft Update
         for target, source in zip(self.targetQNetwork, self.mainQNetwork):
-            soft_update(target, source,self.configs)
+            soft_update(target, source, self.configs)
         # Total Update
-        soft_update(self.targetSuperQNetwork, self.mainSuperQNetwork,self.configs)
+        soft_update(self.targetSuperQNetwork,
+                    self.mainSuperQNetwork, self.configs)
 
     def save_replay(self, state, action, reward, next_state, mask):
         for i in torch.nonzero(mask):

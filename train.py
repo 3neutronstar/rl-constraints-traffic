@@ -45,7 +45,7 @@ def city_dqn_train(configs, time_data, sumoCmd):
         if configs['randomness'] == True:
             tmp_sumoCmd = sumoCmd+['--scale', str(1.5+random())]  # 1.5~2.5
         else:
-            if configs['network'] == 'dunsan' or configs['network']=='3x3grid':
+            if configs['network'] == 'dunsan' or configs['network'] == '3x3grid':
                 tmp_sumoCmd = sumoCmd+['--scale', str(configs['scale'])]
             else:
                 tmp_sumoCmd = sumoCmd
@@ -55,7 +55,7 @@ def city_dqn_train(configs, time_data, sumoCmd):
         actions = torch.zeros(
             (NUM_AGENT, configs['action_size']), dtype=torch.int, device=configs['device'])
         # Mask Matrix : TL_Period가 끝나면 True
-        mask_matrix = torch.ones(
+        mask_matrix = torch.zeros(
             (NUM_AGENT), dtype=torch.bool, device=configs['device'])
 
         # MAX Period까지만 증가하는 t
@@ -70,6 +70,17 @@ def city_dqn_train(configs, time_data, sumoCmd):
             (NUM_AGENT), dtype=torch.long, device=configs['device'])  # 현재 몇번째 phase인지
         action_update_mask = torch.eq(   # action이 지금 update해야되는지 확인
             t_agent, action_matrix[0, action_index_matrix]).view(NUM_AGENT)  # 0,인 이유는 인덱싱
+
+        # 최대에 도달하면 0으로 초기화 (offset과 비교)
+        clear_matrix = torch.eq(t_agent % TL_PERIOD, 0)
+        t_agent[clear_matrix] = 0
+        # action 넘어가야된다면 action index증가 (by tensor slicing)
+        action_index_matrix[action_update_mask] += 1
+        action_index_matrix[clear_matrix] = 0
+
+        # mask update, matrix True로 전환
+        mask_matrix[clear_matrix] = True
+        mask_matrix[~clear_matrix] = False
 
         # state initialization
         state = env.collect_state(
@@ -87,17 +98,34 @@ def city_dqn_train(configs, time_data, sumoCmd):
                 action_matrix, actions, mask_matrix)
             # 누적값으로 나타남
 
+            # environment에 적용
+            # action 적용함수, traci.simulationStep 있음
+            if mask_matrix.sum() > 0:
+                print(actions)
+            next_state = env.step(
+                actions, mask_matrix, action_index_matrix, action_update_mask)
+
             # 전체 1초증가 # traci는 env.step에
             step += 1
             t_agent += 1
 
-            # environment에 적용
-            # action 적용함수, traci.simulationStep 있음
-            next_state = env.step(
-                actions, mask_matrix, action_index_matrix, action_update_mask)
+            # action 넘어가야된다면 action index증가 (by tensor slicing)
+            action_update_mask = torch.eq(  # update는 단순히 진짜 현시만 받아서 결정해야됨
+                t_agent, action_matrix[0, action_index_matrix]).view(NUM_AGENT)  # 0,인 이유는 인덱싱
+            action_index_matrix[action_update_mask] += 1
+            # agent의 최대 phase를 넘어가면 해당 agent의 action index 0으로 초기화
+            action_index_matrix[clear_matrix] = 0
+
+            # mask update, matrix True로 전환
+            mask_matrix[clear_matrix] = True
+            mask_matrix[~clear_matrix] = False
+
+            # 최대에 도달하면 0으로 초기화 (offset과 비교)
+            clear_matrix = torch.eq(t_agent % TL_PERIOD, 0)
+            t_agent[clear_matrix] = 0
 
             # env속에 agent별 state를 꺼내옴, max_offset+period 이상일 때 시작
-            if step >= int(torch.max(OFFSET)+torch.max(TL_PERIOD)):
+            if step >= int(torch.max(OFFSET)+torch.max(TL_PERIOD)) and mask_matrix.sum() > 0:
                 rep_state, rep_action, rep_reward, rep_next_state = env.get_state(
                     mask_matrix)
                 agent.save_replay(rep_state, rep_action, rep_reward,
@@ -106,28 +134,10 @@ def city_dqn_train(configs, time_data, sumoCmd):
             # update
             agent.update(mask_matrix)
 
-            # 모두 하고 나서
-
-            # 넘어가야된다면 action index증가 (by tensor slicing)
-            action_update_mask = torch.eq(  # update는 단순히 진짜 현시만 받아서 결정해야됨
-                t_agent, action_matrix[0, action_index_matrix]).view(NUM_AGENT)  # 0,인 이유는 인덱싱
-
-            # 최대에 도달하면 0으로 초기화 (offset과 비교)
-            update_matrix = torch.eq(t_agent % TL_PERIOD, 0)
-            t_agent[update_matrix] = 0
-
-            action_index_matrix[action_update_mask] += 1
-            # agent의 최대 phase를 넘어가면 해당 agent의 action index 0으로 초기화
-            clear_matrix = torch.ge(action_index_matrix, phase_num_matrix)
-            action_index_matrix[clear_matrix] = 0
-            # mask update, matrix True로 전환
-            mask_matrix[clear_matrix] = True
-            mask_matrix[~clear_matrix] = False
-
             state = next_state
             # info
             arrived_vehicles += traci.simulation.getArrivedNumber()
-            #soft update
+            # soft update
             agent.target_update()
 
         agent.update_hyperparams(epoch)  # lr and epsilon upate
