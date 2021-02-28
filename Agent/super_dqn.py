@@ -16,7 +16,7 @@ DEFAULT_CONFIG = {
     'batch_size': 64,
     'experience_replay_size': 1e5,
     'epsilon': 0.8,
-    'epsilon_decay_rate': 0.99,
+    'epsilon_decay_rate': 0.98,
     'fc_net': [36, 48, 24],
     'lr': 1e-4,
     'lr_decay_rate': 0.99,
@@ -142,6 +142,7 @@ class Trainer(RLAlgorithm):
         self.lr_decay_rate = self.configs['lr_decay_rate']
         self.epsilon_decay_rate = self.configs['epsilon_decay_rate']
         self.batch_size = self.configs['batch_size']
+        self.device=self.configs['device']
         self.running_loss = 0
         self.super_output_size = int(self.num_agent*2)
         self.super_input_size = int(self.num_agent)
@@ -185,16 +186,16 @@ class Trainer(RLAlgorithm):
 
         # 전체를 날리는 epsilon greedy
         actions = torch.zeros((1, self.num_agent, self.action_size),
-                              dtype=torch.int, device=self.configs['device'])
+                              dtype=torch.int, device=self.device)
         if mask.sum() > 0:
             if random.random() > self.epsilon:  # epsilon greedy
                 # masks = torch.cat((mask, mask), dim=0)
                 with torch.no_grad():
                     obs = self.mainSuperQNetwork(state)
                     rate_actions = torch.zeros(
-                        (1, self.num_agent, 1), dtype=torch.int, device=self.configs['device'])
+                        (1, self.num_agent, 1), dtype=torch.int, device=self.device)
                     time_actions = torch.zeros(
-                        (1, self.num_agent, 1), dtype=torch.int, device=self.configs['device'])
+                        (1, self.num_agent, 1), dtype=torch.int, device=self.device)
                     for index in torch.nonzero(mask):
                         rate_action, time_action = self.mainQNetwork[index](
                             obs)
@@ -204,30 +205,30 @@ class Trainer(RLAlgorithm):
                     # agent가 늘어나면 view(agents,action_size)
             else:
                 rate_actions = torch.zeros(
-                    (1, self.num_agent, 1), dtype=torch.int, device=self.configs['device'])
+                    (1, self.num_agent, 1), dtype=torch.int, device=self.device)
                 time_actions = torch.zeros(
-                    (1, self.num_agent, 1), dtype=torch.int, device=self.configs['device'])
+                    (1, self.num_agent, 1), dtype=torch.int, device=self.device)
                 for index in torch.nonzero(mask):  # TODO masking
                     rate_actions[0, index] = torch.tensor(random.randint(
-                        0, self.rate_action_space[self.rate_key_list[index]]-1), dtype=torch.int, device=self.configs['device'])
+                        0, self.rate_action_space[self.rate_key_list[index]]-1), dtype=torch.int, device=self.device)
                     time_actions[0, index] = torch.tensor(random.randint(
-                        0, self.configs['time_action_space'][index]-1), dtype=torch.int, device=self.configs['device'])
+                        0, self.configs['time_action_space'][index]-1), dtype=torch.int, device=self.device)
                 actions = torch.cat((rate_actions, time_actions), dim=2)
         return actions
 
     def target_update(self):
-        # # Hard Update
-        # for target, source in zip(self.targetQNetwork, self.mainQNetwork):
-        #     hard_update(target, source)
-        # # Total Update
-        # hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
-
-        # Soft Update
+        # Hard Update
         for target, source in zip(self.targetQNetwork, self.mainQNetwork):
-            soft_update(target, source, self.configs)
+            hard_update(target, source)
         # Total Update
-        soft_update(self.targetSuperQNetwork,
-                    self.mainSuperQNetwork, self.configs)
+        hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
+
+        # # Soft Update
+        # for target, source in zip(self.targetQNetwork, self.mainQNetwork):
+        #     soft_update(target, source, self.configs)
+        # # Total Update
+        # soft_update(self.targetSuperQNetwork,
+        #             self.mainSuperQNetwork, self.configs)
 
     def save_replay(self, state, action, reward, next_state, mask):
         for i in torch.nonzero(mask):
@@ -244,7 +245,7 @@ class Trainer(RLAlgorithm):
 
             # 최종 상태가 아닌 마스크를 계산하고 배치 요소를 연결합니다.
             non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
-                                                    batch.next_state)), device=self.configs['device'], dtype=torch.bool)
+                                                    batch.next_state)), device=self.device, dtype=torch.bool)
 
             non_final_next_states = torch.cat([s for s in batch.next_state
                                                if s is not None], dim=0)
@@ -264,15 +265,15 @@ class Trainer(RLAlgorithm):
                 1, action_batch[:, 0, 1].view(-1, 1).long())
             # 모든 다음 상태를 위한 V(s_{t+1}) 계산
             rate_next_state_values = torch.zeros(
-                self.configs['batch_size'], device=self.configs['device'], dtype=torch.float)
+                self.configs['batch_size'], device=self.device, dtype=torch.float)
             time_next_state_values = torch.zeros(
-                self.configs['batch_size'], device=self.configs['device'], dtype=torch.float)
+                self.configs['batch_size'], device=self.device, dtype=torch.float)
             rate_Q, time_Q = targetQNetwork(
                 self.mainSuperQNetwork(non_final_next_states))
             rate_next_state_values[non_final_mask] = rate_Q.max(
-                1)[0].detach().to(self.configs['device'])
+                1)[0].detach().to(self.device)
             time_next_state_values[non_final_mask] = time_Q.max(1)[0].detach().to(
-                self.configs['device'])  # .to(self.configs['device'])  # 자신의 Q value 중에서max인 value를 불러옴
+                self.device)  # .to(self.configs['device'])  # 자신의 Q value 중에서max인 value를 불러옴
 
             # 기대 Q 값 계산
             rate_expected_state_action_values = (

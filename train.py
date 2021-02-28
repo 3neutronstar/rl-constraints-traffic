@@ -30,13 +30,14 @@ def city_dqn_train(configs, time_data, sumoCmd):
     agent.save_params(time_data)
     # init training
     NUM_AGENT = configs['num_agent']
+    DEVICE=configs['device']
     TL_RL_LIST = configs['tl_rl_list']
     MAX_PHASES = configs['max_phase_num']
     MAX_STEPS = configs['max_steps']
     OFFSET = torch.tensor(configs['offset'],  # i*10
-                          device=configs['device'], dtype=torch.int)
+                          device=DEVICE, dtype=torch.int)
     TL_PERIOD = torch.tensor(
-        configs['tl_period'], device=configs['device'], dtype=torch.int)
+        configs['tl_period'], device=DEVICE, dtype=torch.int)
     epoch = 0
     print("action space(rate: {}, time: {}".format(
         configs['rate_action_space'], configs['time_action_space']))
@@ -53,21 +54,21 @@ def city_dqn_train(configs, time_data, sumoCmd):
         env = CityEnv(configs)
         # Total Initialization
         actions = torch.zeros(
-            (NUM_AGENT, configs['action_size']), dtype=torch.int, device=configs['device'])
+            (NUM_AGENT, configs['action_size']), dtype=torch.int, device=DEVICE)
         # Mask Matrix : TL_Period가 끝나면 True
         mask_matrix = torch.zeros(
-            (NUM_AGENT), dtype=torch.bool, device=configs['device'])
+            (NUM_AGENT), dtype=torch.bool, device=DEVICE)
 
         # MAX Period까지만 증가하는 t
         t_agent = torch.zeros(
-            (NUM_AGENT), dtype=torch.int, device=configs['device'])
+            (NUM_AGENT), dtype=torch.int, device=DEVICE)
         t_agent -= OFFSET
 
         # Action configs['offset']on Matrix : 비교해서 동일할 때 collect_state, 없는 state는 zero padding
         action_matrix = torch.zeros(
-            (NUM_AGENT, MAX_PHASES), dtype=torch.int, device=configs['device'])  # 노란불 3초 해줘야됨
+            (NUM_AGENT, MAX_PHASES), dtype=torch.int, device=DEVICE)  # 노란불 3초 해줘야됨
         action_index_matrix = torch.zeros(
-            (NUM_AGENT), dtype=torch.long, device=configs['device'])  # 현재 몇번째 phase인지
+            (NUM_AGENT), dtype=torch.long, device=DEVICE)  # 현재 몇번째 phase인지
         action_update_mask = torch.eq(   # action이 지금 update해야되는지 확인
             t_agent, action_matrix[0, action_index_matrix]).view(NUM_AGENT)  # 0,인 이유는 인덱싱
 
@@ -100,8 +101,6 @@ def city_dqn_train(configs, time_data, sumoCmd):
 
             # environment에 적용
             # action 적용함수, traci.simulationStep 있음
-            if mask_matrix.sum() > 0:
-                print(actions)
             next_state = env.step(
                 actions, mask_matrix, action_index_matrix, action_update_mask)
 
@@ -137,13 +136,13 @@ def city_dqn_train(configs, time_data, sumoCmd):
             state = next_state
             # info
             arrived_vehicles += traci.simulation.getArrivedNumber()
-            # soft update
-            agent.target_update()
+            # # soft update
+            # agent.target_update()
 
         agent.update_hyperparams(epoch)  # lr and epsilon upate
-        # # hard update
-        # if epoch % agent.configs['target_update_period'] == 0:
-        #     agent.target_update()  # dqn
+        # hard update
+        if epoch % agent.configs['target_update_period'] == 0:
+            agent.target_update()  # dqn
         b = time.time()
         traci.close()
         print("time:", b-a)
