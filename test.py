@@ -31,13 +31,11 @@ def city_dqn_test(flags, sumoCmd, configs):
                           device=configs['device'], dtype=torch.int)
     TL_PERIOD = torch.tensor(
         configs['tl_period'], device=configs['device'], dtype=torch.int)
-    epoch = 0
     # state initialization
     # agent setting
     # check performance
     avg_waiting_time = 0
     avg_part_velocity = 0
-    total_reward = 0
     avg_velocity = 0
     arrived_vehicles = 0
     part_velocity = list()
@@ -152,7 +150,7 @@ def city_dqn_test(flags, sumoCmd, configs):
             # for edgeid in edge_list:
             #     if traci.edge.getLastStepVehicleNumber(edgeid) !=None:
             #         total_velocity.append(traci.edge.getLastStepMeanSpeed(edgeid))
-            #     state = next_state
+            state = next_state
             # info
             
             arrived_vehicles += traci.simulation.getArrivedNumber()

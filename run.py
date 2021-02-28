@@ -186,12 +186,12 @@ def simulate(flags, configs, sumoConfig):
         # for edgeid in edge_list:
         #     if traci.edge.getLastStepVehicleNumber(edgeid) !=None:
         #         total_velocity.append(traci.edge.getLastStepMeanSpeed(edgeid))
-
         arrived_vehicles += traci.simulation.getAllSubscriptionResults()[
             ''][0x79]  # throughput
     b = time.time()
     traci.close()
     avg_part_velocity = torch.tensor(part_velocity, dtype=torch.float).mean()
+
     avg_velocity = torch.tensor(total_velocity, dtype=torch.float).mean()
     avg_travel_time = torch.tensor(travel_time, dtype=torch.float).mean()
     avg_waiting_time = torch.tensor(waiting_time, dtype=torch.float).mean()
