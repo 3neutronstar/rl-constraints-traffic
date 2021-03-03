@@ -255,7 +255,7 @@ def main(args):
         if configs['network']=='3x3grid':
             configs['scale']=str(1.1)
         elif configs['network']=='dunsan':
-            configs['scale']=str(2.0)
+            configs['scale']=str(0.7)
 
     # check the environment
     if 'SUMO_HOME' in os.environ:
