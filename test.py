@@ -103,6 +103,9 @@ def city_dqn_test(flags, sumoCmd, configs):
             # 전체 1초증가 # traci는 env.step에
             step += 1
             t_agent += 1
+            # 최대에 도달하면 0으로 초기화 (offset과 비교)
+            clear_matrix = torch.eq(t_agent % TL_PERIOD, 0)
+            t_agent[clear_matrix] = 0
 
 
             # 넘어가야된다면 action index증가 (by tensor slicing)
@@ -116,9 +119,6 @@ def city_dqn_test(flags, sumoCmd, configs):
             mask_matrix[clear_matrix] = True
             mask_matrix[~clear_matrix] = False
 
-            # 최대에 도달하면 0으로 초기화 (offset과 비교)
-            clear_matrix = torch.eq(t_agent % TL_PERIOD, 0)
-            t_agent[clear_matrix] = 0
 
             # check performance
             for _, interests in enumerate(configs['interest_list']):

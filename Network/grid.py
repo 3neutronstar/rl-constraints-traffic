@@ -386,6 +386,11 @@ class GridNetwork(Network):
                 )
                 interest_list.append(interests)
                 interest_set += list(interests)
+        no_dup_interest_list=list()
+        for interest_set_item in interest_set:
+            if interest_set_item not in no_dup_interest_list:
+                no_dup_interest_list.append(interest_set_item)
+
         # phase 생성
         '''
             key 에는 node id
@@ -421,7 +426,7 @@ class GridNetwork(Network):
         for _, node in enumerate(node_list):
             if node['id'][-1] not in side_list:
                 node_interest_pair[node['id']] = list()
-                for _, interest in enumerate(interest_set):
+                for _, interest in enumerate(no_dup_interest_list):
                     if node['id'][-3:] == interest['id'][-3:]:  # 좌표만 받기
                         node_interest_pair[node['id']].append(interest)
 
