@@ -13,7 +13,7 @@ from itertools import chain
 DEFAULT_CONFIG = {
     'gamma': 0.99,
     'tau': 0.001,
-    'batch_size': 4,
+    'batch_size': 32,
     'experience_replay_size': 1e5,
     'epsilon': 0.8,
     'epsilon_decay_rate': 0.98,
@@ -209,17 +209,17 @@ class Trainer(RLAlgorithm):
         return actions
 
     def target_update(self):
-        # Hard Update
-        for target, source in zip(self.targetQNetwork, self.mainQNetwork):
-            hard_update(target, source)
-        # Total Update
-        hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
-
-        # # Soft Update
+        # # Hard Update
         # for target, source in zip(self.targetQNetwork, self.mainQNetwork):
-        #     soft_update(target, source,self.configs)
+        #     hard_update(target, source)
         # # Total Update
-        # soft_update(self.targetSuperQNetwork, self.mainSuperQNetwork,self.configs)
+        # hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
+
+        # Soft Update
+        for target, source in zip(self.targetQNetwork, self.mainQNetwork):
+            soft_update(target, source,self.configs)
+        # Total Update
+        soft_update(self.targetSuperQNetwork, self.mainSuperQNetwork,self.configs)
 
     def save_replay(self, state, action, reward, next_state, mask):
         for i in torch.nonzero(mask):

@@ -217,7 +217,7 @@ class MapNetwork(Network):
             NET_CONFIGS['phase_num_actions'] = {2: [[0, 0], [1, -1]],
                                                 3: [[0, 0, 0], [1, 0, -1], [1, -1, 0], [0, 1, -1], [-1, 0, 1], [0, -1, 1], [-1, 1, 0]],
                                                 4: [[0, 0, 0, 0], [1, 0, 0, -1], [1, 0, -1, 0], [1, -1, 0, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1],
-                                                    [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1], [1, -1, -1, 1]],
+                                                    [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]],
                                                 5: [[0, 0, 0, 0, 0]],
                                                 6: [[0, 0, 0, 0, 0, 0]], }
             NET_CONFIGS['rate_action_space'] = dict()
@@ -261,16 +261,26 @@ class MapNetwork(Network):
                 num_phase = 0  # phase갯수 filtering
                 for i, phase in enumerate(phaseList):
                     phase_state_list.append(phase.attrib['state'])
-                    phase_duration_list.append(int(phase.attrib['duration']))
-                    tl_period += int(phase.attrib['duration'])
-                    if int(phase.attrib['duration']) > 5:  # Phase 로 간주할 숫자
+                    this_phase_dur = phase.attrib['duration']
+                    phase_duration_list.append(int(this_phase_dur))
+                    tl_period += int(this_phase_dur)
+                    # Phase 로 간주할 숫자
+                    if int(this_phase_dur) > 5 and 'minDur' in phase.attrib.keys() and 'maxDur' in phase.attrib.keys():
                         num_phase += 1
                         min_duration_list.append(
-                            int(phase.attrib['minDuration']))
+                            int(phase.attrib['minDur']))
                         max_duration_list.append(
-                            int(phase.attrib['maxDuration']))
+                            int(phase.attrib['maxDur']))
                         phase_index_list.append(i)
-                        common_phase_list.append(int(phase.attrib['duration']))
+                        common_phase_list.append(int(this_phase_dur))
+                    elif int(this_phase_dur) > 5:
+                        num_phase += 1
+                        min_duration_list.append(
+                            int(this_phase_dur)-5)
+                        max_duration_list.append(
+                            int(this_phase_dur)+5)
+                        phase_index_list.append(i)
+                        common_phase_list.append(int(this_phase_dur))
 
                 # dictionary에 담기
                 traffic_node_info['phase_list'] = phase_state_list
@@ -301,7 +311,6 @@ class MapNetwork(Network):
             # road용
             # edge info 저장
             self.configs['edge_info'] = list()
-            edge_list = list()  # edge존재 확인용
             edges = net_tree.findall('edge')
             for edge in edges:
                 if 'function' not in edge.attrib.keys():
@@ -343,6 +352,11 @@ class MapNetwork(Network):
                                     break
                                 else:
                                     interest['outflow'] = None
+                            # tmp_edge=str(-int(edge['id']))
+                            # if tmp_edge in edge_list:
+                            #     interest['outflow']=tmp_edge
+                            # else:
+                            #     interest['outflow']=None
                             interests.append(interest)
                             i += 1  # index표기용
 
@@ -355,6 +369,11 @@ class MapNetwork(Network):
                                     break
                                 else:
                                     interest['inflow'] = None
+                            # tmp_edge=str(-int(edge['id']))
+                            # if tmp_edge in edge_list:
+                            #     interest['inflow']=tmp_edge
+                            # else:
+                            #     interest['inflow']=None
                             interests.append(interest)
                             i += 1  # index표기용
 

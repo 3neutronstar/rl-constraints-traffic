@@ -157,11 +157,9 @@ class GridNetwork(Network):
 
                             # 위 아래
                             if checkEdge['to'][-1] == direction_list[1] or checkEdge['to'][-1] == direction_list[2]:
-                                # self.configs['probability'] = '0.133'
-                                self.configs['vehsPerHour'] = '3000'
+                                self.configs['probability'] = '0.133'
                             else:
-                                self.configs['vehsPerHour'] = '5000'
-                                # self.configs['probability'] = '0.388'
+                                self.configs['probability'] = '0.388'
                             via_string = str()
                             node_x_y = edge['id'][2]  # 끝에서 사용하는 기준 x나 y
                             if 'r' in edge['id']:
@@ -187,8 +185,7 @@ class GridNetwork(Network):
                                 'id': edge['from'],
                                 'begin': str(self.configs['flow_start']),
                                 'end': str(self.configs['flow_end']),
-                                # 'probability': self.configs['probability'],
-                                'vehsPerHour': self.configs['vehsPerHour'],
+                                'probability': self.configs['probability'],
                                 'reroute': 'false',
                                 # 'via': edge['id']+" "+via_string+" "+checkEdge['id'],
                                 'departPos': "base",
@@ -327,12 +324,13 @@ class GridNetwork(Network):
         side_list = ['u', 'r', 'd', 'l']
         NET_CONFIGS = dict()
         interest_list = list()
+        interests = list()
+        interest_set = list()
         node_list = self.configs['node_info']
         # grid에서는 자동 생성기 따라서 사용해도 무방함 #map완성되면 통일 가능
         x_y_end = self.configs['grid_num']-1
         for _, node in enumerate(node_list):
             if node['id'][-1] not in side_list:
-                interests = list()
                 x = int(node['id'][-3])
                 y = int(node['id'][-1])
                 left_x = x-1
@@ -387,30 +385,36 @@ class GridNetwork(Network):
                     }
                 )
                 interest_list.append(interests)
+                interest_set += list(interests)
+        no_dup_interest_list=list()
+        for interest_set_item in interest_set:
+            if interest_set_item not in no_dup_interest_list:
+                no_dup_interest_list.append(interest_set_item)
+
         # phase 생성
         '''
             key 에는 node id
             value에는 dictionary해서 그 속에 모든 내용 다들어가게
         '''
         # rate_action_space
-        NET_CONFIGS['phase_num_actions'] = {2: [[0, 0], [1, -1]],
+        NET_CONFIGS['phase_num_actions'] = {2: [[0, 0], [1, -1], [-1, 1]],
                                             3: [[0, 0, 0], [1, 0, -1], [1, -1, 0], [0, 1, -1], [-1, 0, 1], [0, -1, 1], [-1, 1, 0]],
                                             4: [[0, 0, 0, 0], [1, 0, 0, -1], [1, 0, -1, 0], [1, -1, 0, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1],
-                                                [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1], [1, -1, -1, 1]]}
+                                                [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]]}
         NET_CONFIGS['rate_action_space'] = {2: len(NET_CONFIGS['phase_num_actions'][2]), 3: len(
             NET_CONFIGS['phase_num_actions'][3]), 4: len(NET_CONFIGS['phase_num_actions'][4])}
         # time_action_space
         NET_CONFIGS['time_action_space'] = list()
         traffic_info = {
-            'n_0_0': {'min_phase': [28, 28, 28, 28], 'offset': 0, 'phase_duration': [37,  3, 37,  3, 37,  3, 37,  3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
-            'n_0_1': {'min_phase': [28, 28, 28, 28], 'offset': 0, 'phase_duration': [37,  3, 37,  3, 37,  3, 37,  3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
-            'n_0_2': {'min_phase': [28, 28, 28, 28], 'offset': 0, 'phase_duration': [37,  3, 37,  3, 37,  3, 37,  3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
-            'n_1_0': {'min_phase': [28, 28, 28, 28], 'offset': 0, 'phase_duration': [37,  3, 37,  3, 37,  3, 37,  3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
-            'n_1_1': {'min_phase': [28, 28, 28, 28], 'offset': 0, 'phase_duration': [37,  3, 37,  3, 37,  3, 37,  3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
-            'n_1_2': {'min_phase': [28, 28, 28, 28], 'offset': 0, 'phase_duration': [37,  3, 37,  3, 37,  3, 37,  3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
-            'n_2_0': {'min_phase': [28, 28, 28, 28], 'offset': 0, 'phase_duration': [37,  3, 37,  3, 37,  3, 37,  3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
-            'n_2_1': {'min_phase': [28, 28, 28, 28], 'offset': 0, 'phase_duration': [37,  3, 37,  3, 37,  3, 37,  3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
-            'n_2_2': {'min_phase': [28, 28, 28, 28], 'offset': 0, 'phase_duration': [37,  3, 37,  3, 37,  3, 37,  3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
+            'n_0_0': {'min_phase': [28, 28, 28, 28], 'offset': 0, 'phase_duration': [37, 3, 37, 3, 37, 3, 37, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
+            'n_0_1': {'min_phase': [28, 28, 28, 28], 'offset': 0, 'phase_duration': [37, 3, 37, 3, 37, 3, 37, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
+            'n_0_2': {'min_phase': [28, 28, 28, 28], 'offset': 0, 'phase_duration': [37, 3, 37, 3, 37, 3, 37, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
+            'n_1_0': {'min_phase': [28, 28, 28, 28], 'offset': 0, 'phase_duration': [37, 3, 37, 3, 37, 3, 37, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
+            'n_1_1': {'min_phase': [28, 28, 28, 28], 'offset': 0, 'phase_duration': [37, 3, 37, 3, 37, 3, 37, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
+            'n_1_2': {'min_phase': [28, 28, 28, 28], 'offset': 0, 'phase_duration': [37, 3, 37, 3, 37, 3, 37, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
+            'n_2_0': {'min_phase': [28, 28, 28, 28], 'offset': 0, 'phase_duration': [37, 3, 37, 3, 37, 3, 37, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
+            'n_2_1': {'min_phase': [28, 28, 28, 28], 'offset': 0, 'phase_duration': [37, 3, 37, 3, 37, 3, 37, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
+            'n_2_2': {'min_phase': [28, 28, 28, 28], 'offset': 0, 'phase_duration': [37, 3, 37, 3, 37, 3, 37, 3], 'max_phase': [49, 49, 49, 49], 'period': 160, 'matrix_actions': NET_CONFIGS['phase_num_actions'][4], 'num_phase': 4, },
         }
         # phase list 삽입
         for tl_rl in self.tl_rl_list:
@@ -422,10 +426,10 @@ class GridNetwork(Network):
         for _, node in enumerate(node_list):
             if node['id'][-1] not in side_list:
                 node_interest_pair[node['id']] = list()
-                for _, interests in enumerate(interest_list):
-                    for interest in interests:
-                        if node['id'][-3:] == interest['id'][-3:]:  # 좌표만 받기
-                            node_interest_pair[node['id']].append(interest)
+                for _, interest in enumerate(no_dup_interest_list):
+                    if node['id'][-3:] == interest['id'][-3:]:  # 좌표만 받기
+                        node_interest_pair[node['id']].append(interest)
+
         # TODO, common phase 결정하면서 phase_index 만들기
         for key in traffic_info.keys():
             traffic_info[key]['common_phase'] = list()  # 실제 현시로 분류되는 phase
@@ -457,7 +461,7 @@ class GridNetwork(Network):
             NET_CONFIGS['offset'].append(traffic_info[key]['offset'])
             NET_CONFIGS['phase_index'].append(traffic_info[key]['phase_index'])
             NET_CONFIGS['time_action_space'].append(round((torch.min(torch.tensor(traffic_info[key]['max_phase'])-torch.tensor(
-                traffic_info[key]['common_phase']), torch.tensor(traffic_info[key]['common_phase'])-torch.tensor(traffic_info[key]['min_phase']))/2.0).mean().item()))
+                traffic_info[key]['common_phase']), torch.tensor(traffic_info[key]['common_phase'])-torch.tensor(traffic_info[key]['min_phase']))/2).mean().item()))
 
         NET_CONFIGS['num_agent'] = len(NET_CONFIGS['tl_rl_list'])
         # max value 검출기

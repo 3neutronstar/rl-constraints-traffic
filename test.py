@@ -31,16 +31,15 @@ def city_dqn_test(flags, sumoCmd, configs):
                           device=configs['device'], dtype=torch.int)
     TL_PERIOD = torch.tensor(
         configs['tl_period'], device=configs['device'], dtype=torch.int)
-    epoch = 0
     # state initialization
     # agent setting
     # check performance
     avg_waiting_time = 0
     avg_part_velocity = 0
-    total_reward = 0
     avg_velocity = 0
     arrived_vehicles = 0
     part_velocity = list()
+    waiting_time = list()
     total_velocity = list()
     # travel time
     travel_time = list()
@@ -68,6 +67,17 @@ def city_dqn_test(flags, sumoCmd, configs):
         action_update_mask = torch.eq(   # action이 지금 update해야되는지 확인
             t_agent, action_matrix[0, action_index_matrix]).view(NUM_AGENT)  # 0,인 이유는 인덱싱
 
+        # 최대에 도달하면 0으로 초기화 (offset과 비교)
+        clear_matrix = torch.eq(t_agent % TL_PERIOD, 0)
+        t_agent[clear_matrix] = 0
+        # action 넘어가야된다면 action index증가 (by tensor slicing)
+        action_index_matrix[action_update_mask] += 1
+        action_index_matrix[clear_matrix] = 0
+
+        # mask update, matrix True로 전환
+        mask_matrix[clear_matrix] = True
+        mask_matrix[~clear_matrix] = False
+
         # state initialization
         state = env.collect_state(
             action_update_mask, action_index_matrix, mask_matrix)
@@ -85,32 +95,31 @@ def city_dqn_test(flags, sumoCmd, configs):
                 action_matrix, actions, mask_matrix)
             # 누적값으로 나타남
 
-            # 전체 1초증가 # traci는 env.step에
-            step += 1
-            t_agent += 1
-
             # environment에 적용
             # action 적용함수, traci.simulationStep 있음
             next_state = env.step(
                 actions, mask_matrix, action_index_matrix, action_update_mask)
 
+            # 전체 1초증가 # traci는 env.step에
+            step += 1
+            t_agent += 1
+            # 최대에 도달하면 0으로 초기화 (offset과 비교)
+            clear_matrix = torch.eq(t_agent % TL_PERIOD, 0)
+            t_agent[clear_matrix] = 0
+
+
             # 넘어가야된다면 action index증가 (by tensor slicing)
             action_update_mask = torch.eq(  # update는 단순히 진짜 현시만 받아서 결정해야됨
                 t_agent, action_matrix[0, action_index_matrix]).view(NUM_AGENT)  # 0,인 이유는 인덱싱
-            # print(t_agent, "time")
-
-            # 최대에 도달하면 0으로 초기화 (offset과 비교)
-            update_matrix = torch.eq(t_agent % TL_PERIOD, 0)
-            t_agent[update_matrix] = 0
-            # print(update_matrix, "update")
-
             action_index_matrix[action_update_mask] += 1
             # agent의 최대 phase를 넘어가면 해당 agent의 action index 0으로 초기화
-            clear_matrix = torch.ge(action_index_matrix, phase_num_matrix)
             action_index_matrix[clear_matrix] = 0
+
             # mask update, matrix True로 전환
             mask_matrix[clear_matrix] = True
             mask_matrix[~clear_matrix] = False
+
+
             # check performance
             for _, interests in enumerate(configs['interest_list']):
                 # delete 중복
@@ -122,13 +131,14 @@ def city_dqn_test(flags, sumoCmd, configs):
                     if inflow != None and inflow not in dup_list:
                         # 차량의 대기시간, 차량이 있을 때만
                         if traci.edge.getLastStepVehicleNumber(inflow) != 0:
-                            avg_waiting_time += traci.edge.getWaitingTime(inflow)/float(
-                                traci.edge.getLastStepVehicleNumber(inflow))
+                            waiting_time.append(traci.edge.getWaitingTime(inflow))#/float(
+                                #traci.edge.getLastStepVehicleNumber(inflow)))
                             # 차량의 평균속도
                             part_velocity.append(
                                 traci.edge.getLastStepMeanSpeed(inflow))
-                            travel_time.append(
-                                traci.edge.getTraveltime(inflow))
+                            tmp_travel = traci.edge.getTraveltime(inflow)
+                            if tmp_travel <= 320:  # 이상한 값 거르기
+                                travel_time.append(tmp_travel)
                         dup_list.append(inflow)
 
                     if outflow != None and outflow not in dup_list:
@@ -140,8 +150,9 @@ def city_dqn_test(flags, sumoCmd, configs):
             # for edgeid in edge_list:
             #     if traci.edge.getLastStepVehicleNumber(edgeid) !=None:
             #         total_velocity.append(traci.edge.getLastStepMeanSpeed(edgeid))
-            #     state = next_state
+            state = next_state
             # info
+            
             arrived_vehicles += traci.simulation.getArrivedNumber()
 
             state = next_state
@@ -149,9 +160,12 @@ def city_dqn_test(flags, sumoCmd, configs):
         b = time.time()
         traci.close()
         print("time:", b-a)
+        avg_part_velocity = torch.tensor(
+            part_velocity, dtype=torch.float).mean()
         avg_velocity = torch.tensor(total_velocity, dtype=torch.float).mean()
         avg_part_velocity = torch.tensor(
             part_velocity, dtype=torch.float).mean()
         avg_travel_time = torch.tensor(travel_time, dtype=torch.float).mean()
+        avg_waiting_time = torch.tensor(waiting_time, dtype=torch.float).mean()
         print('======== arrived number:{} avg waiting time:{},avg velocity:{} avg_part_velocity: {} avg_travel_time: {}'.format(
-            arrived_vehicles, avg_waiting_time/MAX_STEPS, avg_velocity, avg_part_velocity, avg_travel_time/MAX_STEPS))
+            arrived_vehicles, avg_waiting_time, avg_velocity, avg_part_velocity, avg_travel_time))
