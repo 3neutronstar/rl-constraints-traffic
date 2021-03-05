@@ -13,9 +13,9 @@ from itertools import chain
 DEFAULT_CONFIG = {
     'gamma': 0.99,
     'tau': 0.001,
-    'batch_size': 64,
+    'batch_size': 8,
     'experience_replay_size': 1e5,
-    'epsilon': 0.8,
+    'epsilon': 0.4,
     'epsilon_decay_rate': 0.99,
     'fc_net': [36, 48, 24],
     'lr': 1e-4,
@@ -54,6 +54,15 @@ class QNetwork(nn.Module):
             self.configs['fc_net'][1], self.configs['fc_net'][2])
         self.fc_y4 = nn.Linear(
             self.configs['fc_net'][2], self.time_output_size)
+
+        nn.init.xavier_uniform(self.fc1.weight)
+        nn.init.xavier_uniform(self.fc2.weight)
+        nn.init.xavier_uniform(self.fc3.weight)
+        nn.init.xavier_uniform(self.fc4.weight)
+        nn.init.xavier_uniform(self.fc_y1.weight)
+        nn.init.xavier_uniform(self.fc_y2.weight)
+        nn.init.xavier_uniform(self.fc_y3.weight)
+        nn.init.xavier_uniform(self.fc_y4.weight)
         if configs['mode'] == 'test':
             self.eval()
 
@@ -100,6 +109,14 @@ class SuperQNetwork(nn.Module):
             int(self.state_space*1.5*self.num_agent), int(self.state_space*1*self.num_agent))
         self.fc4 = nn.Linear(
             self.state_space*1*self.num_agent, self.output_size)
+        
+        nn.init.xavier_uniform(self.conv1.weight)
+        nn.init.xavier_uniform(self.conv2.weight)
+        nn.init.xavier_uniform(self.fc1.weight)
+        nn.init.xavier_uniform(self.fc2.weight)
+        nn.init.xavier_uniform(self.fc3.weight)
+        nn.init.xavier_uniform(self.fc4.weight)
+
         if configs['mode'] == 'test':
             self.eval()
 
@@ -217,18 +234,18 @@ class Trainer(RLAlgorithm):
         return actions
 
     def target_update(self):
-        # Hard Update
-        for target, source in zip(self.targetQNetwork, self.mainQNetwork):
-            hard_update(target, source)
-        # Total Update
-        hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
-
-        # # Soft Update
+        # # Hard Update
         # for target, source in zip(self.targetQNetwork, self.mainQNetwork):
-        #     soft_update(target, source, self.configs)
+        #     hard_update(target, source)
         # # Total Update
-        # soft_update(self.targetSuperQNetwork,
-        #             self.mainSuperQNetwork, self.configs)
+        # hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
+
+        # Soft Update
+        for target, source in zip(self.targetQNetwork, self.mainQNetwork):
+            soft_update(target, source, self.configs)
+        # Total Update
+        soft_update(self.targetSuperQNetwork,
+                    self.mainSuperQNetwork, self.configs)
 
     def save_replay(self, state, action, reward, next_state, mask):
         for i in torch.nonzero(mask):
@@ -255,6 +272,7 @@ class Trainer(RLAlgorithm):
 
             action_batch = torch.cat(batch.action)
             reward_batch = torch.cat(batch.reward)
+            # print(state_batch[0],action_batch[0],reward_batch[0],non_final_mask[0])
 
             # Q(s_t, a) 계산 - 모델이 action batch의 a'일때의 Q(s_t,a')를 계산할때, 취한 행동 a'의 column 선택(column이 Q)
             rate_state_action_values, time_state_action_values = mainQNetwork(self.mainSuperQNetwork(
@@ -272,6 +290,7 @@ class Trainer(RLAlgorithm):
                 self.mainSuperQNetwork(non_final_next_states))
             rate_next_state_values[non_final_mask] = rate_Q.max(
                 1)[0].detach().to(self.device)
+            print(action_batch[0])
             time_next_state_values[non_final_mask] = time_Q.max(1)[0].detach().to(
                 self.device)  # .to(self.configs['device'])  # 자신의 Q value 중에서max인 value를 불러옴
 
