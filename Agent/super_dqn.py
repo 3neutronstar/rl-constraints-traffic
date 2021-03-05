@@ -112,7 +112,7 @@ class SuperQNetwork(nn.Module):
         x = f.relu(self.fc2(x))
         x = f.dropout(x, 0.3)
         x = f.relu(self.fc3(x))
-        x = self.fc4(x)  # .view(-1, self.num_agent,
+        x = f.relu(self.fc4(x))  # .view(-1, self.num_agent,
         #                      int(self.configs['state_space']/2))
         return x.view(-1, self.output_size)
 
@@ -142,7 +142,7 @@ class Trainer(RLAlgorithm):
         self.lr_decay_rate = self.configs['lr_decay_rate']
         self.epsilon_decay_rate = self.configs['epsilon_decay_rate']
         self.batch_size = self.configs['batch_size']
-        self.device=self.configs['device']
+        self.device = self.configs['device']
         self.running_loss = 0
         self.super_output_size = int(self.num_agent*2)
         self.super_input_size = int(self.num_agent)
