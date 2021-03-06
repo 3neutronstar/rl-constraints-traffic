@@ -157,9 +157,11 @@ class GridNetwork(Network):
 
                             # 위 아래
                             if checkEdge['to'][-1] == direction_list[1] or checkEdge['to'][-1] == direction_list[2]:
-                                self.configs['probability'] = '0.133'
+                                self.configs['probability'] = '0.2'
+                                self.configs['vehsPerHour']='900'
                             else:
-                                self.configs['probability'] = '0.388'
+                                self.configs['probability'] = '0.5'
+                                self.configs['vehsPerHour']='2000'
                             via_string = str()
                             node_x_y = edge['id'][2]  # 끝에서 사용하는 기준 x나 y
                             if 'r' in edge['id']:
@@ -185,9 +187,10 @@ class GridNetwork(Network):
                                 'id': edge['from'],
                                 'begin': str(self.configs['flow_start']),
                                 'end': str(self.configs['flow_end']),
-                                'probability': self.configs['probability'],
+                                #'probability': self.configs['probability'],
+                                'vehsPerHour':self.configs['vehsPerHour'],
                                 'reroute': 'false',
-                                # 'via': edge['id']+" "+via_string+" "+checkEdge['id'],
+                                'via': edge['id']+" "+via_string+" "+checkEdge['id'],
                                 'departPos': "base",
                                 'departLane': 'best',
                             })
@@ -386,10 +389,16 @@ class GridNetwork(Network):
                 )
                 interest_list.append(interests)
                 interest_set += list(interests)
-        no_dup_interest_list=list()
+        
+        no_dup_interest_set=list()
         for interest_set_item in interest_set:
-            if interest_set_item not in no_dup_interest_list:
-                no_dup_interest_list.append(interest_set_item)
+            if interest_set_item not in no_dup_interest_set:
+                no_dup_interest_set.append(interest_set_item)
+        no_dup_interest_list=list()
+        for interest_list_item in interest_list:
+            if interest_list_item not in no_dup_interest_list:
+                no_dup_interest_list.append(interest_list_item)
+
 
         # phase 생성
         '''
@@ -426,7 +435,7 @@ class GridNetwork(Network):
         for _, node in enumerate(node_list):
             if node['id'][-1] not in side_list:
                 node_interest_pair[node['id']] = list()
-                for _, interest in enumerate(no_dup_interest_list):
+                for _, interest in enumerate(no_dup_interest_set):
                     if node['id'][-3:] == interest['id'][-3:]:  # 좌표만 받기
                         node_interest_pair[node['id']].append(interest)
 
@@ -471,7 +480,7 @@ class GridNetwork(Network):
                 maximum = len(traffic_info[key]['phase_duration'])
         NET_CONFIGS['max_phase_num'] = maximum
 
-        NET_CONFIGS['interest_list'] = interest_list
+        NET_CONFIGS['interest_list'] = no_dup_interest_list
         NET_CONFIGS['node_interest_pair'] = node_interest_pair
         NET_CONFIGS['traffic_node_info'] = traffic_info
 
