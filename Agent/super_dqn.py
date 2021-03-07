@@ -182,11 +182,11 @@ class Trainer(RLAlgorithm):
         with torch.no_grad():
             if mask.sum()>0:
                 obs = self.mainSuperQNetwork(state)
+                rate_actions = torch.zeros(
+                        (1, 1, self.num_agent), dtype=torch.int, device=self.configs['device'])
+                time_actions = torch.zeros(
+                        (1, 1, self.num_agent), dtype=torch.int, device=self.configs['device'])
                 for index in torch.nonzero(mask):
-                    rate_actions = torch.zeros(
-                        (1, 1, self.num_agent), dtype=torch.int, device=self.configs['device'])
-                    time_actions = torch.zeros(
-                        (1, 1, self.num_agent), dtype=torch.int, device=self.configs['device'])
                     if random.random() > self.epsilon:  # epsilon greedy
                         # masks = torch.cat((mask, mask), dim=0)
                         rate_action, time_action = self.mainQNetwork[index](
