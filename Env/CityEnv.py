@@ -117,7 +117,7 @@ class CityEnv(baseEnv):
             for interest in interests:
                 if interest['outflow']:  # None이 아닐 때 행동
                     outflow += (traci.edge.getLastStepVehicleNumber(
-                        interest['outflow']-traci.edge.getLastStepHaltingNumber(interest['outflow'])))/100.0
+                        interest['outflow'])-traci.edge.getLastStepHaltingNumber(interest['outflow']))/100.0
                 if interest['inflow']:  # None이 아닐 때 행동
                     inflow += traci.edge.getLastStepHaltingNumber(
                         interest['inflow'])/100.0
