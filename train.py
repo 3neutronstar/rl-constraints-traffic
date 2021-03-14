@@ -41,6 +41,7 @@ def city_dqn_train(configs, time_data, sumoCmd):
     epoch = 0
     print("action space(rate: {}, time: {}".format(
         configs['rate_action_space'], configs['time_action_space']))
+    sumoCmd+=['--seed','1']
     while epoch < configs['num_epochs']:
         step = 0
         if configs['randomness'] == True:
@@ -136,13 +137,13 @@ def city_dqn_train(configs, time_data, sumoCmd):
             state = next_state
             # info
             arrived_vehicles += traci.simulation.getArrivedNumber()
-            # soft update
-            agent.target_update()
+            # # soft update
+            # agent.target_update()
 
         agent.update_hyperparams(epoch)  # lr and epsilon upate
         # hard update
-        # if epoch % agent.configs['target_update_period'] == 0:
-        #     agent.target_update()  # dqn
+        if epoch % agent.configs['target_update_period'] == 0:
+            agent.target_update()  # dqn
         b = time.time()
         traci.close()
         print("time:", b-a)

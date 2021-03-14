@@ -168,8 +168,8 @@ def simulate(flags, configs, sumoConfig):
                         waiting_time.append(traci.edge.getWaitingTime(inflow))
                         # traci.edge.getLastStepVehicleNumber(inflow)))
                         # 차량의 평균속도
-                        part_velocity.append(
-                            traci.edge.getLastStepMeanSpeed(inflow))
+                        # part_velocity.append(
+                        #     traci.edge.getLastStepMeanSpeed(inflow))
                         tmp_travel = traci.edge.getTraveltime(inflow)
                         if tmp_travel <= 320:  # 이상한 값 거르기
                             travel_time.append(tmp_travel)
@@ -180,6 +180,9 @@ def simulate(flags, configs, sumoConfig):
                     if traci.edge.getLastStepVehicleNumber(outflow) != 0:
                         part_velocity.append(
                             traci.edge.getLastStepMeanSpeed(interest['outflow']))
+                        tmp_travel = traci.edge.getTraveltime(outflow)
+                        if tmp_travel <= 320:  # 이상한 값 거르기
+                            travel_time.append(tmp_travel)
                     dup_list.append(interest['outflow'])
 
         # edge_list=traci.edge.getIDList()
@@ -253,9 +256,9 @@ def main(args):
         mapnet.gen_rou_from_xml()
         mapnet.generate_cfg(True, configs['mode'])
         if configs['network']=='3x3grid':
-            configs['scale']=str(1.1)
+            configs['scale']=str(1)
         elif configs['network']=='dunsan':
-            configs['scale']=str(0.7)
+            configs['scale']=str(2.0)
 
     # check the environment
     if 'SUMO_HOME' in os.environ:

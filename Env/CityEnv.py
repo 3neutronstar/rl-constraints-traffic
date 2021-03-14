@@ -119,11 +119,12 @@ class CityEnv(baseEnv):
             interests = self.node_interest_pair[self.tl_rl_list[index]]
             for interest in interests:
                 if interest['outflow']:  # None이 아닐 때 행동
-                    outflow += traci.edge.getLastStepVehicleNumber(
-                        interest['outflow'])
+                    outflow += (traci.edge.getLastStepVehicleNumber(
+                        interest['outflow'])-traci.edge.getLastStepHaltingNumber(
+                        interest['outflow']))/100.0
                 if interest['inflow']:  # None이 아닐 때 행동
                     inflow += traci.edge.getLastStepHaltingNumber(
-                        interest['inflow'])
+                        interest['inflow'])/100.0
             # pressure=inflow-outflow
             # reward cumulative sum
             pressure = torch.tensor(
