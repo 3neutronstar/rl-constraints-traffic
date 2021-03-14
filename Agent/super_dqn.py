@@ -15,14 +15,15 @@ DEFAULT_CONFIG = {
     'tau': 0.001,
     'batch_size': 32,
     'experience_replay_size': 1e5,
-    'epsilon': 0.4,
+    'epsilon': 0.8,
     'epsilon_decay_rate': 0.99,
     'fc_net': [36, 48, 24],
     'lr': 1e-3,
     'lr_decay_rate': 0.995,
     'target_update_period': 20,
     'final_epsilon': 0.0005,
-    'final_lr': 1e-7,
+    'final_lr': 1e-6,
+    'alpha':0.91,
 }
 
 Transition = namedtuple('Transition',
@@ -234,12 +235,12 @@ class Trainer(RLAlgorithm):
         # Total Update
         hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
 
-        # Soft Update
-        for target, source in zip(self.targetQNetwork, self.mainQNetwork):
-            soft_update(target, source, self.configs)
-        # Total Update
-        soft_update(self.targetSuperQNetwork,
-                    self.mainSuperQNetwork, self.configs)
+        # # Soft Update
+        # for target, source in zip(self.targetQNetwork, self.mainQNetwork):
+        #     soft_update(target, source, self.configs)
+        # # Total Update
+        # soft_update(self.targetSuperQNetwork,
+        #             self.mainSuperQNetwork, self.configs)
 
     def save_replay(self, state, action, reward, next_state, mask):
         for i in torch.nonzero(mask):
@@ -298,14 +299,16 @@ class Trainer(RLAlgorithm):
                                        rate_expected_state_action_values.unsqueeze(1))
             time_loss = self.criterion(time_state_action_values,
                                        time_expected_state_action_values.unsqueeze(1))
+            total_loss= self.configs['alpha'] *rate_loss + (1.0-self.configs['alpha'])*time_loss
             self.running_loss += rate_loss/self.configs['batch_size']
             self.running_loss += time_loss/self.configs['batch_size']
 
             # 모델 최적화
             optimizer.zero_grad()
             # retain_graph를 하는 이유는 mainSuperQ에 대해 영향이 없게 하기 위함
-            rate_loss.backward(retain_graph=True)
-            time_loss.backward()
+            # rate_loss.backward(retain_graph=True)
+            # time_loss.backward()
+            total_loss.backward(retain_graph=True)
             for param in mainQNetwork.parameters():
                 param.grad.data.clamp_(-1, 1)  # 값을 -1과 1로 한정시켜줌 (clipping)
             optimizer.step()

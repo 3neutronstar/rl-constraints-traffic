@@ -127,7 +127,6 @@ def city_dqn_train(configs, time_data, sumoCmd):
             mask_matrix[clear_matrix] = True
             mask_matrix[~clear_matrix] = False
 
-
             next_state=env.collect_state(action_update_mask,action_index_matrix,mask_matrix)
             # if mask_matrix.sum()>0:
             #     print("Cycle")
