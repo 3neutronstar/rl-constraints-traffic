@@ -120,7 +120,6 @@ class CityEnv(baseEnv):
             for interest in interests:
                 if interest['outflow']:  # None이 아닐 때 행동
                     outflow += (traci.edge.getLastStepVehicleNumber(
-                        interest['outflow'])-traci.edge.getLastStepHaltingNumber(
                         interest['outflow']))/100.0
                 if interest['inflow']:  # None이 아닐 때 행동
                     inflow += traci.edge.getLastStepHaltingNumber(
@@ -178,7 +177,7 @@ class CityEnv(baseEnv):
         else:
             next_states = torch.zeros(
                 1, self.state_space, self.num_agent, dtype=torch.float, device=self.device)
-        return next_states
+        return next_states #list 반환 (안에 tensor)
 
     def step(self, action, mask_matrix, action_index_matrix, action_update_mask):
         '''
@@ -201,11 +200,9 @@ class CityEnv(baseEnv):
 
         # step
         traci.simulationStep()
-        # next state 받아오기, reward저장
-        next_state = self.collect_state(
-            action_update_mask, action_index_matrix, mask_matrix)
+
+
         self.before_action_update_mask = action_update_mask
-        return next_state
 
     def calc_action(self, action_matrix, actions, mask_matrix):
         for index in torch.nonzero(mask_matrix):
