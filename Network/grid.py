@@ -157,11 +157,19 @@ class GridNetwork(Network):
 
                             # 위 아래
                             if checkEdge['to'][-1] == direction_list[1] or checkEdge['to'][-1] == direction_list[2]:
+<<<<<<< HEAD
+                                self.configs['probability'] = '0.2'
+                                self.configs['vehsPerHour']='900'
+                            else:
+                                self.configs['probability'] = '0.5'
+                                self.configs['vehsPerHour']='2000'
+=======
                                 self.configs['probability'] = '0.133'
                                 self.configs['vehsPerHour'] = '900'
                             else:
                                 self.configs['vehsPerHour'] = '1600'
                                 self.configs['probability'] = '0.388'
+>>>>>>> state
                             via_string = str()
                             node_x_y = edge['id'][2]  # 끝에서 사용하는 기준 x나 y
                             if 'r' in edge['id']:
@@ -187,10 +195,15 @@ class GridNetwork(Network):
                                 'id': edge['from'],
                                 'begin': str(self.configs['flow_start']),
                                 'end': str(self.configs['flow_end']),
+<<<<<<< HEAD
+                                #'probability': self.configs['probability'],
+                                'vehsPerHour':self.configs['vehsPerHour'],
+=======
                                 'probability': self.configs['probability'],
                                 # 'vehsPerHour': self.configs['vehsPerHour'],
+>>>>>>> state
                                 'reroute': 'false',
-                                # 'via': edge['id']+" "+via_string+" "+checkEdge['id'],
+                                'via': edge['id']+" "+via_string+" "+checkEdge['id'],
                                 'departPos': "base",
                                 'departLane': 'best',
                             })
@@ -389,7 +402,11 @@ class GridNetwork(Network):
                 )
                 interest_list.append(interests)
                 interest_set += list(interests)
+<<<<<<< HEAD
+        
+=======
         no_dup_interest_list=list()
+>>>>>>> state
         no_dup_interest_set=list()
         for interest_set_item in interest_set:
             if interest_set_item not in no_dup_interest_set:
@@ -399,6 +416,10 @@ class GridNetwork(Network):
             if interest_list_item not in no_dup_interest_list:
                 no_dup_interest_list.append(interest_list_item)
 
+<<<<<<< HEAD
+
+=======
+>>>>>>> state
         # phase 생성
         '''
             key 에는 node id
@@ -471,7 +492,10 @@ class GridNetwork(Network):
             NET_CONFIGS['phase_index'].append(traffic_info[key]['phase_index'])
             NET_CONFIGS['time_action_space'].append(round((torch.min(torch.tensor(traffic_info[key]['max_phase'])-torch.tensor(
                 traffic_info[key]['common_phase']), torch.tensor(traffic_info[key]['common_phase'])-torch.tensor(traffic_info[key]['min_phase']))/2).mean().item()))
+<<<<<<< HEAD
+=======
             NET_CONFIGS['phase_type'].append([0,0])
+>>>>>>> state
 
         NET_CONFIGS['num_agent'] = len(NET_CONFIGS['tl_rl_list'])
         # max value 검출기

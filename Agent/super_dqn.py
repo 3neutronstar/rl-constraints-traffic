@@ -198,7 +198,6 @@ class Trainer(RLAlgorithm):
 
             # dim=0인 이유는 batch 끼리 cat 하는 것이기 때문임
             state_batch = torch.cat(batch.state)
-
             action_batch = torch.cat(batch.action)
             reward_batch = torch.cat(batch.reward)
             # print(state_batch[0],action_batch[0],reward_batch[0],non_final_mask[0])
