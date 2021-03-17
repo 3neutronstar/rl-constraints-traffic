@@ -65,41 +65,6 @@ def train(flags, time_data, configs, sumoConfig):
     configs['algorithm'] = flags.algorithm.lower()
     configs['randomness'] = flags.randomness
     print("training algorithm: ", configs['algorithm'])
-<<<<<<< HEAD
-    if flags.model.lower() == 'base':
-        from train import super_dqn_train
-        from configs import SUPER_DQN_TRAFFIC_CONFIGS
-        if flags.network.lower() == 'grid':
-            configs = merge_dict_non_conflict(
-                configs, SUPER_DQN_TRAFFIC_CONFIGS)
-        configs['max_phase_num'] = 4
-        configs['offset'] = [0 for i in range(
-            configs['num_agent'])]  # offset 임의 설정
-        configs['tl_period'] = [160 for i in range(
-            configs['num_agent'])]  # max period 임의 설정
-        configs['action_size'] = 2
-        configs['state_space'] = 8  # 4phase에서 각각 받아오는게 아니라 마지막에 한번만 받음
-        # action space
-        configs['rate_action_space'] = 13
-        # time action space지정 (무조건 save param 이후 list화 시키고 나면 이전으로 옮길 것)
-        # TODO 여기 홀수일 때, 어떻게 할 건지 지정해야함
-        configs['time_action_space'] = (torch.min(torch.tensor(configs['max_phase'])-torch.tensor(
-            configs['common_phase']), torch.tensor(configs['common_phase'])-torch.tensor(configs['min_phase']))/2).mean(dim=1).int().tolist()
-        configs['model'] = 'base'
-        super_dqn_train(configs, time_data, sumoCmd)
-
-    elif flags.model.lower() == 'city':
-        configs['action_size'] = 2
-        # state space 는 map.py에서 결정
-        if flags.network.lower() == 'grid':
-            configs['state_space'] = 8
-
-        configs['model'] = 'city'
-        from train import city_dqn_train
-        from configs import SUPER_DQN_TRAFFIC_CONFIGS
-        configs = merge_dict_non_conflict(configs, SUPER_DQN_TRAFFIC_CONFIGS)
-        city_dqn_train(configs, time_data, sumoCmd)
-=======
     configs['action_size'] = 2
     # state space 는 map.py에서 결정
     if flags.network.lower() == 'grid':
@@ -110,7 +75,6 @@ def train(flags, time_data, configs, sumoConfig):
     from configs import SUPER_DQN_TRAFFIC_CONFIGS
     configs = merge_dict_non_conflict(configs, SUPER_DQN_TRAFFIC_CONFIGS)
     city_dqn_train(configs, time_data, sumoCmd)
->>>>>>> state
 
 
 def test(flags, configs, sumoConfig):
@@ -193,11 +157,7 @@ def simulate(flags, configs, sumoConfig):
                     if traci.edge.getLastStepVehicleNumber(outflow) != 0:
                         part_velocity.append(
                             traci.edge.getLastStepMeanSpeed(interest['outflow']))
-<<<<<<< HEAD
-                        tmp_travel = traci.edge.getTraveltime(inflow)
-=======
                         tmp_travel = traci.edge.getTraveltime(outflow)
->>>>>>> state
                         if tmp_travel <= 320:  # 이상한 값 거르기
                             travel_time.append(tmp_travel)
                     dup_list.append(interest['outflow'])
@@ -263,6 +223,7 @@ def main(args):
         configs['grid_num'] = 3
         configs['num_lanes'] = 2
         configs['load_file_name'] = configs['network']
+        print("A")
         mapnet = MapNetwork(configs)
         MAP_CONFIGS = mapnet.get_tl_from_xml()
 
@@ -273,15 +234,9 @@ def main(args):
         mapnet.gen_rou_from_xml()
         mapnet.generate_cfg(True, configs['mode'])
         if configs['network']=='3x3grid':
-<<<<<<< HEAD
-            configs['scale']=str(1.1)
-        elif configs['network']=='dunsan':
-            configs['scale']=str(0.7)
-=======
             configs['scale']=str(1)
         elif configs['network']=='dunsan':
             configs['scale']=str(2.0)
->>>>>>> state
 
     # check the environment
     if 'SUMO_HOME' in os.environ:

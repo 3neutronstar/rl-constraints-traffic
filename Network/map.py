@@ -442,8 +442,4 @@ class MapNetwork(Network):
             gen_file_name = str(os.path.join(self.configs['current_path'], 'Net_data',
                                              self.configs['time_data']+'.rou.xml'))
             net_tree.write(gen_file_name, encoding='UTF-8',
-<<<<<<< HEAD
                            xml_declaration=True)
-=======
-                           xml_declaration=True)
->>>>>>> state
