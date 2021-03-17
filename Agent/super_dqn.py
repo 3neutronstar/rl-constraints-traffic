@@ -14,11 +14,11 @@ DEFAULT_CONFIG = {
     'gamma': 0.99,
     'tau': 0.001,
     'batch_size': 32,
-    'experience_replay_size': 1e6,
-    'epsilon': 0.4,
-    'epsilon_decay_rate': 0.99,
+    'experience_replay_size': 5e6,
+    'epsilon': 0.8,
+    'epsilon_decay_rate': 0.995,
     'fc_net': [36, 48, 24],
-    'lr': 1e-3,
+    'lr': 1e-4,
     'lr_decay_rate': 0.995,
     'target_update_period': 20,
     'final_epsilon': 0.0005,
@@ -161,6 +161,7 @@ class Trainer(RLAlgorithm):
                         0, self.rate_action_space[self.rate_key_list[index]]-1), dtype=torch.int, device=self.device)
                     time_actions[0, index] = torch.tensor(random.randint(
                         0, self.configs['time_action_space'][index]-1), dtype=torch.int, device=self.device)
+
             actions = torch.cat((rate_actions, time_actions), dim=2)
         return actions
 
@@ -197,7 +198,6 @@ class Trainer(RLAlgorithm):
 
             # dim=0인 이유는 batch 끼리 cat 하는 것이기 때문임
             state_batch = torch.cat(batch.state)
-
             action_batch = torch.cat(batch.action)
             reward_batch = torch.cat(batch.reward)
             # print(state_batch[0],action_batch[0],reward_batch[0],non_final_mask[0])
@@ -252,6 +252,9 @@ class Trainer(RLAlgorithm):
         # decay learning rate
         if self.lr > self.configs['final_lr']:
             self.lr = self.lr_decay_rate*self.lr
+        
+        # if epoch%100==0:
+        #     self.lr = 0.5*self.lr
 
     def save_weights(self, name):
 
@@ -272,6 +275,8 @@ class Trainer(RLAlgorithm):
                           self.configs['max_steps']*epoch)
         writer.add_scalar('hyperparameter/epsilon',
                           self.epsilon, self.configs['max_steps']*epoch)
+        # writer.add_histogram('action/time',self.time_action_dist_save, self.configs['max_steps']*epoch)
+        # writer.add_histogram('action/rate',self.rate_action_dist_save, self.configs['max_steps']*epoch)
 
         # clear
         self.running_loss = 0

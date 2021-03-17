@@ -209,23 +209,27 @@ class CityEnv(baseEnv):
 
     def calc_action(self, action_matrix, actions, mask_matrix):
         for index in torch.nonzero(mask_matrix):
-            actions = actions.long()
+            # print(self.traffic_node_info[self.tl_rl_list[0]
+            #                                              ]['phase_duration'])
+            # print(actions[0])
             phase_duration_list = self.traffic_node_info[self.tl_rl_list[index]
                                                          ]['phase_duration']
             pad_mat = torch.zeros_like(action_matrix[index])
             pad_mat_size = pad_mat.size()[1]
+
+            new_phase_duration_list=self._toPhaseLength(self.tl_rl_list[index],actions[0,index])
             insert_mat = torch.tensor(
-                phase_duration_list, dtype=torch.int, device=self.device)
+                new_phase_duration_list, dtype=torch.int, device=self.device)
             mat = torch.nn.functional.pad(
                 insert_mat, (0, pad_mat_size-insert_mat.size()[0]), 'constant', 0)
             action_matrix[index] = mat
-            # action_matrix[index] = torch.tensor(
-            #     phase_duration_list, dtype=torch.int, device=self.device)
+
             # 누적 합산
             self.phase_action_matrix[index] = mat  # 누적합산이전 저장
             for l, _ in enumerate(phase_duration_list):
                 if l >= 1:
                     action_matrix[index, l] += action_matrix[index, l-1]
+            # print(action_matrix[0])
         return action_matrix.int()  # 누적합산 저장
 
     def update_tensorboard(self, writer, epoch):
@@ -238,6 +242,6 @@ class CityEnv(baseEnv):
         tl_dict = deepcopy(self.traffic_node_info[tl_rl])
         for j, idx in enumerate(tl_dict['phase_index']):
             tl_dict['phase_duration'][idx] = tl_dict['phase_duration'][idx] + \
-                tl_dict['matrix_actions'][action[0, 0]][j] * action[0, 1]
+                tl_dict['matrix_actions'][action[0, 0]][j] * action[0, 1]*2
         phase_length_set = tl_dict['phase_duration']
         return phase_length_set
