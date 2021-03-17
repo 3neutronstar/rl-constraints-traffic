@@ -14,23 +14,13 @@ DEFAULT_CONFIG = {
     'gamma': 0.99,
     'tau': 0.001,
     'batch_size': 32,
-<<<<<<< HEAD
-    'experience_replay_size': 1e5,
-    'epsilon': 0.4,
-    'epsilon_decay_rate': 0.98,
-    'fc_net': [64, 64, 50],
-    'lr': 1e-4,
-    'lr_decay_rate': 0.99,
-    'target_update_period': 10,
-=======
-    'experience_replay_size': 1e6,
-    'epsilon': 0.4,
-    'epsilon_decay_rate': 0.99,
+    'experience_replay_size': 5e6,
+    'epsilon': 0.8,
+    'epsilon_decay_rate': 0.995,
     'fc_net': [36, 48, 24],
-    'lr': 1e-3,
+    'lr': 1e-4,
     'lr_decay_rate': 0.995,
     'target_update_period': 20,
->>>>>>> state
     'final_epsilon': 0.0005,
     'final_lr': 1e-6,
     'alpha':0.91,
@@ -148,48 +138,9 @@ class Trainer(RLAlgorithm):
         # hard update, optimizer setting
         self.optimizer=optim.Adam(self.mainSuperQNetwork.parameters(),self.lr)
         hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
-<<<<<<< HEAD
-        for targetQ, mainQ in zip(self.targetQNetwork, self.mainQNetwork):
-            hard_update(targetQ, mainQ)
-            params = chain(self.mainSuperQNetwork.parameters(),
-                           mainQ.parameters())
-            self.optimizer.append(optim.Adam(params, lr=self.lr))
-
-        # # Network
-        # print("========SUPER NETWORK==========\n", self.mainSuperQNetwork)
-        # print("========NETWORK==========\n")
-        # for i in range(self.num_agent):
-        #     print(self.mainQNetwork[i])
-=======
->>>>>>> state
 
     def get_action(self, state, mask):
         # 전체를 날리는 epsilon greedy
-<<<<<<< HEAD
-        actions = torch.zeros((1, self.action_size, self.num_agent),
-                              dtype=torch.int, device=self.configs['device'])
-        with torch.no_grad():
-            if mask.sum()>0:
-                obs = self.mainSuperQNetwork(state)
-                rate_actions = torch.zeros(
-                        (1, 1, self.num_agent), dtype=torch.int, device=self.configs['device'])
-                time_actions = torch.zeros(
-                        (1, 1, self.num_agent), dtype=torch.int, device=self.configs['device'])
-                for index in torch.nonzero(mask):
-                    if random.random() > self.epsilon:  # epsilon greedy
-                        # masks = torch.cat((mask, mask), dim=0)
-                        rate_action, time_action = self.mainQNetwork[index](
-                            obs)
-                        rate_actions[0, 0, index] = rate_action.max(1)[1].int()
-                        time_actions[0, 0, index] = time_action.max(1)[1].int()
-                            # agent가 늘어나면 view(agents,action_size)
-                    else:
-                        rate_actions[0, 0, index] = torch.tensor(random.randint(
-                            0, self.rate_action_space[self.rate_key_list[index]]-1), dtype=torch.int, device=self.configs['device'])
-                        time_actions[0, 0, index] = torch.tensor(random.randint(
-                            0, self.configs['time_action_space'][index]-1), dtype=torch.int, device=self.configs['device'])
-                actions = torch.cat((rate_actions, time_actions), dim=1)
-=======
         actions = torch.zeros((1, self.num_agent, self.action_size),
                               dtype=torch.int, device=self.device)
         with torch.no_grad():
@@ -210,8 +161,8 @@ class Trainer(RLAlgorithm):
                         0, self.rate_action_space[self.rate_key_list[index]]-1), dtype=torch.int, device=self.device)
                     time_actions[0, index] = torch.tensor(random.randint(
                         0, self.configs['time_action_space'][index]-1), dtype=torch.int, device=self.device)
+
             actions = torch.cat((rate_actions, time_actions), dim=2)
->>>>>>> state
         return actions
 
     def target_update(self):
@@ -226,17 +177,6 @@ class Trainer(RLAlgorithm):
         #             self.mainSuperQNetwork, self.configs)
 
     def save_replay(self, state, action, reward, next_state, mask):
-<<<<<<< HEAD
-        for i in torch.nonzero(mask):
-            self.mainQNetwork[i].experience_replay.push(
-                state[0, i].view(1, self.super_input_size), action[0, :, i].view(-1, self.action_size), reward[0, i], next_state[0, i].view(1, self.super_input_size))
-
-    def update(self, mask):  # 각 agent마다 시행하기 # agent network로 돌아가서 시행 그러면될듯?
-        for i, (mainQNetwork, targetQNetwork, optimizer) in enumerate(zip(self.mainQNetwork, self.targetQNetwork, self.optimizer)):
-            if mask[i] == False or len(mainQNetwork.experience_replay) < self.configs['batch_size']:
-                continue
-            transitions = mainQNetwork.experience_replay.sample(
-=======
         for index in torch.nonzero(mask):
             # print(state[0,:, index].sum(),action[0,index].sum(),reward[0,index].sum(),next_state[0,:, index].sum())
             self.mainSuperQNetwork.experience_replay.push(
@@ -246,7 +186,6 @@ class Trainer(RLAlgorithm):
         # if mask.sum() > 0 and len(self.mainSuperQNetwork.experience_replay) > self.configs['batch_size']:
         if len(self.mainSuperQNetwork.experience_replay) > self.configs['batch_size']:
             transitions = self.mainSuperQNetwork.experience_replay.sample(
->>>>>>> state
                 self.configs['batch_size'])
             batch = Transition(*zip(*transitions))
 
@@ -266,15 +205,9 @@ class Trainer(RLAlgorithm):
             # Q(s_t, a) 계산 - 모델이 action batch의 a'일때의 Q(s_t,a')를 계산할때, 취한 행동 a'의 column 선택(column이 Q)
             rate_state_action_values, time_state_action_values = self.mainSuperQNetwork(state_batch)
             rate_state_action_values = rate_state_action_values.gather(
-<<<<<<< HEAD
-                1, action_batch[:, 0].view(-1, 1).long())  # batch,rate_action_size
-            time_state_action_values = time_state_action_values.gather(
-                1, action_batch[:, 1].view(-1, 1).long())  # batch,time_action_size
-=======
                 1, action_batch[:,0].view(-1, 1).long())
             time_state_action_values = time_state_action_values.gather(
                 1, action_batch[:,1].view(-1, 1).long())
->>>>>>> state
             # 모든 다음 상태를 위한 V(s_{t+1}) 계산
             rate_next_state_values = torch.zeros(
                 self.configs['batch_size'], device=self.device, dtype=torch.float)
@@ -319,6 +252,9 @@ class Trainer(RLAlgorithm):
         # decay learning rate
         if self.lr > self.configs['final_lr']:
             self.lr = self.lr_decay_rate*self.lr
+        
+        # if epoch%100==0:
+        #     self.lr = 0.5*self.lr
 
     def save_weights(self, name):
 
@@ -327,26 +263,10 @@ class Trainer(RLAlgorithm):
         torch.save(self.targetSuperQNetwork.state_dict(), os.path.join(
             self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'Super_target.h5'))
 
-<<<<<<< HEAD
-        for i, (mainQ, targetQ) in enumerate(zip(self.mainQNetwork, self.targetQNetwork)):
-            torch.save(mainQ.state_dict(), os.path.join(
-                self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'_{}.h5'.format(i)))
-            torch.save(targetQ.state_dict(), os.path.join(
-                self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'_target_{}.h5'.format(i)))
-
-=======
->>>>>>> state
     def load_weights(self, name):
         self.mainSuperQNetwork.load_state_dict(torch.load(os.path.join(
             self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'_{}Super.h5'.format(self.configs['replay_epoch']))))
         self.mainSuperQNetwork.eval()
-<<<<<<< HEAD
-        for i, mainQ in enumerate(self.mainQNetwork):
-            mainQ.load_state_dict(torch.load(os.path.join(
-                self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'_{}_{}.h5'.format(self.configs['replay_epoch'], i))))
-            mainQ.eval()
-=======
->>>>>>> state
 
     def update_tensorboard(self, writer, epoch):
         writer.add_scalar('episode/loss', self.running_loss/self.configs['max_steps'],
@@ -355,6 +275,8 @@ class Trainer(RLAlgorithm):
                           self.configs['max_steps']*epoch)
         writer.add_scalar('hyperparameter/epsilon',
                           self.epsilon, self.configs['max_steps']*epoch)
+        # writer.add_histogram('action/time',self.time_action_dist_save, self.configs['max_steps']*epoch)
+        # writer.add_histogram('action/rate',self.rate_action_dist_save, self.configs['max_steps']*epoch)
 
         # clear
         self.running_loss = 0
