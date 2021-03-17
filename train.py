@@ -30,48 +30,59 @@ def city_dqn_train(configs, time_data, sumoCmd):
     agent.save_params(time_data)
     # init training
     NUM_AGENT = configs['num_agent']
+    DEVICE=configs['device']
     TL_RL_LIST = configs['tl_rl_list']
     MAX_PHASES = configs['max_phase_num']
     MAX_STEPS = configs['max_steps']
     OFFSET = torch.tensor(configs['offset'],  # i*10
-                          device=configs['device'], dtype=torch.int)
+                          device=DEVICE, dtype=torch.int)
     TL_PERIOD = torch.tensor(
-        configs['tl_period'], device=configs['device'], dtype=torch.int)
+        configs['tl_period'], device=DEVICE, dtype=torch.int)
     epoch = 0
     print("action space(rate: {}, time: {}".format(
         configs['rate_action_space'], configs['time_action_space']))
+    sumoCmd+=['--seed','1']
     while epoch < configs['num_epochs']:
         step = 0
         if configs['randomness'] == True:
             tmp_sumoCmd = sumoCmd+['--scale', str(1.5+random())]  # 1.5~2.5
         else:
-            if configs['network'] == 'dunsan':
-                tmp_sumoCmd = sumoCmd+['--scale', str(2.0)]
-            elif configs['network'] == '3x3grid':
-                tmp_sumoCmd = sumoCmd+['--scale', str(1.1)]
+            if configs['network'] == 'dunsan' or configs['network'] == '3x3grid':
+                tmp_sumoCmd = sumoCmd+['--scale', str(configs['scale'])]
             else:
                 tmp_sumoCmd = sumoCmd
         traci.start(tmp_sumoCmd)
         env = CityEnv(configs)
         # Total Initialization
         actions = torch.zeros(
-            (NUM_AGENT, configs['action_size']), dtype=torch.int, device=configs['device'])
+            (NUM_AGENT, configs['action_size']), dtype=torch.int, device=DEVICE)
         # Mask Matrix : TL_Period가 끝나면 True
-        mask_matrix = torch.ones(
-            (NUM_AGENT), dtype=torch.bool, device=configs['device'])
+        mask_matrix = torch.zeros(
+            (NUM_AGENT), dtype=torch.bool, device=DEVICE)
 
         # MAX Period까지만 증가하는 t
         t_agent = torch.zeros(
-            (NUM_AGENT), dtype=torch.int, device=configs['device'])
+            (NUM_AGENT), dtype=torch.int, device=DEVICE)
         t_agent -= OFFSET
 
         # Action configs['offset']on Matrix : 비교해서 동일할 때 collect_state, 없는 state는 zero padding
         action_matrix = torch.zeros(
-            (NUM_AGENT, MAX_PHASES), dtype=torch.int, device=configs['device'])  # 노란불 3초 해줘야됨
+            (NUM_AGENT, MAX_PHASES), dtype=torch.int, device=DEVICE)  # 노란불 3초 해줘야됨
         action_index_matrix = torch.zeros(
-            (NUM_AGENT), dtype=torch.long, device=configs['device'])  # 현재 몇번째 phase인지
+            (NUM_AGENT), dtype=torch.long, device=DEVICE)  # 현재 몇번째 phase인지
         action_update_mask = torch.eq(   # action이 지금 update해야되는지 확인
             t_agent, action_matrix[0, action_index_matrix]).view(NUM_AGENT)  # 0,인 이유는 인덱싱
+
+        # 최대에 도달하면 0으로 초기화 (offset과 비교)
+        clear_matrix = torch.eq(t_agent % TL_PERIOD, 0)
+        t_agent[clear_matrix] = 0
+        # action 넘어가야된다면 action index증가 (by tensor slicing)
+        action_index_matrix[action_update_mask] += 1
+        action_index_matrix[clear_matrix] = 0
+
+        # mask update, matrix True로 전환
+        mask_matrix[clear_matrix] = True
+        mask_matrix[~clear_matrix] = False
 
         # state initialization
         state = env.collect_state(
@@ -89,17 +100,32 @@ def city_dqn_train(configs, time_data, sumoCmd):
                 action_matrix, actions, mask_matrix)
             # 누적값으로 나타남
 
-            # 전체 1초증가 # traci는 env.step에
-            step += 1
-            t_agent += 1
-
             # environment에 적용
             # action 적용함수, traci.simulationStep 있음
             next_state = env.step(
                 actions, mask_matrix, action_index_matrix, action_update_mask)
 
+            # 전체 1초증가 # traci는 env.step에
+            step += 1
+            t_agent += 1
+            # 최대에 도달하면 0으로 초기화 (offset과 비교)
+            clear_matrix = torch.eq(t_agent % TL_PERIOD, 0)
+            t_agent[clear_matrix] = 0
+
+            # action 넘어가야된다면 action index증가 (by tensor slicing)
+            action_update_mask = torch.eq(  # update는 단순히 진짜 현시만 받아서 결정해야됨
+                t_agent, action_matrix[0, action_index_matrix]).view(NUM_AGENT)  # 0,인 이유는 인덱싱
+            action_index_matrix[action_update_mask] += 1
+            # agent의 최대 phase를 넘어가면 해당 agent의 action index 0으로 초기화
+            action_index_matrix[clear_matrix] = 0
+
+            # mask update, matrix True로 전환
+            mask_matrix[clear_matrix] = True
+            mask_matrix[~clear_matrix] = False
+
+
             # env속에 agent별 state를 꺼내옴, max_offset+period 이상일 때 시작
-            if step >= int(torch.max(OFFSET)+torch.max(TL_PERIOD)):
+            if step >= int(torch.max(OFFSET)+torch.max(TL_PERIOD)) and mask_matrix.sum() > 0:
                 rep_state, rep_action, rep_reward, rep_next_state = env.get_state(
                     mask_matrix)
                 agent.save_replay(rep_state, rep_action, rep_reward,
@@ -108,28 +134,10 @@ def city_dqn_train(configs, time_data, sumoCmd):
             # update
             agent.update(mask_matrix)
 
-            # 모두 하고 나서
-
-            # 넘어가야된다면 action index증가 (by tensor slicing)
-            action_update_mask = torch.eq(  # update는 단순히 진짜 현시만 받아서 결정해야됨
-                t_agent, action_matrix[0, action_index_matrix]).view(NUM_AGENT)  # 0,인 이유는 인덱싱
-
-            # 최대에 도달하면 0으로 초기화 (offset과 비교)
-            update_matrix = torch.eq(t_agent % TL_PERIOD, 0)
-            t_agent[update_matrix] = 0
-
-            action_index_matrix[action_update_mask] += 1
-            # agent의 최대 phase를 넘어가면 해당 agent의 action index 0으로 초기화
-            clear_matrix = torch.ge(action_index_matrix, phase_num_matrix)
-            action_index_matrix[clear_matrix] = 0
-            # mask update, matrix True로 전환
-            mask_matrix[clear_matrix] = True
-            mask_matrix[~clear_matrix] = False
-
             state = next_state
             # info
             arrived_vehicles += traci.simulation.getArrivedNumber()
-            # #soft update
+            # # soft update
             # agent.target_update()
 
         agent.update_hyperparams(epoch)  # lr and epsilon upate

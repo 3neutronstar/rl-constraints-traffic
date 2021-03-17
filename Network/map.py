@@ -261,16 +261,26 @@ class MapNetwork(Network):
                 num_phase = 0  # phase갯수 filtering
                 for i, phase in enumerate(phaseList):
                     phase_state_list.append(phase.attrib['state'])
-                    phase_duration_list.append(int(phase.attrib['duration']))
-                    tl_period += int(phase.attrib['duration'])
-                    if int(phase.attrib['duration']) > 5:  # Phase 로 간주할 숫자
+                    this_phase_dur = phase.attrib['duration']
+                    phase_duration_list.append(int(this_phase_dur))
+                    tl_period += int(this_phase_dur)
+                    # Phase 로 간주할 숫자
+                    if int(this_phase_dur) > 5 and 'minDur' in phase.attrib.keys() and 'maxDur' in phase.attrib.keys():
                         num_phase += 1
                         min_duration_list.append(
-                            int(phase.attrib['minDuration']))
+                            int(phase.attrib['minDur']))
                         max_duration_list.append(
-                            int(phase.attrib['maxDuration']))
+                            int(phase.attrib['maxDur']))
                         phase_index_list.append(i)
-                        common_phase_list.append(int(phase.attrib['duration']))
+                        common_phase_list.append(int(this_phase_dur))
+                    elif int(this_phase_dur) > 5:
+                        num_phase += 1
+                        min_duration_list.append(
+                            int(this_phase_dur)-5)
+                        max_duration_list.append(
+                            int(this_phase_dur)+5)
+                        phase_index_list.append(i)
+                        common_phase_list.append(int(this_phase_dur))
 
                 # dictionary에 담기
                 traffic_node_info['phase_list'] = phase_state_list
@@ -301,7 +311,6 @@ class MapNetwork(Network):
             # road용
             # edge info 저장
             self.configs['edge_info'] = list()
-            edge_list = list()  # edge존재 확인용
             edges = net_tree.findall('edge')
             for edge in edges:
                 if 'function' not in edge.attrib.keys():
@@ -321,80 +330,78 @@ class MapNetwork(Network):
             # state space size 결정
             inflow_size = 0
             # network용
-            if True:
-                # if self.configs['network']!='3x3grid':
-                for junction in junctions:
-                    node_id = junction.attrib['id']
-                    if junction.attrib['type'] == "traffic_light":  # 정상 node만 분리, 신호등 노드
-                        node_list.append({
-                            'id': node_id,
-                            'type': junction.attrib['type'],
-                        })
-                        # node 결정 완료
-                        # edge는?
-                        i = 0
-                        interests = list()
-                        for edge in self.configs['edge_info']:
-                            interest = dict()
-                            if edge['to'] == node_id:  # inflow
-                                interest['id'] = node_id+'_{}'.format(i)
-                                interest['inflow'] = edge['id']
-                                for tmpEdge in self.configs['edge_info']:  # outflow
-                                    if tmpEdge['from'] == node_id and edge['from'] == tmpEdge['to']:
-                                        interest['outflow'] = tmpEdge['id']
-                                        break
-                                    else:
-                                        interest['outflow'] = None
-                                # tmp_edge=str(-int(edge['id']))
-                                # if tmp_edge in edge_list:
-                                #     interest['outflow']=tmp_edge
-                                # else:
-                                #     interest['outflow']=None
-                                interests.append(interest)
-                                i += 1  # index표기용
-
-                            elif edge['from'] == node_id:
-                                interest['id'] = node_id+'_{}'.format(i)
-                                interest['outflow'] = edge['id']
-                                for tmpEdge in self.configs['edge_info']:  # outflow
-                                    if tmpEdge['to'] == node_id and edge['to'] == tmpEdge['from']:
-                                        interest['inflow'] = tmpEdge['id']
-                                        break
-                                    else:
-                                        interest['inflow'] = None
-                                # tmp_edge=str(-int(edge['id']))
-                                # if tmp_edge in edge_list:
-                                #     interest['inflow']=tmp_edge
-                                # else:
-                                #     interest['inflow']=None
-                                interests.append(interest)
-                                i += 1  # index표기용
-
-                        # 중복이 존재하는지 확인 후 list에 삽입
-                        no_dup_outflow_list = list()
-                        no_dup_interest_list = list()
-                        for interest_comp in interests:
-                            if interest_comp['outflow'] not in no_dup_outflow_list:
-                                no_dup_outflow_list.append(
-                                    interest_comp['outflow'])
-                                no_dup_interest_list.append(interest_comp)
-                        interest_list.append(no_dup_interest_list)
-                        node_interest_pair[node_id] = no_dup_interest_list
-                        if inflow_size < len(no_dup_interest_list):
-                            inflow_size = len(no_dup_interest_list)
-
-                    # 일반 노드
-                    elif junction.attrib['type'] == "priority":  # 정상 node만 분리
-                        node_list.append({
-                            'id': node_id,
-                            'type': junction.attrib['type'],
-                        })
-                    else:
-                        pass
-                    self.configs['node_info'].append({
+            for junction in junctions:
+                node_id = junction.attrib['id']
+                if junction.attrib['type'] == "traffic_light":  # 정상 node만 분리, 신호등 노드
+                    node_list.append({
                         'id': node_id,
                         'type': junction.attrib['type'],
                     })
+                    # node 결정 완료
+                    # edge는?
+                    i = 0
+                    interests = list()
+                    for edge in self.configs['edge_info']:
+                        interest = dict()
+                        if edge['to'] == node_id:  # inflow
+                            interest['id'] = node_id+'_{}'.format(i)
+                            interest['inflow'] = edge['id']
+                            for tmpEdge in self.configs['edge_info']:  # outflow
+                                if tmpEdge['from'] == node_id and edge['from'] == tmpEdge['to']:
+                                    interest['outflow'] = tmpEdge['id']
+                                    break
+                                else:
+                                    interest['outflow'] = None
+                            # tmp_edge=str(-int(edge['id']))
+                            # if tmp_edge in edge_list:
+                            #     interest['outflow']=tmp_edge
+                            # else:
+                            #     interest['outflow']=None
+                            interests.append(interest)
+                            i += 1  # index표기용
+
+                        elif edge['from'] == node_id:
+                            interest['id'] = node_id+'_{}'.format(i)
+                            interest['outflow'] = edge['id']
+                            for tmpEdge in self.configs['edge_info']:  # outflow
+                                if tmpEdge['to'] == node_id and edge['to'] == tmpEdge['from']:
+                                    interest['inflow'] = tmpEdge['id']
+                                    break
+                                else:
+                                    interest['inflow'] = None
+                            # tmp_edge=str(-int(edge['id']))
+                            # if tmp_edge in edge_list:
+                            #     interest['inflow']=tmp_edge
+                            # else:
+                            #     interest['inflow']=None
+                            interests.append(interest)
+                            i += 1  # index표기용
+
+                    # 중복이 존재하는지 확인 후 list에 삽입
+                    no_dup_outflow_list = list()
+                    no_dup_interest_list = list()
+                    for interest_comp in interests:
+                        if interest_comp['outflow'] not in no_dup_outflow_list:
+                            no_dup_outflow_list.append(
+                                interest_comp['outflow'])
+                            no_dup_interest_list.append(interest_comp)
+                    interest_list.append(no_dup_interest_list)
+                    node_interest_pair[node_id] = no_dup_interest_list
+                    if inflow_size < len(no_dup_interest_list):
+                        inflow_size = len(no_dup_interest_list)
+
+                # 일반 노드
+                elif junction.attrib['type'] == "priority":  # 정상 node만 분리
+                    node_list.append({
+                        'id': node_id,
+                        'type': junction.attrib['type'],
+                    })
+                else:
+                    pass
+                self.configs['node_info'].append({
+                    'id': node_id,
+                    'type': junction.attrib['type'],
+                })
 
             # 정리
             NET_CONFIGS['node_info'] = self.configs['node_info']

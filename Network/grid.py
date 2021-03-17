@@ -158,7 +158,9 @@ class GridNetwork(Network):
                             # 위 아래
                             if checkEdge['to'][-1] == direction_list[1] or checkEdge['to'][-1] == direction_list[2]:
                                 self.configs['probability'] = '0.133'
+                                self.configs['vehsPerHour'] = '900'
                             else:
+                                self.configs['vehsPerHour'] = '1600'
                                 self.configs['probability'] = '0.388'
                             via_string = str()
                             node_x_y = edge['id'][2]  # 끝에서 사용하는 기준 x나 y
@@ -185,7 +187,8 @@ class GridNetwork(Network):
                                 'id': edge['from'],
                                 'begin': str(self.configs['flow_start']),
                                 'end': str(self.configs['flow_end']),
-                                'probability': self.configs['probability'],
+                                # 'probability': self.configs['probability'],
+                                'vehsPerHour': self.configs['vehsPerHour'],
                                 'reroute': 'false',
                                 # 'via': edge['id']+" "+via_string+" "+checkEdge['id'],
                                 'departPos': "base",
@@ -324,6 +327,8 @@ class GridNetwork(Network):
         side_list = ['u', 'r', 'd', 'l']
         NET_CONFIGS = dict()
         interest_list = list()
+        interests = list()
+        interest_set = list()
         node_list = self.configs['node_info']
         # grid에서는 자동 생성기 따라서 사용해도 무방함 #map완성되면 통일 가능
         x_y_end = self.configs['grid_num']-1
@@ -351,7 +356,7 @@ class GridNetwork(Network):
                 if y == x_y_end:
                     down_y = 'd'
                 # up
-                interest_list.append(
+                interests.append(
                     {
                         'id': 'u_{}'.format(node['id'][2:]),
                         'inflow': 'n_{}_{}_to_n_{}_{}'.format(up_x, up_y, x, y),
@@ -359,7 +364,7 @@ class GridNetwork(Network):
                     }
                 )
                 # right
-                interest_list.append(
+                interests.append(
                     {
                         'id': 'r_{}'.format(node['id'][2:]),
                         'inflow': 'n_{}_{}_to_n_{}_{}'.format(right_x, right_y, x, y),
@@ -367,7 +372,7 @@ class GridNetwork(Network):
                     }
                 )
                 # down
-                interest_list.append(
+                interests.append(
                     {
                         'id': 'd_{}'.format(node['id'][2:]),
                         'inflow': 'n_{}_{}_to_n_{}_{}'.format(down_x, down_y, x, y),
@@ -375,20 +380,32 @@ class GridNetwork(Network):
                     }
                 )
                 # left
-                interest_list.append(
+                interests.append(
                     {
                         'id': 'l_{}'.format(node['id'][2:]),
                         'inflow': 'n_{}_{}_to_n_{}_{}'.format(left_x, left_y, x, y),
                         'outflow': 'n_{}_{}_to_n_{}_{}'.format(x, y, left_x, left_y),
                     }
                 )
+                interest_list.append(interests)
+                interest_set += list(interests)
+        no_dup_interest_list=list()
+        no_dup_interest_set=list()
+        for interest_set_item in interest_set:
+            if interest_set_item not in no_dup_interest_set:
+                no_dup_interest_set.append(interest_set_item)
+        no_dup_interest_list=list()
+        for interest_list_item in interest_list:
+            if interest_list_item not in no_dup_interest_list:
+                no_dup_interest_list.append(interest_list_item)
+
         # phase 생성
         '''
             key 에는 node id
             value에는 dictionary해서 그 속에 모든 내용 다들어가게
         '''
         # rate_action_space
-        NET_CONFIGS['phase_num_actions'] = {2: [[0, 0], [1, -1]],
+        NET_CONFIGS['phase_num_actions'] = {2: [[0, 0], [1, -1], [-1, 1]],
                                             3: [[0, 0, 0], [1, 0, -1], [1, -1, 0], [0, 1, -1], [-1, 0, 1], [0, -1, 1], [-1, 1, 0]],
                                             4: [[0, 0, 0, 0], [1, 0, 0, -1], [1, 0, -1, 0], [1, -1, 0, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1],
                                                 [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]]}
@@ -417,9 +434,10 @@ class GridNetwork(Network):
         for _, node in enumerate(node_list):
             if node['id'][-1] not in side_list:
                 node_interest_pair[node['id']] = list()
-                for _, interest in enumerate(interest_list):
+                for _, interest in enumerate(no_dup_interest_set):
                     if node['id'][-3:] == interest['id'][-3:]:  # 좌표만 받기
                         node_interest_pair[node['id']].append(interest)
+
         # TODO, common phase 결정하면서 phase_index 만들기
         for key in traffic_info.keys():
             traffic_info[key]['common_phase'] = list()  # 실제 현시로 분류되는 phase
@@ -461,7 +479,7 @@ class GridNetwork(Network):
                 maximum = len(traffic_info[key]['phase_duration'])
         NET_CONFIGS['max_phase_num'] = maximum
 
-        NET_CONFIGS['interest_list'] = interest_list
+        NET_CONFIGS['interest_list'] = no_dup_interest_list
         NET_CONFIGS['node_interest_pair'] = node_interest_pair
         NET_CONFIGS['traffic_node_info'] = traffic_info
 
