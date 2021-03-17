@@ -59,7 +59,6 @@ class CityEnv(baseEnv):
         self.num_phase_list = list()
         for phase in self.common_phase:
             self.num_phase_list.append(len(phase))
-
         self.left_lane_num_dict = dict()
         # lane 정보 저장
         for interest in self.node_interest_pair:
@@ -91,7 +90,6 @@ class CityEnv(baseEnv):
             reward[0, index] = deepcopy(self.tl_rl_memory[index].reward)
             # mask index's reward clear
             self.tl_rl_memory[index].reward = 0
-
         return state, action, reward, next_state
 
     def collect_state(self, action_update_mask, action_index_matrix, mask_matrix):

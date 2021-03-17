@@ -41,7 +41,10 @@ def city_dqn_train(configs, time_data, sumoCmd):
     epoch = 0
     print("action space(rate: {}, time: {}".format(
         configs['rate_action_space'], configs['time_action_space']))
+<<<<<<< HEAD
+=======
     sumoCmd+=['--seed','1']
+>>>>>>> state
     while epoch < configs['num_epochs']:
         step = 0
         if configs['randomness'] == True:
@@ -127,10 +130,14 @@ def city_dqn_train(configs, time_data, sumoCmd):
             mask_matrix[clear_matrix] = True
             mask_matrix[~clear_matrix] = False
 
+<<<<<<< HEAD
+
+=======
             next_state=env.collect_state(action_update_mask,action_index_matrix,mask_matrix)
             # if mask_matrix.sum()>0:
             #     print("Cycle")
             #     print(next_state.sum())
+>>>>>>> state
             # env속에 agent별 state를 꺼내옴, max_offset+period 이상일 때 시작
             if step >= int(torch.max(OFFSET)+torch.max(TL_PERIOD)) and mask_matrix.sum() > 0:
                 rep_state, rep_action, rep_reward, rep_next_state = env.get_state(
