@@ -134,32 +134,17 @@ def city_dqn_test(flags, sumoCmd, configs):
                             waiting_time.append(traci.edge.getWaitingTime(inflow))#/float(
                                 #traci.edge.getLastStepVehicleNumber(inflow)))
                             # 차량의 평균속도
-<<<<<<< HEAD
-                            # part_velocity.append(
-                            #     traci.edge.getLastStepMeanSpeed(inflow))
-                            tmp_travel = traci.edge.getTraveltime(inflow)
-                            if tmp_travel <= 320:  # 이상한 값 거르기
-                                travel_time.append(tmp_travel)
-                        # dup_list.append(inflow)
-=======
                             part_velocity.append(
                                 traci.edge.getLastStepMeanSpeed(inflow))
                             tmp_travel = traci.edge.getTraveltime(inflow)
                             if tmp_travel <= 320:  # 이상한 값 거르기
                                 travel_time.append(tmp_travel)
                         dup_list.append(inflow)
->>>>>>> state
 
                     if outflow != None and outflow not in dup_list:
                         if traci.edge.getLastStepVehicleNumber(outflow) != 0:
                             part_velocity.append(
                                 traci.edge.getLastStepMeanSpeed(interest['outflow']))
-<<<<<<< HEAD
-                            tmp_travel = traci.edge.getTraveltime(inflow)
-                            if tmp_travel <= 320:  # 이상한 값 거르기
-                                travel_time.append(tmp_travel)
-=======
->>>>>>> state
                         dup_list.append(interest['outflow'])
             # edge_list=traci.edge.getIDList()
             # for edgeid in edge_list:
@@ -183,8 +168,4 @@ def city_dqn_test(flags, sumoCmd, configs):
         avg_travel_time = torch.tensor(travel_time, dtype=torch.float).mean()
         avg_waiting_time = torch.tensor(waiting_time, dtype=torch.float).mean()
         print('======== arrived number:{} avg waiting time:{},avg velocity:{} avg_part_velocity: {} avg_travel_time: {}'.format(
-<<<<<<< HEAD
             arrived_vehicles, avg_waiting_time, avg_velocity, avg_part_velocity, avg_travel_time))
-=======
-            arrived_vehicles, avg_waiting_time, avg_velocity, avg_part_velocity, avg_travel_time))
->>>>>>> state
