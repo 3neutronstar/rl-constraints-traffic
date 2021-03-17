@@ -138,12 +138,12 @@ def city_dqn_train(configs, time_data, sumoCmd):
                 agent.save_replay(rep_state, rep_action, rep_reward,
                                   rep_next_state, mask_matrix)  # dqn
                 total_reward += rep_reward.sum()
+            # update
+            agent.update(mask_matrix)
 
             state = next_state
             # info
             arrived_vehicles += traci.simulation.getArrivedNumber()
-            # update
-            agent.update(mask_matrix)
             # # soft update
             # agent.target_update()
 

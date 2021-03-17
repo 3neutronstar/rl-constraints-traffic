@@ -187,8 +187,8 @@ class GridNetwork(Network):
                                 'id': edge['from'],
                                 'begin': str(self.configs['flow_start']),
                                 'end': str(self.configs['flow_end']),
-                                # 'probability': self.configs['probability'],
-                                'vehsPerHour': self.configs['vehsPerHour'],
+                                'probability': self.configs['probability'],
+                                # 'vehsPerHour': self.configs['vehsPerHour'],
                                 'reroute': 'false',
                                 # 'via': edge['id']+" "+via_string+" "+checkEdge['id'],
                                 'departPos': "base",
@@ -457,6 +457,7 @@ class GridNetwork(Network):
         NET_CONFIGS['tl_rl_list'] = list()
         NET_CONFIGS['offset'] = list()
         NET_CONFIGS['phase_index'] = list()
+        NET_CONFIGS['phase_type']=list() # Encoding Vector
 
         for key in traffic_info.keys():
             NET_CONFIGS['tl_period'].append(
@@ -470,6 +471,7 @@ class GridNetwork(Network):
             NET_CONFIGS['phase_index'].append(traffic_info[key]['phase_index'])
             NET_CONFIGS['time_action_space'].append(round((torch.min(torch.tensor(traffic_info[key]['max_phase'])-torch.tensor(
                 traffic_info[key]['common_phase']), torch.tensor(traffic_info[key]['common_phase'])-torch.tensor(traffic_info[key]['min_phase']))/2).mean().item()))
+            NET_CONFIGS['phase_type'].append([0,0])
 
         NET_CONFIGS['num_agent'] = len(NET_CONFIGS['tl_rl_list'])
         # max value 검출기

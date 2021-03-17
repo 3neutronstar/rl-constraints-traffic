@@ -35,7 +35,7 @@ def parse_args(args):
         '--algorithm', type=str, default='super_dqn',
         help='choose algorithm super_dqn.')
     parser.add_argument(
-        '--model', type=str, default='city',
+        '--model', type=str, default='base',
         help='choose model "city".')
     parser.add_argument(
         '--gpu', type=bool, default=False,
@@ -65,39 +65,16 @@ def train(flags, time_data, configs, sumoConfig):
     configs['algorithm'] = flags.algorithm.lower()
     configs['randomness'] = flags.randomness
     print("training algorithm: ", configs['algorithm'])
-    if flags.model.lower() == 'base':
-        from train import super_dqn_train
-        from configs import SUPER_DQN_TRAFFIC_CONFIGS
-        if flags.network.lower() == 'grid':
-            configs = merge_dict_non_conflict(
-                configs, SUPER_DQN_TRAFFIC_CONFIGS)
-        configs['max_phase_num'] = 4
-        configs['offset'] = [0 for i in range(
-            configs['num_agent'])]  # offset 임의 설정
-        configs['tl_period'] = [160 for i in range(
-            configs['num_agent'])]  # max period 임의 설정
-        configs['action_size'] = 2
-        configs['state_space'] = 8  # 4phase에서 각각 받아오는게 아니라 마지막에 한번만 받음
-        # action space
-        configs['rate_action_space'] = 13
-        # time action space지정 (무조건 save param 이후 list화 시키고 나면 이전으로 옮길 것)
-        # TODO 여기 홀수일 때, 어떻게 할 건지 지정해야함
-        configs['time_action_space'] = (torch.min(torch.tensor(configs['max_phase'])-torch.tensor(
-            configs['common_phase']), torch.tensor(configs['common_phase'])-torch.tensor(configs['min_phase']))/2).mean(dim=1).int().tolist()
-        configs['model'] = 'base'
-        super_dqn_train(configs, time_data, sumoCmd)
+    configs['action_size'] = 2
+    # state space 는 map.py에서 결정
+    if flags.network.lower() == 'grid':
+        configs['state_space'] = 10
 
-    elif flags.model.lower() == 'city':
-        configs['action_size'] = 2
-        # state space 는 map.py에서 결정
-        if flags.network.lower() == 'grid':
-            configs['state_space'] = 8
-
-        configs['model'] = 'city'
-        from train import city_dqn_train
-        from configs import SUPER_DQN_TRAFFIC_CONFIGS
-        configs = merge_dict_non_conflict(configs, SUPER_DQN_TRAFFIC_CONFIGS)
-        city_dqn_train(configs, time_data, sumoCmd)
+    configs['model'] = 'city'
+    from train import city_dqn_train
+    from configs import SUPER_DQN_TRAFFIC_CONFIGS
+    configs = merge_dict_non_conflict(configs, SUPER_DQN_TRAFFIC_CONFIGS)
+    city_dqn_train(configs, time_data, sumoCmd)
 
 
 def test(flags, configs, sumoConfig):
