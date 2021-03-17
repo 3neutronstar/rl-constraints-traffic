@@ -35,7 +35,7 @@ def parse_args(args):
         '--algorithm', type=str, default='super_dqn',
         help='choose algorithm super_dqn.')
     parser.add_argument(
-        '--model', type=str, default='city',
+        '--model', type=str, default='base',
         help='choose model "city".')
     parser.add_argument(
         '--gpu', type=bool, default=False,
@@ -65,6 +65,7 @@ def train(flags, time_data, configs, sumoConfig):
     configs['algorithm'] = flags.algorithm.lower()
     configs['randomness'] = flags.randomness
     print("training algorithm: ", configs['algorithm'])
+<<<<<<< HEAD
     if flags.model.lower() == 'base':
         from train import super_dqn_train
         from configs import SUPER_DQN_TRAFFIC_CONFIGS
@@ -98,6 +99,18 @@ def train(flags, time_data, configs, sumoConfig):
         from configs import SUPER_DQN_TRAFFIC_CONFIGS
         configs = merge_dict_non_conflict(configs, SUPER_DQN_TRAFFIC_CONFIGS)
         city_dqn_train(configs, time_data, sumoCmd)
+=======
+    configs['action_size'] = 2
+    # state space 는 map.py에서 결정
+    if flags.network.lower() == 'grid':
+        configs['state_space'] = 10
+
+    configs['model'] = 'city'
+    from train import city_dqn_train
+    from configs import SUPER_DQN_TRAFFIC_CONFIGS
+    configs = merge_dict_non_conflict(configs, SUPER_DQN_TRAFFIC_CONFIGS)
+    city_dqn_train(configs, time_data, sumoCmd)
+>>>>>>> state
 
 
 def test(flags, configs, sumoConfig):
@@ -180,7 +193,11 @@ def simulate(flags, configs, sumoConfig):
                     if traci.edge.getLastStepVehicleNumber(outflow) != 0:
                         part_velocity.append(
                             traci.edge.getLastStepMeanSpeed(interest['outflow']))
+<<<<<<< HEAD
                         tmp_travel = traci.edge.getTraveltime(inflow)
+=======
+                        tmp_travel = traci.edge.getTraveltime(outflow)
+>>>>>>> state
                         if tmp_travel <= 320:  # 이상한 값 거르기
                             travel_time.append(tmp_travel)
                     dup_list.append(interest['outflow'])
@@ -256,9 +273,15 @@ def main(args):
         mapnet.gen_rou_from_xml()
         mapnet.generate_cfg(True, configs['mode'])
         if configs['network']=='3x3grid':
+<<<<<<< HEAD
             configs['scale']=str(1.1)
         elif configs['network']=='dunsan':
             configs['scale']=str(0.7)
+=======
+            configs['scale']=str(1)
+        elif configs['network']=='dunsan':
+            configs['scale']=str(2.0)
+>>>>>>> state
 
     # check the environment
     if 'SUMO_HOME' in os.environ:

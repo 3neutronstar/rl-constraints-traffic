@@ -1,3 +1,4 @@
+from typing import NewType
 import torch
 import numpy as np
 import traci
@@ -10,7 +11,11 @@ class Memory():
         self.configs = configs
         self.reward = torch.zeros(1, dtype=torch.float, device=configs['device'])
         self.state = torch.zeros(
+<<<<<<< HEAD
             (1, self.configs['state_space'], len(configs['tl_rl_list'])), dtype=torch.float, device=configs['device'])
+=======
+            (1, self.configs['state_space'],1), dtype=torch.float, device=configs['device'])
+>>>>>>> state
         self.next_state = torch.zeros_like(self.state)
         self.action = torch.zeros(
             (1, self.configs['action_size']), dtype=torch.int, device=configs['device'])
@@ -20,8 +25,14 @@ class CityEnv(baseEnv):
     def __init__(self, configs):
         super().__init__(configs)
         self.configs = configs
+<<<<<<< HEAD
         self.phase_action_matrix = torch.zeros(  # 누적합산 이전의 action_matrix
             (self.configs['num_agent'], self.configs['max_phase_num']), dtype=torch.int, device=configs['device'])  # reward 계산시 사용
+=======
+        self.device=self.configs['device']
+        self.phase_action_matrix = torch.zeros(  # 누적합산 이전의 action_matrix
+            (self.configs['num_agent'], self.configs['max_phase_num']), dtype=torch.int, device=self.device)  # reward 계산시 사용
+>>>>>>> state
         self.tl_list = traci.trafficlight.getIDList()
         self.tl_rl_list = self.configs['tl_rl_list']
         self.num_agent = len(self.tl_rl_list)
@@ -29,39 +40,43 @@ class CityEnv(baseEnv):
         self.interest_list = self.configs['interest_list']
         self.node_interest_pair = self.configs['node_interest_pair']
 
-        self.reward = 0
+        self.reward = torch.zeros((1,self.num_agent),dtype=torch.float,device=self.configs['device'])
+        self.cum_reward=torch.zeros_like(self.reward)
         self.state_space = self.configs['state_space']
         self.action_size = self.configs['action_size']
         self.traffic_node_info = self.configs['traffic_node_info']
         self.nodes = self.configs['node_info']
 
         self.before_action_update_mask = torch.zeros(
-            self.num_agent, dtype=torch.long, device=self.configs['device'])
+            self.num_agent, dtype=torch.long, device=self.device)
         self.before_action_index_matrix = torch.zeros(
-            self.num_agent, dtype=torch.long, device=self.configs['device'])
+            self.num_agent, dtype=torch.long, device=self.device)
         self.tl_rl_memory = list()
         for _ in range(self.num_agent):
             self.tl_rl_memory.append(Memory(self.configs))
 
         # action의 mapping을 위한 matrix
         self.min_phase = torch.tensor(
-            self.configs['min_phase'], dtype=torch.int, device=self.configs['device'])
+            self.configs['min_phase'], dtype=torch.int, device=self.device)
         self.max_phase = torch.tensor(
-            self.configs['max_phase'], dtype=torch.int, device=self.configs['device'])
+            self.configs['max_phase'], dtype=torch.int, device=self.device)
         self.common_phase = torch.tensor(
-            self.configs['common_phase'], dtype=torch.int, device=self.configs['device'])
+            self.configs['common_phase'], dtype=torch.int, device=self.device)
         self.matrix_actions = torch.tensor(
-            self.configs['matrix_actions'], dtype=torch.int, device=self.configs['device'])
+            self.configs['matrix_actions'], dtype=torch.int, device=self.device)
         # phase 갯수 list 생성
         self.num_phase_list = list()
         for phase in self.common_phase:
             self.num_phase_list.append(len(phase))
 
+<<<<<<< HEAD
         # traci 내의 정보받아오기
         for key in self.traffic_node_info.keys():
             self.traffic_node_info[key]['program'] = traci.trafficlight.getCompleteRedYellowGreenDefinition(
                 key)
 
+=======
+>>>>>>> state
         self.left_lane_num_dict = dict()
         # lane 정보 저장
         for interest in self.node_interest_pair:
@@ -79,6 +94,7 @@ class CityEnv(baseEnv):
         '''
 
         state = torch.zeros(
+<<<<<<< HEAD
             (1, self.num_agent, self.state_space, self.num_agent), dtype=torch.float, device=self.configs['device'])
         next_state = torch.zeros_like(state)
         action = torch.zeros(
@@ -89,10 +105,26 @@ class CityEnv(baseEnv):
             state[0, index, :] = deepcopy(self.tl_rl_memory[index].state)
             action[0, :, index] = deepcopy(self.tl_rl_memory[index].action)
             next_state[0, index, :] = deepcopy(
+=======
+            (1, self.state_space,self.num_agent), dtype=torch.float, device=self.device)
+        next_state = torch.zeros_like(state)
+        action = torch.zeros(
+            (1, self.num_agent,self.action_size), dtype=torch.int, device=self.device)
+        reward = torch.zeros((1,self.num_agent),
+                             dtype=torch.float, device=self.device)
+        for index in torch.nonzero(mask):
+            state[0,:, index] = deepcopy(self.tl_rl_memory[index].state)
+            action[0, index,:] = deepcopy(self.tl_rl_memory[index].action)
+            next_state[0,:, index] = deepcopy(
+>>>>>>> state
                 self.tl_rl_memory[index].next_state)
             reward[0, index] = deepcopy(self.tl_rl_memory[index].reward)
             # mask index's reward clear
             self.tl_rl_memory[index].reward = 0
+<<<<<<< HEAD
+=======
+
+>>>>>>> state
         return state, action, reward, next_state
 
     def collect_state(self, action_update_mask, action_index_matrix, mask_matrix):
@@ -107,8 +139,9 @@ class CityEnv(baseEnv):
         action_change_mask = torch.zeros_like(action_update_mask)
         for index in torch.nonzero(action_update_mask):
             if action_index_matrix[index] in self.traffic_node_info[self.tl_rl_list[index]]['phase_index']:
-                action_change_mask[index] = True
                 # action_index_matrix상의 값이 next state를 받아와야하는 index일 경우
+                action_change_mask[index] = True
+
         # Reward
         for index in torch.nonzero(action_change_mask):
             outflow = 0
@@ -117,13 +150,18 @@ class CityEnv(baseEnv):
             for interest in interests:
                 if interest['outflow']:  # None이 아닐 때 행동
                     outflow += (traci.edge.getLastStepVehicleNumber(
+<<<<<<< HEAD
                         interest['outflow'])-traci.edge.getLastStepHaltingNumber(interest['outflow']))/100.0
+=======
+                        interest['outflow']))/100.0
+>>>>>>> state
                 if interest['inflow']:  # None이 아닐 때 행동
                     inflow += traci.edge.getLastStepHaltingNumber(
                         interest['inflow'])/100.0
             # pressure=inflow-outflow
             # reward cumulative sum
             pressure = torch.tensor(
+<<<<<<< HEAD
                 (inflow-outflow), dtype=torch.float, device=self.configs['device'])
             self.tl_rl_memory[index].reward -= pressure
             self.reward -= pressure
@@ -145,13 +183,41 @@ class CityEnv(baseEnv):
 
         # action 변화를 위한 state
         if mask_matrix.sum() > 0:  # 검색의 필요가 없다면 검색x
+=======
+                (inflow-outflow), dtype=torch.float, device=self.device)/100.0
+            self.reward[0,index] -= pressure
+            self.tl_rl_memory[index].reward -= pressure
+        
+        # penalty
+        for index in torch.nonzero(mask_matrix):
+            if self.phase_action_matrix[index].sum() != 0:
+                phase_index = torch.tensor(
+                    self.traffic_node_info[self.tl_rl_list[index]]['phase_index'], device=self.device).view(1, -1).long()
+                # penalty for phase duration more than maxDuration
+                if torch.gt(self.phase_action_matrix[index].gather(dim=1, index=phase_index), torch.tensor(self.traffic_node_info[self.tl_rl_list[index]]['max_phase'])).sum():
+                    self.reward[0,index] -=1
+                    self.tl_rl_memory[index].reward -= 1  # penalty
+                    
+                # penalty for phase duration less than minDuration
+                if torch.gt(torch.tensor(self.traffic_node_info[self.tl_rl_list[index]]['min_phase']), self.phase_action_matrix[index].gather(dim=1, index=phase_index)).sum():
+                    self.reward[0,index] -=1
+                    self.tl_rl_memory[index].reward -= 1  # penalty
+                    
+        # action 변화를 위한 state
+        next_states = torch.zeros(
+            (1, self.state_space, self.num_agent), dtype=torch.float, device=self.device)
+
+        for idx in torch.nonzero(mask_matrix):
+>>>>>>> state
             next_state = list()
             # 모든 rl node에 대해서
+            phase_type_tensor=torch.tensor(self.configs['phase_type'][idx])
             # vehicle state
-            for interest in self.node_interest_pair:
-                veh_state = torch.zeros(
-                    (self.state_space, 1), dtype=torch.float, device=self.configs['device'])
+            veh_state = torch.zeros(
+                (self.state_space-2), dtype=torch.float, device=self.device)
+            for j,pair in enumerate(self.node_interest_pair[self.tl_rl_list[idx]]):
                 # 모든 inflow에 대해서
+<<<<<<< HEAD
                 for j, pair in enumerate(self.node_interest_pair[interest]):
                     if pair['inflow'] is None:
                         veh_state[j*2] = 0.0
@@ -175,6 +241,30 @@ class CityEnv(baseEnv):
             next_state = torch.zeros(
                 1,  self.state_space, self.num_agent, dtype=torch.float, device=self.configs['device'])
         return next_state.view(1, -1)
+=======
+                if pair['inflow'] is None:
+                    veh_state[j*2] = 0.0
+                    veh_state[j*2+1] = 0.0
+                else:
+                    left_movement = traci.lane.getLastStepHaltingNumber(
+                        pair['inflow']+'_{}'.format(self.left_lane_num_dict[pair['inflow']]))/100.0  # 멈춘애들 계산
+                    # 직진
+                    veh_state[j*2] = traci.edge.getLastStepHaltingNumber(
+                        pair['inflow'])/100.0-left_movement  # 가장 좌측에 멈춘 친구를 왼쪽차선 이용자로 판단
+                        # 좌회전
+                    veh_state[j*2+1] = left_movement
+            next_state=torch.cat((veh_state,phase_type_tensor),dim=0).view(1,self.state_space,1)
+            next_states[0,:,idx] = next_state.detach().clone()
+        for state_index in torch.nonzero(mask_matrix):
+            self.tl_rl_memory[state_index].state = self.tl_rl_memory[state_index].next_state
+            self.tl_rl_memory[state_index].next_state = next_state
+        # reward clear
+        reward=self.reward.detach().clone()
+        self.cum_reward+=reward
+        for index in torch.nonzero(mask_matrix):
+            self.reward[0,index]=torch.zeros_like(self.reward[0,index])
+        return next_states #list 반환 (안에 tensor)
+>>>>>>> state
 
     def step(self, action, mask_matrix, action_index_matrix, action_update_mask):
         '''
@@ -184,23 +274,34 @@ class CityEnv(baseEnv):
         # action update
         for index in torch.nonzero(mask_matrix):
             # action의 변환 -> 각 phase의 길이
+            tl_rl = self.tl_rl_list[index]
             phase_length_set = self._toPhaseLength(
+<<<<<<< HEAD
                 self.tl_rl_list[index], action[0, :, index])
+=======
+                tl_rl, action[0, index])
+>>>>>>> state
             # tls재설정
-            tls = self.traffic_node_info[self.tl_rl_list[index]]['program']
-            for phase_idx in self.traffic_node_info[self.tl_rl_list[index]]['phase_index']:
+            tls=traci.trafficlight.getCompleteRedYellowGreenDefinition(self.tl_rl_list[index])
+            for phase_idx in self.traffic_node_info[tl_rl]['phase_index']:
                 tls[0].phases[phase_idx].duration = phase_length_set[phase_idx]
+<<<<<<< HEAD
             traci.trafficlight.setProgramLogic(self.tl_rl_list[index], tls[0])
             self.tl_rl_memory[index].action = action[0, :, index]
+=======
+            traci.trafficlight.setProgramLogic(tl_rl, tls[0])
+            self.tl_rl_memory[index].action = action[0,index]
+            # print(phase_length_set)
+>>>>>>> state
         # action을 environment에 등록 후 상황 살피기,action을 저장
-
         # step
         traci.simulationStep()
-        # next state 받아오기, reward저장
-        next_state = self.collect_state(
-            action_update_mask, action_index_matrix, mask_matrix)
+        # for index in torch.nonzero(mask_matrix):
+        #     tls=traci.trafficlight.getCompleteRedYellowGreenDefinition(self.tl_rl_list[index])
+        #     print(tls[0].phases,"after")
+
+
         self.before_action_update_mask = action_update_mask
-        return next_state
 
     def calc_action(self, action_matrix, actions, mask_matrix):
         for index in torch.nonzero(mask_matrix):
@@ -210,12 +311,16 @@ class CityEnv(baseEnv):
             pad_mat = torch.zeros_like(action_matrix[index])
             pad_mat_size = pad_mat.size()[1]
             insert_mat = torch.tensor(
+<<<<<<< HEAD
                 phase_duration_list, dtype=torch.int, device=self.configs['device'])
+=======
+                phase_duration_list, dtype=torch.int, device=self.device)
+>>>>>>> state
             mat = torch.nn.functional.pad(
                 insert_mat, (0, pad_mat_size-insert_mat.size()[0]), 'constant', 0)
             action_matrix[index] = mat
             # action_matrix[index] = torch.tensor(
-            #     phase_duration_list, dtype=torch.int, device=self.configs['device'])
+            #     phase_duration_list, dtype=torch.int, device=self.device)
             # 누적 합산
             self.phase_action_matrix[index] = mat  # 누적합산이전 저장
             for l, _ in enumerate(phase_duration_list):
@@ -224,10 +329,10 @@ class CityEnv(baseEnv):
         return action_matrix.int()  # 누적합산 저장
 
     def update_tensorboard(self, writer, epoch):
-        writer.add_scalar('episode/reward', self.reward,
+        writer.add_scalar('episode/reward', self.cum_reward.sum(),
                           self.configs['max_steps']*epoch)  # 1 epoch마다
         # clear the value once in an epoch
-        self.reward = 0
+        self.cum_reward = torch.zeros_like(self.cum_reward)
 
     def _toPhaseLength(self, tl_rl, action):  # action을 해석가능한 phase로 변환
         tl_dict = deepcopy(self.traffic_node_info[tl_rl])

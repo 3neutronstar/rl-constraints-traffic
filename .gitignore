@@ -144,4 +144,8 @@ dmypy.json
 /Network/duaIterate.py
 /Network/costMemory.py
 /Network/dunsan*
+<<<<<<< HEAD
 /Network/3x3grid_*
+=======
+/Network/network_data.zip
+>>>>>>> state

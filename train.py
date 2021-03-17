@@ -41,6 +41,10 @@ def city_dqn_train(configs, time_data, sumoCmd):
     epoch = 0
     print("action space(rate: {}, time: {}".format(
         configs['rate_action_space'], configs['time_action_space']))
+<<<<<<< HEAD
+=======
+    sumoCmd+=['--seed','1']
+>>>>>>> state
     while epoch < configs['num_epochs']:
         step = 0
         if configs['randomness'] == True:
@@ -93,7 +97,11 @@ def city_dqn_train(configs, time_data, sumoCmd):
         a = time.time()
         while step < MAX_STEPS:
             # action 을 정하고
+            # if mask_matrix.sum()>0:
+            #     print(state.sum())
             actions = agent.get_action(state, mask_matrix)
+            # if mask_matrix.sum()>0:
+            #     print(actions.sum())
             # action형태로 변환 # 다음으로 넘어가야할 시점에 대한 matrix
             action_matrix = env.calc_action(
                 action_matrix, actions, mask_matrix)
@@ -101,7 +109,7 @@ def city_dqn_train(configs, time_data, sumoCmd):
 
             # environment에 적용
             # action 적용함수, traci.simulationStep 있음
-            next_state = env.step(
+            env.step(
                 actions, mask_matrix, action_index_matrix, action_update_mask)
 
             # 전체 1초증가 # traci는 env.step에
@@ -122,7 +130,14 @@ def city_dqn_train(configs, time_data, sumoCmd):
             mask_matrix[clear_matrix] = True
             mask_matrix[~clear_matrix] = False
 
+<<<<<<< HEAD
 
+=======
+            next_state=env.collect_state(action_update_mask,action_index_matrix,mask_matrix)
+            # if mask_matrix.sum()>0:
+            #     print("Cycle")
+            #     print(next_state.sum())
+>>>>>>> state
             # env속에 agent별 state를 꺼내옴, max_offset+period 이상일 때 시작
             if step >= int(torch.max(OFFSET)+torch.max(TL_PERIOD)) and mask_matrix.sum() > 0:
                 rep_state, rep_action, rep_reward, rep_next_state = env.get_state(
@@ -149,7 +164,7 @@ def city_dqn_train(configs, time_data, sumoCmd):
         epoch += 1
         # once in an epoch
         update_tensorboard(writer, epoch, env, agent, arrived_vehicles)
-        print('======== {} epoch/ return: {} arrived number:{}'.format(epoch,
+        print('======== {} epoch/ return: {:.5f} arrived number:{}'.format(epoch,
                                                                        total_reward.sum(), arrived_vehicles))
         if epoch % 50 == 0:
             agent.save_weights(
