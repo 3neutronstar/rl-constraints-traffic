@@ -223,6 +223,7 @@ def main(args):
         configs['grid_num'] = 3
         configs['num_lanes'] = 2
         configs['load_file_name'] = configs['network']
+        print("A")
         mapnet = MapNetwork(configs)
         MAP_CONFIGS = mapnet.get_tl_from_xml()
 
