@@ -19,8 +19,10 @@ DEFAULT_CONFIG = {
     'epsilon_decay_rate': 0.995,
     'fc_net': [36, 48, 24],
     'lr': 1e-4,
-    'lr_decay_rate': 0.995,
-    'target_update_period': 20,
+    'lr_decay_period':100,
+    'lr_decay_rate':0.5,
+    # 'lr_decay_rate': 0.995,
+    'target_update_period': 10,
     'final_epsilon': 0.0005,
     'final_lr': 1e-6,
     'alpha':0.91,
@@ -112,7 +114,7 @@ class Trainer(RLAlgorithm):
         self.action_size = self.configs['action_size']
         self.gamma = self.configs['gamma']
         self.epsilon = self.configs['epsilon']
-        self.criterion = nn.SmoothL1Loss()
+        self.criterion = nn.MSELoss()
         self.lr = self.configs['lr']
         self.lr_decay_rate = self.configs['lr_decay_rate']
         self.epsilon_decay_rate = self.configs['epsilon_decay_rate']
@@ -132,9 +134,9 @@ class Trainer(RLAlgorithm):
             self.rate_key_list.append(rate_key)
 
         self.mainSuperQNetwork = SuperQNetwork(
-            self.state_space, self.rate_action_space[4],self.time_action_space[0], self.configs)
+            self.state_space, self.rate_action_space[rate_key],self.time_action_space[0], self.configs)
         self.targetSuperQNetwork = SuperQNetwork(
-            self.state_space, self.rate_action_space[4],self.time_action_space[0], self.configs)
+            self.state_space, self.rate_action_space[rate_key],self.time_action_space[0], self.configs)
         # hard update, optimizer setting
         self.optimizer=optim.Adam(self.mainSuperQNetwork.parameters(),self.lr)
         hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
@@ -149,32 +151,37 @@ class Trainer(RLAlgorithm):
             time_actions = torch.zeros(
                 (1, self.num_agent, 1), dtype=torch.int, device=self.device)
             for index in torch.nonzero(mask):
-                if random.random() > self.epsilon:  # epsilon greedy
-                    # masks = torch.cat((mask, mask), dim=0)
+                if self.configs['mode']=='train':
+                    if random.random() > self.epsilon:  # epsilon greedy
+                        # masks = torch.cat((mask, mask), dim=0)
+                        rate_action, time_action = self.mainSuperQNetwork(
+                            state[0,:,index].view(-1,self.state_space,1))
+                        rate_actions[0, index] = rate_action.max(1)[1].int()
+                        time_actions[0, index] = time_action.max(1)[1].int()
+                        # agent가 늘어나면 view(agents,action_size)
+                    else:
+                        rate_actions[0, index] = torch.tensor(random.randint(
+                            0, self.rate_action_space[self.rate_key_list[index]]-1), dtype=torch.int, device=self.device)
+                        time_actions[0, index] = torch.tensor(random.randint(
+                            0, self.configs['time_action_space'][index]-1), dtype=torch.int, device=self.device)
+                else: #test
                     rate_action, time_action = self.mainSuperQNetwork(
                         state[0,:,index].view(-1,self.state_space,1))
                     rate_actions[0, index] = rate_action.max(1)[1].int()
                     time_actions[0, index] = time_action.max(1)[1].int()
-                    # agent가 늘어나면 view(agents,action_size)
-                else:
-                    rate_actions[0, index] = torch.tensor(random.randint(
-                        0, self.rate_action_space[self.rate_key_list[index]]-1), dtype=torch.int, device=self.device)
-                    time_actions[0, index] = torch.tensor(random.randint(
-                        0, self.configs['time_action_space'][index]-1), dtype=torch.int, device=self.device)
+
 
             actions = torch.cat((rate_actions, time_actions), dim=2)
         return actions
 
     def target_update(self):
-        # Hard Update
-        hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
+        # # Hard Update
+        # hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
 
         # # Soft Update
-        # for target, source in zip(self.targetQNetwork, self.mainQNetwork):
-        #     soft_update(target, source, self.configs)
-        # # Total Update
-        # soft_update(self.targetSuperQNetwork,
-        #             self.mainSuperQNetwork, self.configs)
+        # Total Update
+        soft_update(self.targetSuperQNetwork,
+                    self.mainSuperQNetwork, self.configs)
 
     def save_replay(self, state, action, reward, next_state, mask):
         for index in torch.nonzero(mask):
@@ -231,16 +238,16 @@ class Trainer(RLAlgorithm):
                                        rate_expected_state_action_values.unsqueeze(1))
             time_loss = self.criterion(time_state_action_values,
                                        time_expected_state_action_values.unsqueeze(1))
-            total_loss= self.configs['alpha'] *rate_loss + (1.0-self.configs['alpha'])*time_loss
+            # total_loss= self.configs['alpha'] *rate_loss + (1.0-self.configs['alpha'])*time_loss
             self.running_loss += rate_loss/self.configs['batch_size']
             self.running_loss += time_loss/self.configs['batch_size']
 
             # 모델 최적화
             self.optimizer.zero_grad()
             # retain_graph를 하는 이유는 mainSuperQ에 대해 영향이 없게 하기 위함
-            # rate_loss.backward(retain_graph=True)
-            # time_loss.backward()
-            total_loss.backward(retain_graph=True)
+            rate_loss.backward(retain_graph=True)
+            time_loss.backward()
+            # total_loss.backward(retain_graph=True)
             for param in self.mainSuperQNetwork.parameters():
                 param.grad.data.clamp_(-1, 1)  # 값을 -1과 1로 한정시켜줌 (clipping)
             self.optimizer.step()
@@ -251,11 +258,11 @@ class Trainer(RLAlgorithm):
             self.epsilon *= self.epsilon_decay_rate
 
         # decay learning rate
-        if self.lr > self.configs['final_lr']:
-            self.lr = self.lr_decay_rate*self.lr
+        # if self.lr > self.configs['final_lr']:
+        #     self.lr = self.lr_decay_rate*self.lr
         
-        # if epoch%100==0:
-        #     self.lr = 0.5*self.lr
+        if epoch%self.configs['lr_decay_period']==0 and self.lr > self.configs['final_lr'] and epoch>1:
+            self.lr = self.configs['lr_decay_rate']*self.lr
 
     def save_weights(self, name):
 

@@ -181,19 +181,20 @@ class GridNetwork(Network):
                                     via_string += 'n_{}_{}_to_n_{}_{} '.format(
                                         node_x_y, i, node_x_y, i-1)
 
-                            flows.append({
-                                'from': edge['id'],
-                                'to': checkEdge['id'],
-                                'id': edge['from'],
-                                'begin': str(self.configs['flow_start']),
-                                'end': str(self.configs['flow_end']),
-                                'probability': self.configs['probability'],
-                                # 'vehsPerHour': self.configs['vehsPerHour'],
-                                'reroute': 'false',
-                                # 'via': edge['id']+" "+via_string+" "+checkEdge['id'],
-                                'departPos': "base",
-                                'departLane': 'best',
-                            })
+                            for k in range(4):  # spliting demand
+                                flows.append({
+                                    'from': edge['id'],
+                                    'to': checkEdge['id'],
+                                    'id': edge['from']+str(k),
+                                    'begin': str(float(self.configs['flow_end']*k)/4.0+self.configs['flow_start']),
+                                    'end': str(float(self.configs['flow_end']*(k+1))/4.0),
+                                    'probability': str(float(self.configs['probability'])*float(k+1)/4.0),
+                                    # 'vehsPerHour': self.configs['vehsPerHour'],
+                                    'reroute': 'false',
+                                    # 'via': edge['id']+" "+via_string+" "+checkEdge['id'],
+                                    'departPos': "base",
+                                    'departLane': 'best',
+                                })
 
         self.flows = flows
         self.configs['vehicle_info'] = flows
@@ -389,12 +390,12 @@ class GridNetwork(Network):
                 )
                 interest_list.append(interests)
                 interest_set += list(interests)
-        no_dup_interest_list=list()
-        no_dup_interest_set=list()
+        no_dup_interest_list = list()
+        no_dup_interest_set = list()
         for interest_set_item in interest_set:
             if interest_set_item not in no_dup_interest_set:
                 no_dup_interest_set.append(interest_set_item)
-        no_dup_interest_list=list()
+        no_dup_interest_list = list()
         for interest_list_item in interest_list:
             if interest_list_item not in no_dup_interest_list:
                 no_dup_interest_list.append(interest_list_item)
@@ -457,7 +458,7 @@ class GridNetwork(Network):
         NET_CONFIGS['tl_rl_list'] = list()
         NET_CONFIGS['offset'] = list()
         NET_CONFIGS['phase_index'] = list()
-        NET_CONFIGS['phase_type']=list() # Encoding Vector
+        NET_CONFIGS['phase_type'] = list()  # Encoding Vector
 
         for key in traffic_info.keys():
             NET_CONFIGS['tl_period'].append(
@@ -471,7 +472,7 @@ class GridNetwork(Network):
             NET_CONFIGS['phase_index'].append(traffic_info[key]['phase_index'])
             NET_CONFIGS['time_action_space'].append(round((torch.min(torch.tensor(traffic_info[key]['max_phase'])-torch.tensor(
                 traffic_info[key]['common_phase']), torch.tensor(traffic_info[key]['common_phase'])-torch.tensor(traffic_info[key]['min_phase']))/2).mean().item()))
-            NET_CONFIGS['phase_type'].append([0,0])
+            NET_CONFIGS['phase_type'].append([0, 0])
 
         NET_CONFIGS['num_agent'] = len(NET_CONFIGS['tl_rl_list'])
         # max value 검출기

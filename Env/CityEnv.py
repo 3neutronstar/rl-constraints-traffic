@@ -135,13 +135,13 @@ class CityEnv(baseEnv):
                     self.traffic_node_info[self.tl_rl_list[index]]['phase_index'], device=self.device).view(1, -1).long()
                 # penalty for phase duration more than maxDuration
                 if torch.gt(self.phase_action_matrix[index].gather(dim=1, index=phase_index), torch.tensor(self.traffic_node_info[self.tl_rl_list[index]]['max_phase'])).sum():
-                    self.reward[0,index] -=1
-                    self.tl_rl_memory[index].reward -= 1  # penalty
+                    self.reward[0,index] -= 0.4
+                    self.tl_rl_memory[index].reward -= 0.4  # penalty
                     
                 # penalty for phase duration less than minDuration
                 if torch.gt(torch.tensor(self.traffic_node_info[self.tl_rl_list[index]]['min_phase']), self.phase_action_matrix[index].gather(dim=1, index=phase_index)).sum():
-                    self.reward[0,index] -=1
-                    self.tl_rl_memory[index].reward -= 1  # penalty
+                    self.reward[0,index] -= 0.4
+                    self.tl_rl_memory[index].reward -= 0.4  # penalty
                     
         # action 변화를 위한 state
         next_states = torch.zeros(
@@ -175,8 +175,9 @@ class CityEnv(baseEnv):
         # reward clear
         reward=self.reward.detach().clone()
         self.cum_reward+=reward
-        for index in torch.nonzero(mask_matrix):
-            self.reward[0,index]=torch.zeros_like(self.reward[0,index])
+        for idx,_ in enumerate(self.tl_rl_list):
+            if idx not in torch.nonzero(mask_matrix).tolist():
+                self.reward[0,idx]=torch.zeros_like(self.reward[0,idx]).clone()
         return next_states #list 반환 (안에 tensor)
 
     def step(self, action, mask_matrix, action_index_matrix, action_update_mask):
@@ -196,6 +197,7 @@ class CityEnv(baseEnv):
                 tls[0].phases[phase_idx].duration = phase_length_set[phase_idx]
             traci.trafficlight.setProgramLogic(tl_rl, tls[0])
             self.tl_rl_memory[index].action = action[0,index]
+            # print(traci.trafficlight.getCompleteRedYellowGreenDefinition(self.tl_rl_list[index])[0].phases)
             # print(phase_length_set)
         # action을 environment에 등록 후 상황 살피기,action을 저장
         # step

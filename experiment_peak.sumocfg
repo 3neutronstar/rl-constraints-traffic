@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<configuration>
+  <input>
+    <net-file value="20201028.net.xml"/>
+    <route-files value="tss_peak.rou.xml"/>
+    <additional-files value="tss_7to10.add.xml"/>
+  </input>
+    <time>
+      <begin value="0"/>
+      <end value="10800"/>
+    </time>
+  <output>
+  <output/>
+</configuration>
+  

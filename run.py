@@ -202,7 +202,7 @@ def main(args):
     configs['network'] = flags.network.lower()
     if configs['network'] == 'grid':
         from Network.grid import GridNetwork  # network바꿀때 이걸로 바꾸세요(수정 예정)
-        configs['grid_num'] = 3
+        configs['grid_num'] = 5
         configs['scale']=1
         if configs['mode'] == 'simulate':
             configs['file_name'] = '{}x{}grid'.format(

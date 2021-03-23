@@ -18,7 +18,7 @@ def city_dqn_test(flags, sumoCmd, configs):
 
     phase_num_matrix = torch.tensor(  # 각 tl이 갖는 최대 phase갯수
         [len(configs['traffic_node_info'][index]['phase_duration']) for _, index in enumerate(configs['traffic_node_info'])])
-
+    sumoCmd+=['--seed','1']
     agent = Trainer(configs)
     agent.save_params(configs['time_data'])
     agent.load_weights(flags.replay_name)
@@ -97,7 +97,7 @@ def city_dqn_test(flags, sumoCmd, configs):
 
             # environment에 적용
             # action 적용함수, traci.simulationStep 있음
-            next_state = env.step(
+            env.step(
                 actions, mask_matrix, action_index_matrix, action_update_mask)
 
             # 전체 1초증가 # traci는 env.step에
@@ -150,12 +150,14 @@ def city_dqn_test(flags, sumoCmd, configs):
             # for edgeid in edge_list:
             #     if traci.edge.getLastStepVehicleNumber(edgeid) !=None:
             #         total_velocity.append(traci.edge.getLastStepMeanSpeed(edgeid))
+            
+            next_state = env.collect_state(
+                action_update_mask, action_index_matrix, mask_matrix)
             state = next_state
             # info
             
             arrived_vehicles += traci.simulation.getArrivedNumber()
 
-            state = next_state
 
         b = time.time()
         traci.close()
