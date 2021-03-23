@@ -158,11 +158,11 @@ class GridNetwork(Network):
 
                                 # 위 아래
                                 if checkEdge['to'][-1] == direction_list[1] or checkEdge['to'][-1] == direction_list[2]:
-                                    self.configs['probability'] = '0.133'
+                                    self.configs['probability'] = '0.200'
                                     self.configs['vehsPerHour'] = '900'
                                 else:
                                     self.configs['vehsPerHour'] = '1600'
-                                    self.configs['probability'] = '0.388'
+                                    self.configs['probability'] = '0.402'
                                 via_string = str()
                                 node_x_y = edge['id'][2]  # 끝에서 사용하는 기준 x나 y
                                 if 'r' in edge['id']:
@@ -188,7 +188,7 @@ class GridNetwork(Network):
                                     'id': edge['from']+str(k),
                                     'begin': str(float(self.configs['flow_end']*k)/4.0+self.configs['flow_start']),
                                     'end': str(float(self.configs['flow_end']*(k+1))/4.0),
-                                    'probability': str(float(self.configs['probability'])*float(k+1)/4.0),
+                                    'probability': str(float(self.configs['probability'])*float(4-k)/4.0),
                                     # 'vehsPerHour': self.configs['vehsPerHour'],
                                     'reroute': 'false',
                                     # 'via': edge['id']+" "+via_string+" "+checkEdge['id'],
