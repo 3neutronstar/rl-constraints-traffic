@@ -149,39 +149,39 @@ class GridNetwork(Network):
         #     if direction=='l':
 
         # 삽입
-        for _, edge in enumerate(self.edges):
-            for i, _ in enumerate(direction_list):
-                if direction_list[i] in edge['from']:
-                    for _, checkEdge in enumerate(self.edges):
-                        if edge['from'][-3] == checkEdge['to'][-3] and checkEdge['to'][-1] == direction_list[3-i] and direction_list[i] in edge['from']:
+        for k in range(4):  # spliting demand
+            for _, edge in enumerate(self.edges):
+                for i, _ in enumerate(direction_list):
+                    if direction_list[i] in edge['from']:
+                        for _, checkEdge in enumerate(self.edges):
+                            if edge['from'][-3] == checkEdge['to'][-3] and checkEdge['to'][-1] == direction_list[3-i] and direction_list[i] in edge['from']:
 
-                            # 위 아래
-                            if checkEdge['to'][-1] == direction_list[1] or checkEdge['to'][-1] == direction_list[2]:
-                                self.configs['probability'] = '0.133'
-                                self.configs['vehsPerHour'] = '900'
-                            else:
-                                self.configs['vehsPerHour'] = '1600'
-                                self.configs['probability'] = '0.388'
-                            via_string = str()
-                            node_x_y = edge['id'][2]  # 끝에서 사용하는 기준 x나 y
-                            if 'r' in edge['id']:
-                                for i in range(self.configs['grid_num']-1, 0, -1):
-                                    via_string += 'n_{}_{}_to_n_{}_{} '.format(
-                                        i, node_x_y, i-1, node_x_y)
-                            elif 'l' in edge['id']:
-                                for i in range(self.configs['grid_num']-2):
-                                    via_string += 'n_{}_{}_to_n_{}_{} '.format(
-                                        i, node_x_y, i+1, node_x_y)
-                            elif 'u' in edge['id']:
-                                for i in range(self.configs['grid_num']-2):
-                                    via_string += 'n_{}_{}_to_n_{}_{} '.format(
-                                        node_x_y, i, node_x_y, i+1)
-                            elif 'd' in edge['id']:
-                                for i in range(self.configs['grid_num']-1, 0, -1):
-                                    via_string += 'n_{}_{}_to_n_{}_{} '.format(
-                                        node_x_y, i, node_x_y, i-1)
+                                # 위 아래
+                                if checkEdge['to'][-1] == direction_list[1] or checkEdge['to'][-1] == direction_list[2]:
+                                    self.configs['probability'] = '0.133'
+                                    self.configs['vehsPerHour'] = '900'
+                                else:
+                                    self.configs['vehsPerHour'] = '1600'
+                                    self.configs['probability'] = '0.388'
+                                via_string = str()
+                                node_x_y = edge['id'][2]  # 끝에서 사용하는 기준 x나 y
+                                if 'r' in edge['id']:
+                                    for i in range(self.configs['grid_num']-1, 0, -1):
+                                        via_string += 'n_{}_{}_to_n_{}_{} '.format(
+                                            i, node_x_y, i-1, node_x_y)
+                                elif 'l' in edge['id']:
+                                    for i in range(self.configs['grid_num']-2):
+                                        via_string += 'n_{}_{}_to_n_{}_{} '.format(
+                                            i, node_x_y, i+1, node_x_y)
+                                elif 'u' in edge['id']:
+                                    for i in range(self.configs['grid_num']-2):
+                                        via_string += 'n_{}_{}_to_n_{}_{} '.format(
+                                            node_x_y, i, node_x_y, i+1)
+                                elif 'd' in edge['id']:
+                                    for i in range(self.configs['grid_num']-1, 0, -1):
+                                        via_string += 'n_{}_{}_to_n_{}_{} '.format(
+                                            node_x_y, i, node_x_y, i-1)
 
-                            for k in range(4):  # spliting demand
                                 flows.append({
                                     'from': edge['id'],
                                     'to': checkEdge['id'],
