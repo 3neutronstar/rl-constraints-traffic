@@ -23,9 +23,9 @@ def city_dqn_train(configs, time_data, sumoCmd):
     phase_num_matrix = torch.tensor(  # 각 tl이 갖는 최대 phase갯수
         [len(configs['traffic_node_info'][index]['phase_duration']) for _, index in enumerate(configs['traffic_node_info'])])
     # init agent and tensorboard writer
-    agent = Trainer(configs)
     writer = SummaryWriter(os.path.join(
         configs['current_path'], 'training_data', time_data))
+    agent = Trainer(configs)
     # save hyper parameters
     agent.save_params(time_data)
     # init training
@@ -98,6 +98,8 @@ def city_dqn_train(configs, time_data, sumoCmd):
             # if mask_matrix.sum()>0:
             #     print(state.sum())
             actions = agent.get_action(state, mask_matrix)
+            if mask_matrix.sum()>0:
+                print(actions.transpose(1,2))
             # if mask_matrix.sum()>0:
             #     print(actions.sum())
             # action형태로 변환 # 다음으로 넘어가야할 시점에 대한 matrix

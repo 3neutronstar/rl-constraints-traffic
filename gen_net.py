@@ -152,13 +152,13 @@ class Network():
         # file_name_str=os.path.join(self.current_Env_path,self.file_name)
         file_name_str = os.path.join(self.current_Env_path, self.file_name)
         if len(self.traffic_light) != 0:
-            os.system('netconvert -n {0}.nod.xml -e {0}.edg.xml -i {0}_tl.add.xml -o {0}.net.xml'.format(
+            os.system('netconvert -n {0}.nod.xml -e {0}.edg.xml -i {0}_tl.add.xml -o {0}.net.xml --no-turnarounds True'.format(
                 file_name_str))
         elif len(self.connections) == 0:
-            os.system('netconvert -n {}.nod.xml -e {}.edg.xml -o {}.net.xml'.format(
+            os.system('netconvert -n {}.nod.xml -e {}.edg.xml -o {}.net.xml --no-turnarounds True'.format(
                 file_name_str, file_name_str, file_name_str))
         else:  # connection이 존재하는 경우 -x
-            os.system('netconvert -n {}.nod.xml -e {}.edg.xml -x {}.con.xml -o {}.net.xml'.format(
+            os.system('netconvert -n {}.nod.xml -e {}.edg.xml -x {}.con.xml -o {}.net.xml --no-turnarounds True'.format(
                 file_name_str, file_name_str, file_name_str, file_name_str))
 
     def _generate_rou_xml(self):

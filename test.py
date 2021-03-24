@@ -90,6 +90,8 @@ def city_dqn_test(flags, sumoCmd, configs):
 
             # action 을 정하고
             actions = agent.get_action(state, mask_matrix)
+            if mask_matrix.sum()>0:
+                print(actions)
             # action형태로 변환 # 다음으로 넘어가야할 시점에 대한 matrix
             action_matrix = env.calc_action(
                 action_matrix, actions, mask_matrix)

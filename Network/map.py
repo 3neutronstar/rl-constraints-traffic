@@ -25,8 +25,8 @@ class MapNetwork(Network):
         NET_CONFIGS = dict()
         NET_CONFIGS['phase_num_actions'] = {2: [[0, 0], [1, -1]],
                                             3: [[0, 0, 0], [1, 0, -1], [1, -1, 0], [0, 1, -1], [-1, 0, 1], [0, -1, 1], [-1, 1, 0]],
-                                            4: [[0, 0, 0, 0], [1, 0, 0, -1], [1, 0, -1, 0], [1, -1, 0, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1],
-                                                [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]],
+                                            4: [ [1, 0, 0, -1], [1, 0, -1, 0], [1, -1, 0, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1],#,[0, 0, 0, 0],
+                                                [1, 0, 0, -1], [1, 0, -1, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]],
                                             5: [[0, 0, 0, 0, 0]],
                                             6: [[0, 0, 0, 0, 0, 0]], }
         # NET_CONFIGS['phase_type']=[[0,0],[0,0],[0,1],[0,1],[1,0],[1,0],[0,1],[1,1],[1,1],[1,1],[1,0]]
@@ -237,9 +237,12 @@ class MapNetwork(Network):
             net_tree = parse(self.net_file_path)
             tlLogicList = net_tree.findall('tlLogic')
             NET_CONFIGS['time_action_space'] = list()
-
+            if 'dunsan'== self.configs['network']:
+                NET_CONFIGS['phase_type']=[[0,0],[0,0],[0,1],[1,0],[1,0],[1,1],[1,1],[1,1],[0,1],[1,0]]
             # traffic info 저장
             for tlLogic in tlLogicList:
+                if 'grid' in self.configs['network']:
+                    NET_CONFIGS['phase_type'].append([0,0])
                 tl_id = tlLogic.attrib['id']
                 traffic_info[tl_id] = dict()
                 traffic_node_info = traffic_info[tl_id]
@@ -297,7 +300,6 @@ class MapNetwork(Network):
                 # 각 신호별 길이
                 traffic_node_info['period'] = tl_period
                 NET_CONFIGS['tl_period'].append(tl_period)
-                NET_CONFIGS['phase_type'].append([0,0])
                 traffic_node_info['matrix_actions'] = NET_CONFIGS['phase_num_actions'][num_phase]
                 traffic_node_info['min_phase'] = min_duration_list
                 traffic_node_info['max_phase'] = max_duration_list

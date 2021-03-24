@@ -149,52 +149,51 @@ class GridNetwork(Network):
         #     if direction=='l':
 
         # 삽입
-        for k in range(4):  # spliting demand
-            for _, edge in enumerate(self.edges):
-                for i, _ in enumerate(direction_list):
-                    if direction_list[i] in edge['from']:
-                        for _, checkEdge in enumerate(self.edges):
-                            if edge['from'][-3] == checkEdge['to'][-3] and checkEdge['to'][-1] == direction_list[3-i] and direction_list[i] in edge['from']:
+        for _, edge in enumerate(self.edges):
+            for i, _ in enumerate(direction_list):
+                if direction_list[i] in edge['from']:
+                    for _, checkEdge in enumerate(self.edges):
+                        if edge['from'][-3] == checkEdge['to'][-3] and checkEdge['to'][-1] == direction_list[3-i] and direction_list[i] in edge['from']:
 
-                                # 위 아래
-                                if checkEdge['to'][-1] == direction_list[1] or checkEdge['to'][-1] == direction_list[2]:
-                                    self.configs['probability'] = '0.200'
-                                    self.configs['vehsPerHour'] = '900'
-                                else:
-                                    self.configs['vehsPerHour'] = '1600'
-                                    self.configs['probability'] = '0.402'
-                                via_string = str()
-                                node_x_y = edge['id'][2]  # 끝에서 사용하는 기준 x나 y
-                                if 'r' in edge['id']:
-                                    for i in range(self.configs['grid_num']-1, 0, -1):
-                                        via_string += 'n_{}_{}_to_n_{}_{} '.format(
-                                            i, node_x_y, i-1, node_x_y)
-                                elif 'l' in edge['id']:
-                                    for i in range(self.configs['grid_num']-2):
-                                        via_string += 'n_{}_{}_to_n_{}_{} '.format(
-                                            i, node_x_y, i+1, node_x_y)
-                                elif 'u' in edge['id']:
-                                    for i in range(self.configs['grid_num']-2):
-                                        via_string += 'n_{}_{}_to_n_{}_{} '.format(
-                                            node_x_y, i, node_x_y, i+1)
-                                elif 'd' in edge['id']:
-                                    for i in range(self.configs['grid_num']-1, 0, -1):
-                                        via_string += 'n_{}_{}_to_n_{}_{} '.format(
-                                            node_x_y, i, node_x_y, i-1)
+                            # 위 아래
+                            if checkEdge['to'][-1] == direction_list[1] or checkEdge['to'][-1] == direction_list[2]:
+                                self.configs['probability'] = '0.133'
+                                self.configs['vehsPerHour'] = '900'
+                            else:
+                                self.configs['vehsPerHour'] = '1600'
+                                self.configs['probability'] = '0.388'
+                            via_string = str()
+                            node_x_y = edge['id'][2]  # 끝에서 사용하는 기준 x나 y
+                            if 'r' in edge['id']:
+                                for i in range(self.configs['grid_num']-1, 0, -1):
+                                    via_string += 'n_{}_{}_to_n_{}_{} '.format(
+                                        i, node_x_y, i-1, node_x_y)
+                            elif 'l' in edge['id']:
+                                for i in range(self.configs['grid_num']-2):
+                                    via_string += 'n_{}_{}_to_n_{}_{} '.format(
+                                        i, node_x_y, i+1, node_x_y)
+                            elif 'u' in edge['id']:
+                                for i in range(self.configs['grid_num']-2):
+                                    via_string += 'n_{}_{}_to_n_{}_{} '.format(
+                                        node_x_y, i, node_x_y, i+1)
+                            elif 'd' in edge['id']:
+                                for i in range(self.configs['grid_num']-1, 0, -1):
+                                    via_string += 'n_{}_{}_to_n_{}_{} '.format(
+                                        node_x_y, i, node_x_y, i-1)
 
-                                flows.append({
-                                    'from': edge['id'],
-                                    'to': checkEdge['id'],
-                                    'id': edge['from']+str(k),
-                                    'begin': str(float(self.configs['flow_end']*k)/4.0+self.configs['flow_start']),
-                                    'end': str(float(self.configs['flow_end']*(k+1))/4.0),
-                                    'probability': str(float(self.configs['probability'])*float(4-k)/4.0),
-                                    # 'vehsPerHour': self.configs['vehsPerHour'],
-                                    'reroute': 'false',
-                                    # 'via': edge['id']+" "+via_string+" "+checkEdge['id'],
-                                    'departPos': "base",
-                                    'departLane': 'best',
-                                })
+                            flows.append({
+                                'from': edge['id'],
+                                'to': checkEdge['id'],
+                                'id': edge['from'],
+                                'begin': str(self.configs['flow_start']),
+                                'end': str(self.configs['flow_end']),
+                                'probability': self.configs['probability'],
+                                # 'vehsPerHour': self.configs['vehsPerHour'],
+                                'reroute': 'false',
+                                # 'via': edge['id']+" "+via_string+" "+checkEdge['id'],
+                                'departPos': "base",
+                                'departLane': 'best',
+                            })
 
         self.flows = flows
         self.configs['vehicle_info'] = flows
@@ -216,44 +215,44 @@ class GridNetwork(Network):
                 # 4행시
                 phase_set = [
                     {'duration': '37',  # 1
-                     'state': 'r{2}{1}gr{2}{3}rr{2}{1}gr{2}{3}r'.format(  # 위좌아래좌
+                     'state': 'r{2}{1}r{2}{3}r{2}{1}r{2}{3}'.format(  # 위좌아래좌
                          g*num_lanes, g, r*num_lanes, r),
                      },
                     {'duration': '3',
-                     'state': 'y'*(12+4*num_lanes),
+                     'state': 'y'*(8+4*num_lanes),
                      },
                     # {'duration': '3',
-                    #  'state': 'r'*(12+4*num_lanes),
+                    #  'state': 'r'*(8+4*num_lanes),
                     #  },
                     {'duration': '37',  # 2
-                     'state': 'G{0}{3}rr{2}{3}rG{0}{3}rr{2}{3}r'.format(  # 위직아래직
+                     'state': 'G{0}{3}r{2}{3}G{0}{3}r{2}{3}'.format(  # 위직아래직
                          g*num_lanes, g, r*num_lanes, r),  # current
                      },
                     {'duration': '3',
-                     'state': 'y'*(12+4*num_lanes),
+                     'state': 'y'*(8+4*num_lanes),
                      },
                     # {'duration': '3',
-                    #  'state': 'r'*(12+4*num_lanes),
+                    #  'state': 'r'*(8+4*num_lanes),
                     #  },
                     {'duration': '37',  # 1
-                     'state': 'r{2}{3}rr{2}{1}gr{2}{3}rr{2}{1}g'.format(  # 좌좌우좌
+                     'state': 'r{2}{3}r{2}{1}r{2}{3}r{2}{1}'.format(  # 좌좌우좌
                          g*num_lanes, g, r*num_lanes, r),
                      },
                     {'duration': '3',
-                     'state': 'y'*(12+4*num_lanes),
+                     'state': 'y'*(8+4*num_lanes),
                      },
                     # {'duration': '3',
-                    #  'state': 'r'*(12+4*num_lanes),
+                    #  'state': 'r'*(8+4*num_lanes),
                     #  },
                     {'duration': '37',  # 1
-                     'state': 'r{2}{3}rG{0}{3}rr{2}{3}rG{0}{3}g'.format(  # 좌직우직
+                     'state': 'r{2}{3}G{0}{3}r{2}{3}G{0}{3}'.format(  # 좌직우직
                          g*num_lanes, g, r*num_lanes, r),  # current
                      },
                     {'duration': '3',
-                     'state': 'y'*(12+4*num_lanes),
+                     'state': 'y'*(8+4*num_lanes),
                      },
                     # {'duration': '3',
-                    #  'state': 'r'*(12+4*num_lanes),
+                    #  'state': 'r'*(8+4*num_lanes),
                     #  },
                 ]
                 # 2행시
@@ -390,12 +389,12 @@ class GridNetwork(Network):
                 )
                 interest_list.append(interests)
                 interest_set += list(interests)
-        no_dup_interest_list = list()
-        no_dup_interest_set = list()
+        no_dup_interest_list=list()
+        no_dup_interest_set=list()
         for interest_set_item in interest_set:
             if interest_set_item not in no_dup_interest_set:
                 no_dup_interest_set.append(interest_set_item)
-        no_dup_interest_list = list()
+        no_dup_interest_list=list()
         for interest_list_item in interest_list:
             if interest_list_item not in no_dup_interest_list:
                 no_dup_interest_list.append(interest_list_item)
@@ -409,7 +408,8 @@ class GridNetwork(Network):
         NET_CONFIGS['phase_num_actions'] = {2: [[0, 0], [1, -1], [-1, 1]],
                                             3: [[0, 0, 0], [1, 0, -1], [1, -1, 0], [0, 1, -1], [-1, 0, 1], [0, -1, 1], [-1, 1, 0]],
                                             4: [[0, 0, 0, 0], [1, 0, 0, -1], [1, 0, -1, 0], [1, -1, 0, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1],
-                                                [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]]}
+                                                [1, 0, 0, -1], [1, 0, -1, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]],}
+
         NET_CONFIGS['rate_action_space'] = {2: len(NET_CONFIGS['phase_num_actions'][2]), 3: len(
             NET_CONFIGS['phase_num_actions'][3]), 4: len(NET_CONFIGS['phase_num_actions'][4])}
         # time_action_space
@@ -458,7 +458,7 @@ class GridNetwork(Network):
         NET_CONFIGS['tl_rl_list'] = list()
         NET_CONFIGS['offset'] = list()
         NET_CONFIGS['phase_index'] = list()
-        NET_CONFIGS['phase_type'] = list()  # Encoding Vector
+        NET_CONFIGS['phase_type']=list() # Encoding Vector
 
         for key in traffic_info.keys():
             NET_CONFIGS['tl_period'].append(
@@ -472,7 +472,7 @@ class GridNetwork(Network):
             NET_CONFIGS['phase_index'].append(traffic_info[key]['phase_index'])
             NET_CONFIGS['time_action_space'].append(round((torch.min(torch.tensor(traffic_info[key]['max_phase'])-torch.tensor(
                 traffic_info[key]['common_phase']), torch.tensor(traffic_info[key]['common_phase'])-torch.tensor(traffic_info[key]['min_phase']))/2).mean().item()))
-            NET_CONFIGS['phase_type'].append([0, 0])
+            NET_CONFIGS['phase_type'].append([0,0])
 
         NET_CONFIGS['num_agent'] = len(NET_CONFIGS['tl_rl_list'])
         # max value 검출기
@@ -494,22 +494,22 @@ class GridNetwork(Network):
         r = 'r'
         y = 'y'
         phase_list = [
-            'r{2}{1}gr{2}{3}rr{2}{1}gr{2}{3}r'.format(  # 위좌아래좌
+            'r{2}{1}r{2}{3}r{2}{1}r{2}{3}'.format(  # 위좌아래좌
                 g*num_lanes, g, r*num_lanes, r),
-            '{}'.format(y*(12+4*num_lanes)),
-            '{}'.format(r*(12+4*num_lanes)),
-            'G{0}{3}rr{2}{3}rG{0}{3}rr{2}{3}r'.format(  # 위직아래직
+            '{}'.format(y*(8+4*num_lanes)),
+            '{}'.format(r*(8+4*num_lanes)),
+            'G{0}{3}r{2}{3}G{0}{3}r{2}{3}'.format(  # 위직아래직
                 g*num_lanes, g, r*num_lanes, r),  # current
-            '{}'.format(y*(12+4*num_lanes)),
-            '{}'.format(r*(12+4*num_lanes)),
-            'r{2}{3}rr{2}{1}gr{2}{3}rr{2}{1}g'.format(  # 좌좌우좌
+            '{}'.format(y*(8+4*num_lanes)),
+            '{}'.format(r*(8+4*num_lanes)),
+            'r{2}{3}r{2}{1}r{2}{3}r{2}{1}'.format(  # 좌좌우좌
                 g*num_lanes, g, r*num_lanes, r),
-            '{}'.format(y*(12+4*num_lanes)),
-            '{}'.format(r*(12+4*num_lanes)),
-            'r{2}{3}rG{0}{3}rr{2}{3}rG{0}{3}g'.format(  # 좌직우직
+            '{}'.format(y*(8+4*num_lanes)),
+            '{}'.format(r*(8+4*num_lanes)),
+            'r{2}{3}G{0}{3}r{2}{3}G{0}{3}'.format(  # 좌직우직
                 g*num_lanes, g, r*num_lanes, r),  # current
-            '{}'.format(y*(12+4*num_lanes)),
-            '{}'.format(r*(12+4*num_lanes)),
+            '{}'.format(y*(8+4*num_lanes)),
+            '{}'.format(r*(8+4*num_lanes)),
         ]
         return phase_list
 
