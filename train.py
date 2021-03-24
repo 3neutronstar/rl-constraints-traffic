@@ -30,7 +30,7 @@ def city_dqn_train(configs, time_data, sumoCmd):
     agent.save_params(time_data)
     # init training
     NUM_AGENT = configs['num_agent']
-    DEVICE=configs['device']
+    DEVICE = configs['device']
     TL_RL_LIST = configs['tl_rl_list']
     MAX_PHASES = configs['max_phase_num']
     MAX_STEPS = configs['max_steps']
@@ -98,8 +98,8 @@ def city_dqn_train(configs, time_data, sumoCmd):
             # if mask_matrix.sum()>0:
             #     print(state.sum())
             actions = agent.get_action(state, mask_matrix)
-            if mask_matrix.sum()>0:
-                print(actions.transpose(1,2))
+            # if mask_matrix.sum()>0:
+            #     print(actions.transpose(1,2))
             # if mask_matrix.sum()>0:
             #     print(actions.sum())
             # action형태로 변환 # 다음으로 넘어가야할 시점에 대한 matrix
@@ -130,7 +130,8 @@ def city_dqn_train(configs, time_data, sumoCmd):
             mask_matrix[clear_matrix] = True
             mask_matrix[~clear_matrix] = False
 
-            next_state=env.collect_state(action_update_mask,action_index_matrix,mask_matrix)
+            next_state = env.collect_state(
+                action_update_mask, action_index_matrix, mask_matrix)
             # if mask_matrix.sum()>0:
             #     print("Cycle")
             #     print(next_state.sum())
@@ -161,7 +162,7 @@ def city_dqn_train(configs, time_data, sumoCmd):
         # once in an epoch
         update_tensorboard(writer, epoch, env, agent, arrived_vehicles)
         print('======== {} epoch/ return: {:.5f} arrived number:{}'.format(epoch,
-                                                                       total_reward.sum(), arrived_vehicles))
+                                                                           total_reward.sum(), arrived_vehicles))
         if epoch % 50 == 0:
             agent.save_weights(
                 configs['file_name']+'_{}'.format(epoch))

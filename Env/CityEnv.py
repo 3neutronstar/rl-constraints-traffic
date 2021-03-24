@@ -12,7 +12,7 @@ class Memory():
         self.reward = torch.zeros(
             1, dtype=torch.float, device=configs['device'])
         self.state = torch.zeros(
-            (1, self.configs['state_space'], 4, len(self.configs['tl_rl_list'])), dtype=torch.float, device=configs['device'])
+            (1, self.configs['state_space'], 4, 1), dtype=torch.float, device=configs['device'])
         self.next_state = torch.zeros_like(self.state)
         self.action = torch.zeros(
             (1, self.configs['action_size']), dtype=torch.int, device=configs['device'])
@@ -86,7 +86,7 @@ class CityEnv(baseEnv):
         reward = torch.zeros((1, self.num_agent),
                              dtype=torch.float, device=self.device)
         for index in torch.nonzero(mask):
-            state[0, :, index] = deepcopy(self.tl_rl_memory[index].state)
+            state[0, :, :, index] = deepcopy(self.tl_rl_memory[index].state)
             action[0, index, :] = deepcopy(self.tl_rl_memory[index].action)
             next_state[0, :, index] = deepcopy(
                 self.tl_rl_memory[index].next_state)
@@ -149,7 +149,7 @@ class CityEnv(baseEnv):
         next_states = torch.zeros(
             (1, self.state_space, 4, self.num_agent), dtype=torch.float, device=self.device)
 
-        for idx in torch.nonzero(mask_matrix):
+        for idx in torch.nonzero(action_change_mask):
             next_state = list()
             # 모든 rl node에 대해서
             phase_type_tensor = torch.tensor(self.configs['phase_type'][idx])
@@ -173,9 +173,13 @@ class CityEnv(baseEnv):
                 self.state_space, 1)
             next_states[0, :, action_index_matrix[idx],
                         idx] = next_state.detach().clone()
-        for state_index in torch.nonzero(mask_matrix):
-            self.tl_rl_memory[state_index].state = self.tl_rl_memory[state_index].next_state
-            self.tl_rl_memory[state_index].next_state = next_state
+        for state_index in torch.nonzero(action_change_mask):
+            print(self.tl_rl_memory[state_index].next_state.size())
+            self.tl_rl_memory[state_index].next_state[:, action_index_matrix[state_index]
+                                                      ] = next_state[:]
+        for idx in torch.nonzero(mask_matrix):
+            self.tl_rl_memory[idx].state[:, action_index_matrix[idx]
+                                         ] = self.tl_rl_memory[idx].next_state[action_index_matrix[idx]]
         # reward clear
         reward = self.reward.detach().clone()
         self.cum_reward += reward
@@ -183,7 +187,8 @@ class CityEnv(baseEnv):
             if idx not in torch.nonzero(mask_matrix).tolist():
                 self.reward[0, idx] = torch.zeros_like(
                     self.reward[0, idx]).clone()
-        print(next_states.size())
+        if mask_matrix.sum() > 0:
+            print(torch.nonzero(next_states).size())
         return next_states  # list 반환 (안에 tensor)
 
     def step(self, action, mask_matrix, action_index_matrix, action_update_mask):

@@ -189,7 +189,7 @@ class Trainer(RLAlgorithm):
         for index in torch.nonzero(mask):
             # print(state[0,:, index].sum(),action[0,index],reward[0,index].sum(),next_state[0,:, index].sum())
             self.mainSuperQNetwork.experience_replay.push(
-                state[0, :, index].view(-1, self.state_space, 1), action[0, index], reward[0, index], next_state[0, :, index].view(-1, self.state_space, 1))
+                state[0, :, :, index].view(-1, self.state_space, 4, 1), action[0, index], reward[0, index], next_state[0, :, :, index].view(-1, self.state_space, 4, 1))
 
     def update(self, mask):  # 각 agent마다 시행하기 # agent network로 돌아가서 시행 그러면될듯?
         # if mask.sum() > 0 and len(self.mainSuperQNetwork.experience_replay) > self.configs['batch_size']:
