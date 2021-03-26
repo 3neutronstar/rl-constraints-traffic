@@ -49,6 +49,8 @@ def parse_args(args):
     parser.add_argument(
         '--randomness', type=bool, default=False,
         help='activate only in test mode and write file_name to load weights.')
+    parser.add_argument(
+        '--update_type', type=str, default='soft',help='hard or soft')
     return parser.parse_known_args(args)[0]
 
 
@@ -247,6 +249,7 @@ def main(args):
     # check the mode
     if configs['mode'] == 'train':
         # init train setting
+        configs['update_type']=flags.update_type
         sumoConfig = os.path.join(
             configs['current_path'], 'training_data', time_data, 'net_data', configs['file_name']+'_train.sumocfg')
         train(flags, time_data, configs, sumoConfig)

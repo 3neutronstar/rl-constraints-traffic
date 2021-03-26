@@ -91,7 +91,7 @@ def city_dqn_test(flags, sumoCmd, configs):
             # action 을 정하고
             actions = agent.get_action(state, mask_matrix)
             if mask_matrix.sum()>0:
-                print(actions)
+                print(actions.transpose(1,2))
             # action형태로 변환 # 다음으로 넘어가야할 시점에 대한 matrix
             action_matrix = env.calc_action(
                 action_matrix, actions, mask_matrix)
@@ -107,7 +107,6 @@ def city_dqn_test(flags, sumoCmd, configs):
             t_agent += 1
             # 최대에 도달하면 0으로 초기화 (offset과 비교)
             clear_matrix = torch.eq(t_agent % TL_PERIOD, 0)
-            t_agent[clear_matrix] = 0
 
 
             # 넘어가야된다면 action index증가 (by tensor slicing)
@@ -118,6 +117,7 @@ def city_dqn_test(flags, sumoCmd, configs):
             action_index_matrix[clear_matrix] = 0
 
             # mask update, matrix True로 전환
+            t_agent[clear_matrix] = 0
             mask_matrix[clear_matrix] = True
             mask_matrix[~clear_matrix] = False
 

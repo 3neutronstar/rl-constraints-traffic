@@ -98,8 +98,8 @@ def city_dqn_train(configs, time_data, sumoCmd):
             # if mask_matrix.sum()>0:
             #     print(state.sum())
             actions = agent.get_action(state, mask_matrix)
-            # if mask_matrix.sum()>0:
-            #     print(actions.transpose(1,2))
+            if mask_matrix.sum()>0:
+                print(actions.transpose(1,2))
             # if mask_matrix.sum()>0:
             #     print(actions.sum())
             # action형태로 변환 # 다음으로 넘어가야할 시점에 대한 matrix
@@ -117,7 +117,6 @@ def city_dqn_train(configs, time_data, sumoCmd):
             t_agent += 1
             # 최대에 도달하면 0으로 초기화 (offset과 비교)
             clear_matrix = torch.eq(t_agent % TL_PERIOD, 0)
-            t_agent[clear_matrix] = 0
 
             # action 넘어가야된다면 action index증가 (by tensor slicing)
             action_update_mask = torch.eq(  # update는 단순히 진짜 현시만 받아서 결정해야됨
@@ -127,6 +126,7 @@ def city_dqn_train(configs, time_data, sumoCmd):
             action_index_matrix[clear_matrix] = 0
 
             # mask update, matrix True로 전환
+            t_agent[clear_matrix] = 0
             mask_matrix[clear_matrix] = True
             mask_matrix[~clear_matrix] = False
 
@@ -149,12 +149,8 @@ def city_dqn_train(configs, time_data, sumoCmd):
             # info
             arrived_vehicles += traci.simulation.getArrivedNumber()
 
-        # soft update
-        agent.target_update()
+        agent.target_update(epoch)
         agent.update_hyperparams(epoch)  # lr and epsilon upate
-        # hard update
-        # if epoch % agent.configs['target_update_period'] == 0:
-        #     agent.target_update()  # dqn
         b = time.time()
         traci.close()
         print("time:", b-a)
