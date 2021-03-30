@@ -48,7 +48,7 @@ def city_dqn_train(configs, time_data, sumoCmd):
         if configs['randomness'] == True:
             tmp_sumoCmd = sumoCmd+['--scale', str(1.5+random())]  # 1.5~2.5
         else:
-            if configs['network'] == 'dunsan' or configs['network'] == '3x3grid':
+            if configs['network'] == 'dunsan' or  'grid' in configs['network']:
                 tmp_sumoCmd = sumoCmd+['--scale', str(configs['scale'])]
             else:
                 tmp_sumoCmd = sumoCmd
@@ -121,10 +121,11 @@ def city_dqn_train(configs, time_data, sumoCmd):
             # action 넘어가야된다면 action index증가 (by tensor slicing)
             action_update_mask = torch.eq(  # update는 단순히 진짜 현시만 받아서 결정해야됨
                 t_agent, action_matrix[0, action_index_matrix]).view(NUM_AGENT)  # 0,인 이유는 인덱싱
+
             action_index_matrix[action_update_mask] += 1
             # agent의 최대 phase를 넘어가면 해당 agent의 action index 0으로 초기화
             action_index_matrix[clear_matrix] = 0
-
+            
             # mask update, matrix True로 전환
             t_agent[clear_matrix] = 0
             mask_matrix[clear_matrix] = True

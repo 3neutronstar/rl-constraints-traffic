@@ -29,7 +29,11 @@ class MapNetwork(Network):
                                                 [1, 0, 0, -1], [1, 0, -1, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]],
                                             5: [[0, 0, 0, 0, 0]],
                                             6: [[0, 0, 0, 0, 0, 0]], }
-        # NET_CONFIGS['phase_type']=[[0,0],[0,0],[0,1],[0,1],[1,0],[1,0],[0,1],[1,1],[1,1],[1,1],[1,0]]
+        
+        NET_CONFIGS['phase_type']=list()
+        if 'dunsan' in self.configs['network'] :
+            NET_CONFIGS['phase_type']=[[0,0],[0,0],[0,1],[1,0],[1,0],[1,1],[1,1],[1,1],[0,1],[1,0]]
+        
         NET_CONFIGS['rate_action_space'] = dict()
         for i in range(2, 7):  # rate action_space 지정
             NET_CONFIGS['rate_action_space'][i] = len(
@@ -41,7 +45,6 @@ class MapNetwork(Network):
         add_net_tree = parse(add_file_path)
         tlLogicList = add_net_tree.findall('tlLogic')
         NET_CONFIGS['time_action_space'] = list()
-        NET_CONFIGS['phase_type']=list()
 
         # traffic info 저장
         for tlLogic in tlLogicList:
@@ -98,7 +101,8 @@ class MapNetwork(Network):
             # NET_CONFIGS['time_action_space'].append(abs(round((torch.min(torch.tensor(traffic_node_info['max_phase'])-torch.tensor(
             #     traffic_node_info['common_phase']), torch.tensor(traffic_node_info['common_phase'])-torch.tensor(traffic_node_info['min_phase']))/2).mean().item())))
             NET_CONFIGS['time_action_space'].append(4)  # 임의 초 지정
-            NET_CONFIGS['phase_type'].append([0,0])
+            if 'grid' in self.configs['network']:
+                NET_CONFIGS['phase_type'].append([0,0])
 
             self.phase_list.append(phase_state_list)
             self.common_phase.append(phase_duration_list)
@@ -426,6 +430,7 @@ class MapNetwork(Network):
             NET_CONFIGS['phase_list'] = self.phase_list
             NET_CONFIGS['common_phase'] = self.common_phase
             NET_CONFIGS['state_space'] = inflow_size*2+2  # 좌회전,직전
+            
 
             return NET_CONFIGS
 
