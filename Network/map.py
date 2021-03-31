@@ -25,15 +25,13 @@ class MapNetwork(Network):
         NET_CONFIGS = dict()
         NET_CONFIGS['phase_num_actions'] = {2: [[0, 0], [1, -1]],
                                             3: [[0, 0, 0], [1, 0, -1], [1, -1, 0], [0, 1, -1], [-1, 0, 1], [0, -1, 1], [-1, 1, 0]],
-                                            4: [ [1, 0, 0, -1], [1, 0, -1, 0], [1, -1, 0, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1],[0, 0, 0, 0],
+                                            4: [[1, 0, 0, -1], [1, 0, -1, 0], [1, -1, 0, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [0, 0, 0, 0],
                                                 [1, 0, 0, -1], [1, 0, -1, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1], [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]],
                                             5: [[0, 0, 0, 0, 0]],
                                             6: [[0, 0, 0, 0, 0, 0]], }
-        
-        NET_CONFIGS['phase_type']=list()
-        if 'dunsan' in self.configs['network'] :
-            NET_CONFIGS['phase_type']=[[0,0],[0,0],[0,1],[1,0],[1,0],[1,1],[1,1],[1,1],[0,1],[1,0]]
-        
+
+        NET_CONFIGS['phase_type'] = list()
+
         NET_CONFIGS['rate_action_space'] = dict()
         for i in range(2, 7):  # rate action_space 지정
             NET_CONFIGS['rate_action_space'][i] = len(
@@ -71,6 +69,8 @@ class MapNetwork(Network):
             phase_index_list = list()
             min_duration_list = list()
             max_duration_list = list()
+            dif_max_list = list()
+            dif_min_list = list()
             tl_period = 0  # phase set의 전체 길이
             # 각 phase에 대해서 길이 찾기 등등
             num_phase = 0  # phase갯수 filtering
@@ -82,6 +82,11 @@ class MapNetwork(Network):
                     num_phase += 1
                     min_duration_list.append(int(phase.attrib['minDur']))
                     max_duration_list.append(int(phase.attrib['maxDur']))
+
+                    dif_max_list.append(
+                        int(phase.attrib['maxDur'])-int(phase.attrib['duration']))
+                    dif_min_list.append(
+                        int(phase.attrib['duration'])-int(phase.attrib['minDur']))
                     phase_index_list.append(i)
                     common_phase_list.append(int(phase.attrib['duration']))
 
@@ -90,6 +95,8 @@ class MapNetwork(Network):
             traffic_node_info['phase_duration'] = phase_duration_list
             traffic_node_info['common_phase'] = common_phase_list
             traffic_node_info['phase_index'] = phase_index_list
+            traffic_node_info['dif_min'] = dif_min_list
+            traffic_node_info['dif_max'] = dif_max_list
             # 각 신호별 길이
             traffic_node_info['period'] = tl_period
             NET_CONFIGS['tl_period'].append(tl_period)
@@ -102,11 +109,13 @@ class MapNetwork(Network):
             #     traffic_node_info['common_phase']), torch.tensor(traffic_node_info['common_phase'])-torch.tensor(traffic_node_info['min_phase']))/2).mean().item())))
             NET_CONFIGS['time_action_space'].append(4)  # 임의 초 지정
             if 'grid' in self.configs['network']:
-                NET_CONFIGS['phase_type'].append([0,0])
+                NET_CONFIGS['phase_type'].append([0, 0])
 
             self.phase_list.append(phase_state_list)
             self.common_phase.append(phase_duration_list)
-
+        if 'dunsan' in self.configs['network']:
+            NET_CONFIGS['phase_type'] = [[0, 0], [0, 0], [0, 1], [
+                1, 0], [1, 0], [1, 1], [1, 1], [1, 1], [0, 1], [1, 0]]
         # TODO  node interest pair 계산기 network base에 생성
         maximum = 0
         for key in traffic_info.keys():
@@ -211,7 +220,8 @@ class MapNetwork(Network):
         NET_CONFIGS['offset'] = self.offset_list
         NET_CONFIGS['phase_list'] = self.phase_list
         NET_CONFIGS['common_phase'] = self.common_phase
-        NET_CONFIGS['state_space'] = inflow_size*2+2  # 좌회전,직전
+        NET_CONFIGS['state_space'] = inflow_size*2 + \
+            2+2  # 좌회전,직전, 2는 phase set형태, 2는 phase dif dur(min max)
         print("Agent Num:{}, Traffic Num:{}".format(
             len(self.tl_rl_list), len(node_list)))
         return NET_CONFIGS
@@ -222,15 +232,16 @@ class MapNetwork(Network):
             return self.get_tl_from_add_xml()
         else:
             NET_CONFIGS = dict()
-            NET_CONFIGS['phase_type']=list()
-            NET_CONFIGS['phase_num_actions'] = {2: [[0, 0], [1, -1],[-1, 1]],
+            NET_CONFIGS['phase_type'] = list()
+            NET_CONFIGS['phase_num_actions'] = {2: [[0, 0], [1, -1], [-1, 1]],
                                                 3: [[0, 0, 0], [1, 0, -1], [1, -1, 0], [0, 1, -1], [-1, 0, 1], [0, -1, 1], [-1, 1, 0]],
                                                 4: [[0, 0, 0, 0], [1, 0, 0, -1], [1, 0, -1, 0], [1, -1, 0, 0], [0, 1, 0, -1], [0, 1, -1, 0], [0, 0, 1, -1],
-                                                    [1, 0, 0, -1], [1, 0, -1, 0], [1, 0, 0, -1], [0, 1, 0, -1],[0, 0, 1, -1],
-                                                     [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]],
+                                                    [1, 0, 0, -1], [1, 0, -1, 0], [1, 0,
+                                                                                   0, -1], [0, 1, 0, -1], [0, 0, 1, -1],
+                                                    [1, 1, -1, -1], [1, -1, 1, -1], [-1, 1, 1, -1], [-1, -1, 1, 1], [-1, 1, -1, 1]],
                                                 # 5: [[0, 0, 0, 0, 0]],
                                                 # 6: [[0, 0, 0, 0, 0, 0]],
-                                                 }
+                                                }
             NET_CONFIGS['rate_action_space'] = dict()
             for i in NET_CONFIGS['phase_num_actions'].keys():  # rate action_space 지정
                 NET_CONFIGS['rate_action_space'][i] = len(
@@ -241,12 +252,13 @@ class MapNetwork(Network):
             net_tree = parse(self.net_file_path)
             tlLogicList = net_tree.findall('tlLogic')
             NET_CONFIGS['time_action_space'] = list()
-            if 'dunsan'== self.configs['network']:
-                NET_CONFIGS['phase_type']=[[0,0],[0,0],[0,1],[1,0],[1,0],[1,1],[1,1],[1,1],[0,1],[1,0]]
+            if 'dunsan' == self.configs['network']:
+                NET_CONFIGS['phase_type'] = [[0, 0], [0, 0], [0, 1], [
+                    1, 0], [1, 0], [1, 1], [1, 1], [1, 1], [0, 1], [1, 0]]
             # traffic info 저장
             for tlLogic in tlLogicList:
                 if 'grid' in self.configs['network']:
-                    NET_CONFIGS['phase_type'].append([0,0])
+                    NET_CONFIGS['phase_type'].append([0, 0])
                 tl_id = tlLogic.attrib['id']
                 traffic_info[tl_id] = dict()
                 traffic_node_info = traffic_info[tl_id]
@@ -270,6 +282,8 @@ class MapNetwork(Network):
                 phase_index_list = list()
                 min_duration_list = list()
                 max_duration_list = list()
+                dif_min_list = list()
+                dif_max_list = list()
                 tl_period = 0  # phase set의 전체 길이
                 # 각 phase에 대해서 길이 찾기 등등
                 num_phase = 0  # phase갯수 filtering
@@ -285,14 +299,21 @@ class MapNetwork(Network):
                             int(phase.attrib['minDur']))
                         max_duration_list.append(
                             int(phase.attrib['maxDur']))
+                        dif_max_list.append(
+                            phase.attrib['maxDur']-phase.attrib['duration'])
+                        dif_min_list.append(
+                            phase.attrib['duration']-phase.attrib['minDur'])
                         phase_index_list.append(i)
                         common_phase_list.append(int(this_phase_dur))
+
                     elif int(this_phase_dur) > 5:
                         num_phase += 1
                         min_duration_list.append(
                             int(this_phase_dur)-5)
                         max_duration_list.append(
                             int(this_phase_dur)+5)
+                        dif_max_list.append(5)
+                        dif_min_list.append(5)
                         phase_index_list.append(i)
                         common_phase_list.append(int(this_phase_dur))
 
@@ -301,6 +322,8 @@ class MapNetwork(Network):
                 traffic_node_info['phase_duration'] = phase_duration_list
                 traffic_node_info['common_phase'] = common_phase_list
                 traffic_node_info['phase_index'] = phase_index_list
+                traffic_node_info['dif_max'] = dif_max_list  # max dur의 차이
+                traffic_node_info['dif_min'] = dif_min_list  # min dur의 차이
                 # 각 신호별 길이
                 traffic_node_info['period'] = tl_period
                 NET_CONFIGS['tl_period'].append(tl_period)
@@ -429,8 +452,8 @@ class MapNetwork(Network):
             NET_CONFIGS['offset'] = self.offset_list
             NET_CONFIGS['phase_list'] = self.phase_list
             NET_CONFIGS['common_phase'] = self.common_phase
-            NET_CONFIGS['state_space'] = inflow_size*2+2  # 좌회전,직전
-            
+            # 좌회전,직전 , 2개 phase type(one hot), 2개 phaseduration(min max)
+            NET_CONFIGS['state_space'] = inflow_size*2+2+2
 
             return NET_CONFIGS
 

@@ -11,23 +11,22 @@ from Agent.base import RLAlgorithm, ReplayMemory, merge_dict, hard_update, merge
 from torch.utils.tensorboard import SummaryWriter
 from itertools import chain
 DEFAULT_CONFIG = {
-    'gamma': 0.99,
+    'gamma': 0.9,
     'tau': 0.001,
-    'batch_size': 32,
-    'experience_replay_size': 5e6,
-    'epsilon': 0.8,
+    'batch_size': 40,
+    'experience_replay_size': 100000,
+    'epsilon': 0.9,
     'epsilon_decay_rate': 0.99,
-    'fc_net': [128, 256, 128],
-    'lr': 1e-4,
-    'lr_decay_period': 100,
-    'lr_decay_rate': 0.5,
+    'fc_net': [160, 160, 160, 160],
+    'lr': 0.001,
+    'lr_decay_period': 50,
+    'lr_decay_rate': 0.8,
     # 'lr_decay_rate': 0.995,
-    'target_update_period': 20,
-    'final_epsilon': 0.0005,
-    'final_lr': 5e-7,
+    'target_update_period': 10,
+    'final_epsilon': 0.0001,
+    'final_lr': 0.0001,
     'alpha': 0.91,
-    'main_fc_net': [128, 128],
-    'cnn':[48,64],#cnn
+    'cnn':[32,40]
 }
 
 Transition = namedtuple('Transition',
@@ -38,7 +37,6 @@ class SuperQNetwork(nn.Module):
     def __init__(self, input_size, out_rate_size, out_time_size, configs):
         super(SuperQNetwork, self).__init__()
         self.configs = configs
-        self.device = self.configs['device']
         self.input_size = int(input_size)
         self.num_agent = len(self.configs['tl_rl_list'])
         self.state_space = self.configs['state_space']
@@ -48,62 +46,61 @@ class SuperQNetwork(nn.Module):
         self.conv1 = nn.Conv1d(self.state_space*4, self.configs['cnn'][0], kernel_size=1)
         self.conv2 = nn.Conv1d(self.configs['cnn'][0], self.configs['cnn'][1], kernel_size=1)
 
-        self.main_fc1 = nn.Linear(
-            self.configs['cnn'][1], self.configs['main_fc_net'][0])
-        self.main_fc2 = nn.Linear(
-            self.configs['main_fc_net'][0], self.configs['main_fc_net'][1])
-
         self.fc1 = nn.Linear(
-            self.configs['main_fc_net'][1], self.configs['fc_net'][0])
+            self.configs['cnn'][1], self.configs['fc_net'][0])
         self.fc2 = nn.Linear(
             self.configs['fc_net'][0], self.configs['fc_net'][1])
         self.fc3 = nn.Linear(
             self.configs['fc_net'][1], self.configs['fc_net'][2])
         self.fc4 = nn.Linear(
-            self.configs['fc_net'][2], out_rate_size)
+            self.configs['fc_net'][2], self.configs['fc_net'][3])
+        self.fc5 = nn.Linear(
+            self.configs['fc_net'][3], out_rate_size)
 
         self.fc_y1 = nn.Linear(
-            self.configs['main_fc_net'][1]+1, self.configs['fc_net'][0])  # rate+state
+            self.configs['cnn'][1]+1, self.configs['fc_net'][0])  # rate+state
         self.fc_y2 = nn.Linear(
             self.configs['fc_net'][0], self.configs['fc_net'][1])
         self.fc_y3 = nn.Linear(
             self.configs['fc_net'][1], self.configs['fc_net'][2])
         self.fc_y4 = nn.Linear(
-            self.configs['fc_net'][2], out_time_size)
+            self.configs['fc_net'][2], self.configs['fc_net'][3])
+        self.fc_y5 = nn.Linear(
+            self.configs['fc_net'][3], out_time_size)
 
         nn.init.kaiming_uniform_(self.conv1.weight)
         nn.init.kaiming_uniform_(self.conv2.weight)
-        nn.init.kaiming_uniform_(self.main_fc1.weight)
-        nn.init.kaiming_uniform_(self.main_fc2.weight)
         nn.init.kaiming_uniform_(self.fc1.weight)
         nn.init.kaiming_uniform_(self.fc2.weight)
         nn.init.kaiming_uniform_(self.fc3.weight)
+        nn.init.kaiming_uniform_(self.fc4.weight)
         nn.init.kaiming_uniform_(self.fc_y1.weight)
         nn.init.kaiming_uniform_(self.fc_y2.weight)
         nn.init.kaiming_uniform_(self.fc_y3.weight)
+        nn.init.kaiming_uniform_(self.fc_y4.weight)
 
         if configs['mode'] == 'test':
             self.eval()
 
     def forward(self, input_x):
         # x_state,x_traffic=torch.split(input_x,[8,2],dim=1)
-        # x1,x2,x3,x4=torch.split(input_x,[1,1,1,1],dim=2)
+        #x1,x2,x3,x4=torch.split(input_x,[1,1,1,1],dim=2)
         input_x = input_x.view(-1, self.state_space*4, 1)
         x_cnn = f.relu(self.conv1(input_x))
         x_cnn = f.relu(self.conv2(x_cnn))
         x_cnn = x_cnn.view(-1, self.configs['cnn'][1])
-        x_fc = f.relu(self.main_fc1(x_cnn))  # 여기
-        x_fc = f.relu(self.main_fc2(x_fc))
-        x_vehicle = f.relu(self.fc1(x_fc))
+        x_vehicle = f.relu(self.fc1(x_cnn))
         x_vehicle = f.relu(self.fc2(x_vehicle))
         x_vehicle = f.relu(self.fc3(x_vehicle))
-        rate_action_Q = self.fc4(x_vehicle)
-        x_traffic = torch.cat((x_fc, rate_action_Q.argmax(
-            dim=1, keepdim=True).detach().clone()), dim=1).view(-1, self.configs['main_fc_net'][1]+1)
+        x_vehicle = f.relu(self.fc4(x_vehicle))
+        rate_action_Q = self.fc5(x_vehicle)
+        x_traffic = torch.cat((x_cnn, rate_action_Q.argmax(
+            dim=1, keepdim=True).detach().clone()), dim=1).view(-1, self.configs['cnn'][1]+1)
         x_traffic = f.relu(self.fc_y1(x_traffic))
         x_traffic = f.relu(self.fc_y2(x_traffic))
         x_traffic = f.relu(self.fc_y3(x_traffic))
-        time_action_Q = self.fc_y4(x_traffic)
+        x_traffic = f.relu(self.fc_y4(x_traffic))
+        time_action_Q = self.fc_y5(x_traffic)
         return rate_action_Q, time_action_Q
 
 
@@ -127,7 +124,7 @@ class Trainer(RLAlgorithm):
         self.action_size = self.configs['action_size']
         self.gamma = self.configs['gamma']
         self.epsilon = self.configs['epsilon']
-        self.criterion = nn.SmoothL1Loss()
+        self.criterion = nn.MSELoss()
         self.lr = self.configs['lr']
         self.lr_decay_rate = self.configs['lr_decay_rate']
         self.epsilon_decay_rate = self.configs['epsilon_decay_rate']
@@ -152,7 +149,7 @@ class Trainer(RLAlgorithm):
         self.targetSuperQNetwork = SuperQNetwork(
             self.state_space, self.rate_action_space[rate_key], self.time_action_space[0], self.configs)
         # hard update, optimizer setting
-        self.optimizer = optim.Adam(
+        self.optimizer = optim.Adadelta(
             self.mainSuperQNetwork.parameters(), self.lr)
         hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
 
@@ -180,25 +177,22 @@ class Trainer(RLAlgorithm):
                         time_actions[0, index] = torch.tensor(random.randint(
                             0, self.configs['time_action_space'][index]-1), dtype=torch.int, device=self.device)
                 else:  # test
-                    # print(state[0, :, :, index].sum())
                     rate_action, time_action = self.mainSuperQNetwork(
-                        state[0, :, :, index].view(-1, self.state_space, 4, 1))
+                        state[0, :,:, index].view(-1, self.state_space,4, 1))
                     rate_actions[0, index] = rate_action.max(1)[1].int()
                     time_actions[0, index] = time_action.max(1)[1].int()
-                    # print(rate_actions[0,index],index)
 
             actions = torch.cat((rate_actions, time_actions), dim=2)
         return actions
 
-    def target_update(self, epoch):
+    def target_update(self,epoch):
         # Hard Update
-        if epoch % self.configs['target_update_period'] == 0 and self.configs['update_type'] == 'hard':
-            # print("hard")
+        if epoch%self.configs['target_update_period']==0 and self.configs['update_type']=='hard':
             hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
 
         # # Soft Update
         # Total Update
-        if self.configs['update_type'] == 'soft':
+        if self.configs['update_type']=='soft':
             soft_update(self.targetSuperQNetwork,
                         self.mainSuperQNetwork, self.configs)
 
@@ -207,6 +201,10 @@ class Trainer(RLAlgorithm):
             # print(state[0,:, index].sum(),action[0,index],reward[0,index].sum(),next_state[0,:, index].sum())
             self.mainSuperQNetwork.experience_replay.push(
                 state[0, :, :, index].view(-1, self.state_space, 4, 1), action[0, index], reward[0, index], next_state[0, :, :, index].view(-1, self.state_space, 4, 1))
+            # print("state {}".format(state[0, :, :, index].view(-1, self.state_space, 4, 1)))
+            # print("action {}".format(action[0, index]))
+            # print("reward {}".format(reward[0, index]))
+            # print("next_state {}".format(next_state[0, :, :, index].view(-1, self.state_space, 4, 1)))
 
     def update(self, mask):  # 각 agent마다 시행하기 # agent network로 돌아가서 시행 그러면될듯?
         # if mask.sum() > 0 and len(self.mainSuperQNetwork.experience_replay) > self.configs['batch_size']:
@@ -220,7 +218,7 @@ class Trainer(RLAlgorithm):
                                                     batch.next_state)), device=self.device, dtype=torch.bool)
 
             non_final_next_states = torch.cat([s for s in batch.next_state
-                                                if s is not None], dim=0)
+                                               if s is not None], dim=0)
 
             # dim=0인 이유는 batch 끼리 cat 하는 것이기 때문임
             state_batch = torch.cat(batch.state)
@@ -255,9 +253,9 @@ class Trainer(RLAlgorithm):
 
             # loss 계산
             rate_loss = self.criterion(rate_state_action_values,
-                                        rate_expected_state_action_values.unsqueeze(1))
+                                       rate_expected_state_action_values.unsqueeze(1))
             time_loss = self.criterion(time_state_action_values,
-                                        time_expected_state_action_values.unsqueeze(1))
+                                       time_expected_state_action_values.unsqueeze(1))
             # total_loss= self.configs['alpha'] *rate_loss + (1.0-self.configs['alpha'])*time_loss
             self.running_loss += rate_loss/self.configs['batch_size']
             self.running_loss += time_loss/self.configs['batch_size']
@@ -292,10 +290,8 @@ class Trainer(RLAlgorithm):
             self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'Super_target.h5'))
 
     def load_weights(self, name):
-        print(self.mainSuperQNetwork.fc1.weight)
         self.mainSuperQNetwork.load_state_dict(torch.load(os.path.join(
             self.configs['current_path'], 'training_data', self.configs['time_data'], 'model', name+'_{}Super.h5'.format(self.configs['replay_epoch']))))
-        print(self.mainSuperQNetwork.fc1.weight)
         self.mainSuperQNetwork.eval()
 
     def update_tensorboard(self, writer, epoch):

@@ -155,7 +155,7 @@ class CityEnv(baseEnv):
             phase_type_tensor = torch.tensor(self.configs['phase_type'][idx])
             # vehicle state
             veh_state = torch.zeros(
-                (self.state_space-2), dtype=torch.float, device=self.device)
+                (self.state_space-2-2), dtype=torch.float, device=self.device)
             for j, pair in enumerate(self.node_interest_pair[self.tl_rl_list[idx]]):
                 # 모든 inflow에 대해서
                 if pair['inflow'] is None:
@@ -170,7 +170,12 @@ class CityEnv(baseEnv):
                     # 좌회전
                     veh_state[j*2+1] = left_movement
             print(idx, veh_state.sum(), phase_type_tensor.sum())
-            next_state = torch.cat((veh_state, phase_type_tensor), dim=0).view(
+            # duration 차이의 tensor
+            min_dur_tensor = torch.tensor(
+                self.traffic_node_info[self.tl_rl_list[idx]]['dif_min'][int(action_index_matrix[idx]/2)], dtype=torch.int, device=self.device).view(-1)
+            max_dur_tensor = torch.tensor(
+                self.traffic_node_info[self.tl_rl_list[idx]]['dif_max'][int(action_index_matrix[idx]/2)], dtype=torch.int, device=self.device).view(-1)
+            next_state = torch.cat((veh_state, phase_type_tensor, min_dur_tensor, max_dur_tensor), dim=0).view(
                 self.state_space, 1)
             # print(next_state,idx,self.configs['phase_type'][idx])
             # print(next_state)
