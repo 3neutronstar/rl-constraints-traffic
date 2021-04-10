@@ -49,6 +49,8 @@ def parse_args(args):
     parser.add_argument(
         '--randomness', type=bool, default=False,
         help='activate only in test mode and write file_name to load weights.')
+    parser.add_argument(
+        '--update_type', type=str, default='soft', help='hard or soft')
     return parser.parse_known_args(args)[0]
 
 
@@ -84,12 +86,7 @@ def test(flags, configs, sumoConfig):
         sumoBinary = checkBinary('sumo-gui')
     else:
         sumoBinary = checkBinary('sumo')
-    if flags.network.lower() == "3x3grid":
-        sumoCmd = [sumoBinary, "-c", sumoConfig, "--scale", configs['scale']]
-    elif flags.network.lower() == 'dunsan':
-        sumoCmd = [sumoBinary, "-c", sumoConfig, "--scale", configs['scale']]
-    else:
-        sumoCmd = [sumoBinary, "-c", sumoConfig]
+    sumoCmd = [sumoBinary, "-c", sumoConfig, "--scale", configs['scale']]
 
     if flags.algorithm.lower() == 'super_dqn':
         city_dqn_test(flags, sumoCmd, configs)
@@ -100,13 +97,7 @@ def simulate(flags, configs, sumoConfig):
         sumoBinary = checkBinary('sumo-gui')
     else:
         sumoBinary = checkBinary('sumo')
-    if flags.network.lower() == "3x3grid":
-        sumoCmd = [sumoBinary, "-c", sumoConfig, "--scale", configs['scale']]
-    elif flags.network.lower() == 'dunsan':
-        sumoCmd = [sumoBinary, "-c", sumoConfig, "--scale", configs['scale']]
-    else:
-        sumoCmd = [sumoBinary, "-c", sumoConfig]
-
+    sumoCmd = [sumoBinary, "-c", sumoConfig, "--scale", configs['scale']]
     MAX_STEPS = configs['max_steps']
     traci.start(sumoCmd)
     a = time.time()
@@ -148,17 +139,17 @@ def simulate(flags, configs, sumoConfig):
                         # part_velocity.append(
                         #     traci.edge.getLastStepMeanSpeed(inflow))
                         tmp_travel = traci.edge.getTraveltime(inflow)
-                        if tmp_travel <= 320:  # 이상한 값 거르기
+                        if tmp_travel <= 500 and tmp_travel != -1:  # 이상한 값 거르기
                             travel_time.append(tmp_travel)
                         # print(travel_time)
                     dup_list.append(inflow)
 
                 if outflow != None and outflow not in dup_list:
                     if traci.edge.getLastStepVehicleNumber(outflow) != 0:
-                        part_velocity.append(
-                            traci.edge.getLastStepMeanSpeed(interest['outflow']))
+                        # part_velocity.append(
+                        #     traci.edge.getLastStepMeanSpeed(interest['outflow']))
                         tmp_travel = traci.edge.getTraveltime(outflow)
-                        if tmp_travel <= 320:  # 이상한 값 거르기
+                        if tmp_travel <= 500 and tmp_travel != -1:  # 이상한 값 거르기
                             travel_time.append(tmp_travel)
                     dup_list.append(interest['outflow'])
 
@@ -202,8 +193,8 @@ def main(args):
     configs['network'] = flags.network.lower()
     if configs['network'] == 'grid':
         from Network.grid import GridNetwork  # network바꿀때 이걸로 바꾸세요(수정 예정)
-        configs['grid_num'] = 3
-        configs['scale']=1
+        configs['grid_num'] = 5
+        configs['scale'] = 1
         if configs['mode'] == 'simulate':
             configs['file_name'] = '{}x{}grid'.format(
                 configs['grid_num'], configs['grid_num'])
@@ -223,7 +214,6 @@ def main(args):
         configs['grid_num'] = 3
         configs['num_lanes'] = 2
         configs['load_file_name'] = configs['network']
-        print("A")
         mapnet = MapNetwork(configs)
         MAP_CONFIGS = mapnet.get_tl_from_xml()
 
@@ -233,10 +223,18 @@ def main(args):
         mapnet.gen_net_from_xml()
         mapnet.gen_rou_from_xml()
         mapnet.generate_cfg(True, configs['mode'])
-        if configs['network']=='3x3grid':
-            configs['scale']=str(1)
-        elif configs['network']=='dunsan':
-            configs['scale']=str(2.0)
+        mapnet._generate_add_xml()
+        if configs['network'] == '3x3grid':
+            configs['scale'] = str(1)
+        if configs['network'] == '5x5grid':
+            configs['scale'] = str(1)
+        if configs['network'] == '5x5grid_v2':
+            configs['scale'] = str(1.5)
+        if configs['network'] == 'dunsan':
+            configs['scale'] = str(1)
+        if configs['network'] == 'dunsan_v2':
+            configs['scale'] = str(0.8)
+        print("Scale:",configs['scale'])
 
     # check the environment
     if 'SUMO_HOME' in os.environ:
@@ -248,6 +246,7 @@ def main(args):
     # check the mode
     if configs['mode'] == 'train':
         # init train setting
+        configs['update_type'] = flags.update_type
         sumoConfig = os.path.join(
             configs['current_path'], 'training_data', time_data, 'net_data', configs['file_name']+'_train.sumocfg')
         train(flags, time_data, configs, sumoConfig)

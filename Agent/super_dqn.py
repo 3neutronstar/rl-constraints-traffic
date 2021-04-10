@@ -11,19 +11,22 @@ from Agent.base import RLAlgorithm, ReplayMemory, merge_dict, hard_update, merge
 from torch.utils.tensorboard import SummaryWriter
 from itertools import chain
 DEFAULT_CONFIG = {
-    'gamma': 0.99,
+    'gamma': 0.9,
     'tau': 0.001,
-    'batch_size': 32,
-    'experience_replay_size': 5e6,
-    'epsilon': 0.8,
-    'epsilon_decay_rate': 0.995,
-    'fc_net': [36, 48, 24],
-    'lr': 1e-4,
-    'lr_decay_rate': 0.995,
-    'target_update_period': 20,
-    'final_epsilon': 0.0005,
-    'final_lr': 1e-6,
-    'alpha':0.91,
+    'batch_size': 40,
+    'experience_replay_size': 500000,
+    'epsilon': 0.9,
+    'epsilon_decay_rate': 0.99,
+    'fc_net': [160, 160, 160, 160],
+    'lr': 0.0001,
+    'lr_decay_period': 50,
+    'lr_decay_rate': 0.8,
+    # 'lr_decay_rate': 0.995,
+    'target_update_period': 10,
+    'final_epsilon': 0.0012,
+    'final_lr': 0.00001,
+    'alpha': 0.91,
+    'cnn':[50,60]
 }
 
 Transition = namedtuple('Transition',
@@ -31,65 +34,72 @@ Transition = namedtuple('Transition',
 
 
 class SuperQNetwork(nn.Module):
-    def __init__(self, input_size,out_rate_size,out_time_size, configs):
+    def __init__(self, input_size, out_rate_size, out_time_size, configs):
         super(SuperQNetwork, self).__init__()
         self.configs = configs
         self.input_size = int(input_size)
         self.num_agent = len(self.configs['tl_rl_list'])
         self.state_space = self.configs['state_space']
-        self.experience_replay=ReplayMemory(self.configs['experience_replay_size'])
+        self.experience_replay = ReplayMemory(
+            self.configs['experience_replay_size'])
         # Neural Net
-        self.conv1 = nn.Conv1d(self.state_space-2, 4, kernel_size=1)
-        self.conv2 = nn.Conv1d(4, 8, kernel_size=1)
+        self.conv1 = nn.Conv2d(self.state_space, self.configs['cnn'][0], kernel_size=1)
+        self.conv2 = nn.Conv2d(self.configs['cnn'][0], self.configs['cnn'][1], kernel_size=1)
 
         self.fc1 = nn.Linear(
-            8, self.configs['fc_net'][0])
+            self.configs['cnn'][1]*4, self.configs['fc_net'][0])
         self.fc2 = nn.Linear(
             self.configs['fc_net'][0], self.configs['fc_net'][1])
         self.fc3 = nn.Linear(
             self.configs['fc_net'][1], self.configs['fc_net'][2])
         self.fc4 = nn.Linear(
-            self.configs['fc_net'][2], out_rate_size)
+            self.configs['fc_net'][2], self.configs['fc_net'][3])
+        self.fc5 = nn.Linear(
+            self.configs['fc_net'][3], out_rate_size)
 
         self.fc_y1 = nn.Linear(
-            self.state_space+1, self.configs['fc_net'][0]) # rate+state
+            self.configs['cnn'][1]*4+1, self.configs['fc_net'][0])  # rate+state
         self.fc_y2 = nn.Linear(
             self.configs['fc_net'][0], self.configs['fc_net'][1])
         self.fc_y3 = nn.Linear(
             self.configs['fc_net'][1], self.configs['fc_net'][2])
         self.fc_y4 = nn.Linear(
-            self.configs['fc_net'][2], out_time_size)
-        
+            self.configs['fc_net'][2], self.configs['fc_net'][3])
+        self.fc_y5 = nn.Linear(
+            self.configs['fc_net'][3], out_time_size)
+
         nn.init.kaiming_uniform_(self.conv1.weight)
         nn.init.kaiming_uniform_(self.conv2.weight)
         nn.init.kaiming_uniform_(self.fc1.weight)
         nn.init.kaiming_uniform_(self.fc2.weight)
         nn.init.kaiming_uniform_(self.fc3.weight)
+        nn.init.kaiming_uniform_(self.fc4.weight)
         nn.init.kaiming_uniform_(self.fc_y1.weight)
         nn.init.kaiming_uniform_(self.fc_y2.weight)
         nn.init.kaiming_uniform_(self.fc_y3.weight)
+        nn.init.kaiming_uniform_(self.fc_y4.weight)
 
         if configs['mode'] == 'test':
             self.eval()
 
     def forward(self, input_x):
-        x_state,x_traffic=torch.split(input_x,[8,2],dim=1)
-        x_state = f.relu(self.conv1(x_state))
-        x_cnn = f.relu(self.conv2(x_state))
-        x_vehicle = x_cnn.view(-1, 8)
-        x_vehicle = f.relu(self.fc1(x_vehicle))
+        # input_x = input_x.view(-1, self.state_space*4, 1)
+        x_cnn = f.relu(self.conv1(input_x))
+        x_cnn = f.relu(self.conv2(x_cnn))
+        x_cnn = x_cnn.view(-1, self.configs['cnn'][1]*4)
+        x_vehicle = f.relu(self.fc1(x_cnn))
         x_vehicle = f.relu(self.fc2(x_vehicle))
         x_vehicle = f.relu(self.fc3(x_vehicle))
-        rate_action_Q = self.fc4(x_vehicle)
-
-        x_traffic = torch.cat((x_cnn, x_traffic, x_state.argmax(dim=1,keepdim=True).detach().clone()),dim=1).view(-1,self.state_space+1)
+        x_vehicle = f.relu(self.fc4(x_vehicle))
+        rate_action_Q = self.fc5(x_vehicle)
+        x_traffic = torch.cat((x_cnn, rate_action_Q.argmax(
+            dim=1, keepdim=True).detach().clone()), dim=1).view(-1, self.configs['cnn'][1]*4+1)
         x_traffic = f.relu(self.fc_y1(x_traffic))
         x_traffic = f.relu(self.fc_y2(x_traffic))
         x_traffic = f.relu(self.fc_y3(x_traffic))
-        time_action_Q = self.fc_y4(x_traffic)
-          # .view(-1, self.num_agent,
-        #                      int(self.configs['state_space']/2))
-        return rate_action_Q,time_action_Q
+        x_traffic = f.relu(self.fc_y4(x_traffic))
+        time_action_Q = self.fc_y5(x_traffic)
+        return rate_action_Q, time_action_Q
 
 
 class Trainer(RLAlgorithm):
@@ -112,14 +122,15 @@ class Trainer(RLAlgorithm):
         self.action_size = self.configs['action_size']
         self.gamma = self.configs['gamma']
         self.epsilon = self.configs['epsilon']
-        self.criterion = nn.SmoothL1Loss()
+        self.criterion = nn.MSELoss()
         self.lr = self.configs['lr']
         self.lr_decay_rate = self.configs['lr_decay_rate']
         self.epsilon_decay_rate = self.configs['epsilon_decay_rate']
         self.batch_size = self.configs['batch_size']
         self.device = self.configs['device']
         self.running_loss = 0
-        
+        # self.writer=writer
+
         # NN composition
         # size에 따라 다르게 해주어야함
         self.rate_key_list = list()
@@ -132,12 +143,14 @@ class Trainer(RLAlgorithm):
             self.rate_key_list.append(rate_key)
 
         self.mainSuperQNetwork = SuperQNetwork(
-            self.state_space, self.rate_action_space[4],self.time_action_space[0], self.configs)
+            self.state_space, self.rate_action_space[rate_key], self.time_action_space[0], self.configs)
         self.targetSuperQNetwork = SuperQNetwork(
-            self.state_space, self.rate_action_space[4],self.time_action_space[0], self.configs)
+            self.state_space, self.rate_action_space[rate_key], self.time_action_space[0], self.configs)
         # hard update, optimizer setting
-        self.optimizer=optim.Adam(self.mainSuperQNetwork.parameters(),self.lr)
+        self.optimizer = optim.Adadelta(
+            self.mainSuperQNetwork.parameters(), lr=self.configs['lr'])
         hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
+        self.lr_scheduler=optim.lr_scheduler.StepLR(optimizer=self.optimizer,step_size=self.configs['lr_decay_period'],gamma=self.configs['lr_decay_rate'])
 
     def get_action(self, state, mask):
         # 전체를 날리는 epsilon greedy
@@ -149,42 +162,55 @@ class Trainer(RLAlgorithm):
             time_actions = torch.zeros(
                 (1, self.num_agent, 1), dtype=torch.int, device=self.device)
             for index in torch.nonzero(mask):
-                if random.random() > self.epsilon:  # epsilon greedy
-                    # masks = torch.cat((mask, mask), dim=0)
+                if self.configs['mode'] == 'train':
+                    if random.random() > self.epsilon:  # epsilon greedy
+                        # masks = torch.cat((mask, mask), dim=0)
+                        rate_action, time_action = self.mainSuperQNetwork(
+                            state[0, :, :, index].view(-1, self.state_space, 4, 1))
+                        rate_actions[0, index] = rate_action.max(1)[1].int()
+                        time_actions[0, index] = time_action.max(1)[1].int()
+                        # agent가 늘어나면 view(agents,action_size)
+                    else:
+                        rate_actions[0, index] = torch.tensor(random.randint(
+                            0, self.rate_action_space[self.rate_key_list[index]]-1), dtype=torch.int, device=self.device)
+                        time_actions[0, index] = torch.tensor(random.randint(
+                            0, self.configs['time_action_space'][index]-1), dtype=torch.int, device=self.device)
+                else:  # test
                     rate_action, time_action = self.mainSuperQNetwork(
-                        state[0,:,index].view(-1,self.state_space,1))
+                        state[0, :,:, index].view(-1, self.state_space,4, 1))
                     rate_actions[0, index] = rate_action.max(1)[1].int()
                     time_actions[0, index] = time_action.max(1)[1].int()
-                    # agent가 늘어나면 view(agents,action_size)
-                else:
-                    rate_actions[0, index] = torch.tensor(random.randint(
-                        0, self.rate_action_space[self.rate_key_list[index]]-1), dtype=torch.int, device=self.device)
-                    time_actions[0, index] = torch.tensor(random.randint(
-                        0, self.configs['time_action_space'][index]-1), dtype=torch.int, device=self.device)
 
             actions = torch.cat((rate_actions, time_actions), dim=2)
         return actions
 
-    def target_update(self):
+    def target_update(self,epoch):
         # Hard Update
-        hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
+        if epoch%self.configs['target_update_period']==0 and self.configs['update_type']=='hard':
+            hard_update(self.targetSuperQNetwork, self.mainSuperQNetwork)
 
         # # Soft Update
-        # for target, source in zip(self.targetQNetwork, self.mainQNetwork):
-        #     soft_update(target, source, self.configs)
-        # # Total Update
-        # soft_update(self.targetSuperQNetwork,
-        #             self.mainSuperQNetwork, self.configs)
+        # Total Update
+        if self.configs['update_type']=='soft':
+            soft_update(self.targetSuperQNetwork,
+                        self.mainSuperQNetwork, self.configs)
 
     def save_replay(self, state, action, reward, next_state, mask):
         for index in torch.nonzero(mask):
-            # print(state[0,:, index].sum(),action[0,index].sum(),reward[0,index].sum(),next_state[0,:, index].sum())
+            # print(state[0,:, index])#,action[0,index],reward[0,index].sum(),next_state[0,:, index].sum())
             self.mainSuperQNetwork.experience_replay.push(
-                state[0,:, index].view(-1,self.state_space,1), action[0, index], reward[0, index], next_state[0,:, index].view(-1,self.state_space,1))
+                state[0, :, :, index].view(-1, self.state_space, 4, 1), action[0, index], reward[0, index], next_state[0, :, :, index].view(-1, self.state_space, 4, 1))
+            # print("state {}".format(state[0, :, :, index].view(-1, self.state_space, 4, 1)))
+            # print("action {}".format(action[0, index]))
+            # print("reward {}".format(reward[0, index]))
+            # print("next_state {}".format(next_state[0, :, :, index].view(-1, self.state_space, 4, 1)))
+            # if torch.eq(state[0, :, :, index],next_state[0, :, :, index]).sum()>0:
+            #     print(torch.eq(state[0, :, :, index],next_state[0, :, :, index]).sum())
+            #     print("FAKE")
 
-    def update(self,mask):  # 각 agent마다 시행하기 # agent network로 돌아가서 시행 그러면될듯?
+    def update(self, mask):  # 각 agent마다 시행하기 # agent network로 돌아가서 시행 그러면될듯?
         # if mask.sum() > 0 and len(self.mainSuperQNetwork.experience_replay) > self.configs['batch_size']:
-        if len(self.mainSuperQNetwork.experience_replay) > self.configs['batch_size']:
+        if len(self.mainSuperQNetwork.experience_replay) > self.configs['batch_size'] and mask.sum() > 0:
             transitions = self.mainSuperQNetwork.experience_replay.sample(
                 self.configs['batch_size'])
             batch = Transition(*zip(*transitions))
@@ -198,22 +224,24 @@ class Trainer(RLAlgorithm):
 
             # dim=0인 이유는 batch 끼리 cat 하는 것이기 때문임
             state_batch = torch.cat(batch.state)
+
             action_batch = torch.cat(batch.action)
             reward_batch = torch.cat(batch.reward)
             # print(state_batch[0],action_batch[0],reward_batch[0],non_final_mask[0])
 
             # Q(s_t, a) 계산 - 모델이 action batch의 a'일때의 Q(s_t,a')를 계산할때, 취한 행동 a'의 column 선택(column이 Q)
-            rate_state_action_values, time_state_action_values = self.mainSuperQNetwork(state_batch)
+            rate_state_action_values, time_state_action_values = self.mainSuperQNetwork(
+                state_batch)
             rate_state_action_values = rate_state_action_values.gather(
-                1, action_batch[:,0].view(-1, 1).long())
+                1, action_batch[:, 0].view(-1, 1).long())
             time_state_action_values = time_state_action_values.gather(
-                1, action_batch[:,1].view(-1, 1).long())
+                1, action_batch[:, 1].view(-1, 1).long())
             # 모든 다음 상태를 위한 V(s_{t+1}) 계산
             rate_next_state_values = torch.zeros(
                 self.configs['batch_size'], device=self.device, dtype=torch.float)
             time_next_state_values = torch.zeros(
                 self.configs['batch_size'], device=self.device, dtype=torch.float)
-            rate_Q, time_Q =self.mainSuperQNetwork(non_final_next_states)
+            rate_Q, time_Q = self.mainSuperQNetwork(non_final_next_states)
             rate_next_state_values[non_final_mask] = rate_Q.max(
                 1)[0].detach().to(self.device)
             time_next_state_values[non_final_mask] = time_Q.max(1)[0].detach().to(
@@ -230,16 +258,16 @@ class Trainer(RLAlgorithm):
                                        rate_expected_state_action_values.unsqueeze(1))
             time_loss = self.criterion(time_state_action_values,
                                        time_expected_state_action_values.unsqueeze(1))
-            total_loss= self.configs['alpha'] *rate_loss + (1.0-self.configs['alpha'])*time_loss
+            # total_loss= self.configs['alpha'] *rate_loss + (1.0-self.configs['alpha'])*time_loss
             self.running_loss += rate_loss/self.configs['batch_size']
             self.running_loss += time_loss/self.configs['batch_size']
 
             # 모델 최적화
             self.optimizer.zero_grad()
             # retain_graph를 하는 이유는 mainSuperQ에 대해 영향이 없게 하기 위함
-            # rate_loss.backward(retain_graph=True)
-            # time_loss.backward()
-            total_loss.backward(retain_graph=True)
+            rate_loss.backward(retain_graph=True)
+            time_loss.backward()
+            # total_loss.backward(retain_graph=True)
             for param in self.mainSuperQNetwork.parameters():
                 param.grad.data.clamp_(-1, 1)  # 값을 -1과 1로 한정시켜줌 (clipping)
             self.optimizer.step()
@@ -250,11 +278,10 @@ class Trainer(RLAlgorithm):
             self.epsilon *= self.epsilon_decay_rate
 
         # decay learning rate
-        if self.lr > self.configs['final_lr']:
-            self.lr = self.lr_decay_rate*self.lr
-        
-        # if epoch%100==0:
-        #     self.lr = 0.5*self.lr
+        # if self.lr > self.configs['final_lr']:
+        #     self.lr = self.lr_decay_rate*self.lr
+
+        self.lr_scheduler.step()
 
     def save_weights(self, name):
 
@@ -271,7 +298,7 @@ class Trainer(RLAlgorithm):
     def update_tensorboard(self, writer, epoch):
         writer.add_scalar('episode/loss', self.running_loss/self.configs['max_steps'],
                           self.configs['max_steps']*epoch)  # 1 epoch마다
-        writer.add_scalar('hyperparameter/lr', self.lr,
+        writer.add_scalar('hyperparameter/lr', self.optimizer.param_groups[0]['lr'],
                           self.configs['max_steps']*epoch)
         writer.add_scalar('hyperparameter/epsilon',
                           self.epsilon, self.configs['max_steps']*epoch)
