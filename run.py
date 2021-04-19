@@ -187,9 +187,9 @@ def main(args):
     configs['mode'] = flags.mode.lower()
     time_data = time.strftime('%m-%d_%H-%M-%S', time.localtime(time.time()))
     configs['time_data'] = str(time_data)
-    
-    if os.path.exists(os.path.join(os.path.dirname(__file__),'data',configs['mode']))==False:
-        os.mkdir(os.path.join(os.path.dirname(__file__),'data',configs['mode']))
+    if os.path.exists(os.path.join(os.path.dirname(__file__),'data')):
+        if os.path.exists(os.path.join(os.path.dirname(__file__),'data',configs['mode']))==False:
+            os.mkdir(os.path.join(os.path.dirname(__file__),'data',configs['mode']))
     configs['file_name'] = configs['time_data']
     # check the network
     configs['network'] = flags.network.lower()
