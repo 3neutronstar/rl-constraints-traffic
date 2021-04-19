@@ -18,8 +18,10 @@ check the condition state (throughput)
 
 Run in RL algorithm DQN (default device: cpu)
 ```shell script
-    python run.py train
+    python run.py train --network [5x5grid, 5x5grid_v2, dunsan, dunsan_v2]
 ``` 
+"Traffic data of Dunsan and Dunsan_v2 are classified by government of South Korea."
+
 - check the result
 Tensorboard
 ```shell script
