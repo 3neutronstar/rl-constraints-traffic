@@ -25,7 +25,7 @@ def parse_args(args):
         'mode', type=str,
         help='train or test, simulate, "train_old" is the old version to train')
     parser.add_argument(
-        '--network', type=str, default='grid',
+        '--network', type=str, default='5x5grid',
         help='choose network in Env or load from map file')
     # optional input parameters
     parser.add_argument(
@@ -187,7 +187,9 @@ def main(args):
     configs['mode'] = flags.mode.lower()
     time_data = time.strftime('%m-%d_%H-%M-%S', time.localtime(time.time()))
     configs['time_data'] = str(time_data)
-
+    
+    if os.path.exists(os.path.join(os.path.dirname(__file__),'data',configs['mode']))==False:
+        os.mkdir(os.path.join(os.path.dirname(__file__),'data',configs['mode']))
     configs['file_name'] = configs['time_data']
     # check the network
     configs['network'] = flags.network.lower()

@@ -135,7 +135,7 @@ dmypy.json
 /tss_peak.rou.xml
 /sample.net.xml
 /20201028.net.xml
-/Net_data
+
 /training_data/*
 /Network/modify2*.xml
 /Network/origin*.xml

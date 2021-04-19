@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<configuration>
+  <input>
+    <net-file value="C:\traffic-optimization_RL\Experiment\Net_data\5x5grid.net.xml"/>
+    <route-files value="C:\traffic-optimization_RL\Experiment\Net_data\5x5grid.rou.xml"/>
+    <additional-files value="C:\traffic-optimization_RL\Experiment\Net_data\5x5grid_data.add.xml"/>
+    </input>
+    <time>
+    <begin value="0"/>
+    <end value="3600"/>
+    </time>
+    <output/>
+  </configuration>
+  

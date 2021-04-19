@@ -110,7 +110,6 @@ def city_dqn_test(flags, sumoCmd, configs):
 
 
             # 넘어가야된다면 action index증가 (by tensor slicing)
-            
             # action 넘어가야된다면 action index증가 (by tensor slicing)
             for idx,_ in enumerate(TL_RL_LIST):
                 action_update_mask[idx] = torch.eq(  # update는 단순히 진짜 현시만 받아서 결정해야됨
@@ -137,11 +136,7 @@ def city_dqn_test(flags, sumoCmd, configs):
                     if inflow != None and inflow not in dup_list:
                         # 차량의 대기시간, 차량이 있을 때만
                         if traci.edge.getLastStepVehicleNumber(inflow) != 0:
-                            waiting_time.append(traci.edge.getWaitingTime(inflow))#/float(
-                                #traci.edge.getLastStepVehicleNumber(inflow)))
-                            # 차량의 평균속도
-                            # part_velocity.append(
-                            #     traci.edge.getLastStepMeanSpeed(inflow))
+                            waiting_time.append(traci.edge.getWaitingTime(inflow))
                             tmp_travel = traci.edge.getTraveltime(inflow)
                             if tmp_travel<=500 and tmp_travel !=-1:  # 이상한 값 거르기
                                 travel_time.append(tmp_travel)
@@ -149,16 +144,11 @@ def city_dqn_test(flags, sumoCmd, configs):
 
                     if outflow != None and outflow not in dup_list:
                         if traci.edge.getLastStepVehicleNumber(outflow) != 0:
-                            # part_velocity.append(
-                            #     traci.edge.getLastStepMeanSpeed(interest['outflow']))
                             tmp_travel = traci.edge.getTraveltime(outflow)
                             if tmp_travel<=500 and tmp_travel !=-1:  # 이상한 값 거르기
                                 travel_time.append(tmp_travel)
                         dup_list.append(interest['outflow'])
-            # edge_list=traci.edge.getIDList()
-            # for edgeid in edge_list:
-            #     if traci.edge.getLastStepVehicleNumber(edgeid) !=None:
-            #         total_velocity.append(traci.edge.getLastStepMeanSpeed(edgeid))
+
             next_state = env.collect_state(
                 action_update_mask, action_index_matrix, mask_matrix)
             state = next_state
@@ -170,13 +160,8 @@ def city_dqn_test(flags, sumoCmd, configs):
         b = time.time()
         traci.close()
         print("time:", b-a)
-        avg_part_velocity = torch.tensor(
-            part_velocity, dtype=torch.float).mean()
-        avg_velocity = torch.tensor(total_velocity, dtype=torch.float).mean()
-        avg_part_velocity = torch.tensor(
-            part_velocity, dtype=torch.float).mean()
         avg_travel_time = torch.tensor(travel_time, dtype=torch.float).mean()
         avg_waiting_time = torch.tensor(waiting_time, dtype=torch.float).mean()
-        print('======== arrived number:{} avg waiting time:{},avg velocity:{} avg_part_velocity: {} avg_travel_time: {}'.format(
-            arrived_vehicles, avg_waiting_time, avg_velocity, avg_part_velocity, avg_travel_time))
+        print('======== arrived number:{} avg waiting time:{} avg_travel_time: {}'.format(
+            arrived_vehicles, avg_waiting_time, avg_travel_time))
         print("Reward: {}".format(env.cum_reward.sum()))

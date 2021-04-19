@@ -13,9 +13,6 @@ from Agent.base import merge_dict
 
 
 def city_dqn_train(configs, time_data, sumoCmd):
-    '''
-    여기서 configs 값 조정 금지
-    '''
     from Agent.super_dqn import Trainer
     if configs['model'] == 'city':
         from Env.CityEnv import CityEnv
@@ -39,10 +36,6 @@ def city_dqn_train(configs, time_data, sumoCmd):
     TL_PERIOD = torch.tensor(
         configs['tl_period'], device=DEVICE, dtype=torch.int)
     epoch = 0
-    print("action space(rate: {}, time: {}".format(
-        configs['rate_action_space'], configs['time_action_space']))
-    # sumoCmd+=['--seed','1']
-    print(TL_RL_LIST)
     while epoch < configs['num_epochs']:
         step = 0
         if configs['randomness'] == True:
@@ -95,13 +88,9 @@ def city_dqn_train(configs, time_data, sumoCmd):
         a = time.time()
         while step < MAX_STEPS:
             # action 을 정하고
-            # if mask_matrix.sum()>0:
-            #     print(state.sum())
             actions = agent.get_action(state, mask_matrix)
             if mask_matrix.sum()>0:
                 print(actions.transpose(1,2))
-            # if mask_matrix.sum()>0:
-            #     print(actions.sum())
             # action형태로 변환 # 다음으로 넘어가야할 시점에 대한 matrix
             action_matrix = env.calc_action(
                 action_matrix, actions, mask_matrix)
@@ -135,9 +124,6 @@ def city_dqn_train(configs, time_data, sumoCmd):
 
             next_state = env.collect_state(
                 action_update_mask, action_index_matrix, mask_matrix)
-            # if mask_matrix.sum()>0:
-            #     print("Cycle")
-            #     print(next_state.sum())
             # env속에 agent별 state를 꺼내옴, max_offset+period 이상일 때 시작
             if step >= int(torch.max(OFFSET)+torch.max(TL_PERIOD)) and mask_matrix.sum() > 0:
                 rep_state, rep_action, rep_reward, rep_next_state = env.get_state(
@@ -161,7 +147,6 @@ def city_dqn_train(configs, time_data, sumoCmd):
         print('======== {} epoch/ return: {:.5f} arrived number:{}'.format(epoch,
                                                                            env.cum_reward.sum(), arrived_vehicles))
         update_tensorboard(writer, epoch, env, agent, arrived_vehicles)
-        # print("hi",env.test_val)
         env.test_val=0
         if epoch % 50 == 0:
             agent.save_weights(
