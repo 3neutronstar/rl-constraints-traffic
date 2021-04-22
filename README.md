@@ -33,3 +33,7 @@ Hyperparameter in json, model is in `./training_data/[time you run]/model` direc
 ```shell script
     python run.py test --replay_name /replay_data in training_data dir/ --replay_epoch NUM
 ```
+### Performance
+- Synthetic Data in 5x5grid(Straight Flow), 5x5grid_v2(Random Trips)
+
+- Real World Data in Dunsan-dong, Daejeon, Korea
