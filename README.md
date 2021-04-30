@@ -47,5 +47,5 @@ Real World Data in Dunsan-dong, Daejeon, Korea
 |:---:|:---:|---:|---:|
 |Throughput(vehs)|Fixed|13616|10415|
 |Throughput(vehs)|Ours|**13649**|**10539**|
-|Waiting Time(vehs)|Fixed|240.1|237.6|
-|Waiting Time(vehs)|Ours|**231.1**|**218.1**|
+|Waiting Time(s)|Fixed|240.1|237.6|
+|Waiting Time(s)|Ours|**231.1**|**218.1**|
