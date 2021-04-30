@@ -37,15 +37,15 @@ Hyperparameter in json, model is in `./training_data/[time you run]/model` direc
 Synthetic Data in 5x5grid(Straight Flow), 5x5grid_v2(Random Trips)</br>
 |Evaluation Metric|Method|Straight Flow|Random Trips|
 |:---:|:---:|---:|---:|
-|Throughput|Fixed|15184|6872|
-|Throughput|Ours|**15380**|**7154**|
-|Waiting Time|Fixed|916.7|670.2|
-|Waiting Time|Ours|**851.2**|**587.1**|
+|Throughput(vehs)|Fixed|15184|6872|
+|Throughput(vehs)|Ours|**15380**|**7154**|
+|Waiting Time(s)|Fixed|916.7|670.2|
+|Waiting Time(s)|Ours|**851.2**|**587.1**|
 
 Real World Data in Dunsan-dong, Daejeon, Korea
 |Evaluation Metric|Method|Peak|Free and Peak combined|
 |:---:|:---:|---:|---:|
-|Throughput|Fixed|13616|10415|
-|Throughput|Ours|**13649**|**10539**|
-|Waiting Time|Fixed|240.1|237.6|
-|Waiting Time|Ours|**231.1**|**218.1**|
+|Throughput(vehs)|Fixed|13616|10415|
+|Throughput(vehs)|Ours|**13649**|**10539**|
+|Waiting Time(vehs)|Fixed|240.1|237.6|
+|Waiting Time(vehs)|Ours|**231.1**|**218.1**|
