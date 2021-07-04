@@ -43,8 +43,8 @@ class SuperQNetwork(nn.Module):
         self.experience_replay = ReplayMemory(
             self.configs['experience_replay_size'])
         # Neural Net
-        self.conv1 = nn.Conv2d(self.state_space, self.configs['cnn'][0], kernel_size=1)
-        self.conv2 = nn.Conv2d(self.configs['cnn'][0], self.configs['cnn'][1], kernel_size=1)
+        self.conv1 = nn.Conv2d(self.state_space, self.configs['cnn'][0], kernel_size=1,bias=False)
+        self.conv2 = nn.Conv2d(self.configs['cnn'][0], self.configs['cnn'][1], kernel_size=1,bias=False)
 
         self.fc1 = nn.Linear(
             self.configs['cnn'][1]*4, self.configs['fc_net'][0])
@@ -241,11 +241,20 @@ class Trainer(RLAlgorithm):
                 self.configs['batch_size'], device=self.device, dtype=torch.float)
             time_next_state_values = torch.zeros(
                 self.configs['batch_size'], device=self.device, dtype=torch.float)
-            rate_Q, time_Q = self.mainSuperQNetwork(non_final_next_states)
-            rate_next_state_values[non_final_mask] = rate_Q.max(
-                1)[0].detach().to(self.device)
-            time_next_state_values[non_final_mask] = time_Q.max(1)[0].detach().to(
-                self.device)  # .to(self.configs['device'])  # 자신의 Q value 중에서max인 value를 불러옴
+            rate_Q, time_Q = self.targetSuperQNetwork(non_final_next_states)
+
+            ##dqn
+            # rate_next_state_values[non_final_mask] = rate_Q.max(
+            #     1)[0].detach().to(self.device)
+            # time_next_state_values[non_final_mask] = time_Q.max(1)[0].detach().to(
+            #     self.device)  # .to(self.configs['device'])  # 자신의 Q value 중에서max인 value를 불러옴
+
+            #ddqn
+            behavior_actions=self.mainSuperQNetwork(non_final_next_states)
+            behavior_rate_action=torch.argmax(behavior_actions[0],dim=1,keepdim=True)
+            behavior_time_action=torch.argmax(behavior_actions[1],dim=1,keepdim=True)
+            rate_next_state_values[non_final_mask] = rate_Q.detach().gather(dim=1,index=behavior_rate_action).view(-1)
+            time_next_state_values[non_final_mask] = time_Q.detach().gather(dim=1,index=behavior_time_action).view(-1)  # .to(self.configs['device'])  # 자신의 Q value 중에서max인 value를 불러옴
 
             # 기대 Q 값 계산
             rate_expected_state_action_values = (
